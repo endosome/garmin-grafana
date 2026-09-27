@@ -1131,7 +1131,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
                                 "fields": {
-                                    "Index": int(length_record.get('message_index', -1)) + 1,
+                                    "Index": (int(v) if str(v := length_record.get('message_index', -1)).isdigit() else -1) + 1,
                                     "ActivityName": activity_type,
                                     "Activity_ID": activityID,
                                     "Elapsed_Time": length_record.get('total_elapsed_time', None),
@@ -1155,7 +1155,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
                                 "fields": {
-                                    "Index": int(lap_record.get('message_index', -1)) + 1,
+                                    "Index": (int(v) if str(v := lap_record.get('message_index', -1)).isdigit() else -1) + 1,
                                     "ActivityName": activity_type,
                                     "Activity_ID": activityID,
                                     "Elapsed_Time": lap_record.get('total_elapsed_time', None),
