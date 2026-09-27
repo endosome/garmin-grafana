@@ -1095,7 +1095,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                         if session_record.get('start_time') or session_record.get('timestamp'):
                             point = {
                                 "measurement": "ActivitySession",
-                                "time": session_record['start_time'].replace(tzinfo=pytz.UTC).isoformat() or session_record['timestamp'].replace(tzinfo=pytz.UTC).isoformat(), 
+                                "time": (session_record.get('start_time') or session_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
                                     "Database_Name": INFLUXDB_DATABASE,
@@ -1123,7 +1123,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                         if length_record.get('start_time') or length_record.get('timestamp'):
                             point = {
                                 "measurement": "ActivityLength",
-                                "time": length_record['start_time'].replace(tzinfo=pytz.UTC).isoformat() or length_record['timestamp'].replace(tzinfo=pytz.UTC).isoformat(), 
+                                "time": (length_record.get('start_time') or length_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
                                     "Database_Name": INFLUXDB_DATABASE,
@@ -1147,7 +1147,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                         if lap_record.get('start_time') or lap_record.get('timestamp'):
                             point = {
                                 "measurement": "ActivityLap",
-                                "time": lap_record['start_time'].replace(tzinfo=pytz.UTC).isoformat() or lap_record['timestamp'].replace(tzinfo=pytz.UTC).isoformat(), 
+                                "time": (lap_record.get('start_time') or lap_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
                                     "Database_Name": INFLUXDB_DATABASE,
