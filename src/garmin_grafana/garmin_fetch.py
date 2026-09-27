@@ -1217,10 +1217,10 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                     logging.info(f"Success : Activity ID {activityID} stored in output file {tcx_path}")
             except requests.exceptions.Timeout as err:
                 logging.warning(f"Request timeout for fetching large activity record {activityID} - skipping record")
-                return []
+                continue
             except Exception as err:
                 logging.exception(f"Unable to fetch TCX for activity record {activityID} : skipping record")
-                return []
+                continue
 
             for activity in root.findall("tcx:Activities/tcx:Activity", ns):
                 activity_start_time = datetime.fromisoformat(activity.find("tcx:Id", ns).text.strip("Z"))
