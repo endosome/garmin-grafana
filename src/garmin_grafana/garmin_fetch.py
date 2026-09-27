@@ -1032,7 +1032,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
         activity_type = activityIDdict[activityID]
         if (activityID in PARSED_ACTIVITY_ID_LIST) and (not FORCE_REPROCESS_ACTIVITIES):
             logging.info(f"Skipping : Activity ID {activityID} has already been processed within current runtime")
-            return []
+            continue
         if (activityID in PARSED_ACTIVITY_ID_LIST) and (FORCE_REPROCESS_ACTIVITIES):
             logging.info(f"Re-processing : Activity ID {activityID} (FORCE_REPROCESS_ACTIVITIES is on)")
         try:
