@@ -11,7 +11,7 @@ COPY pyproject.toml uv.lock ./
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential git \
  && rm -rf /var/lib/apt/lists/*
-RUN uv sync --locked
+RUN uv sync --locked --no-dev
 
 FROM python:3.13-slim-bookworm AS runtime
 

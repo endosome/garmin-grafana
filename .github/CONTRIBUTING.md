@@ -52,6 +52,14 @@ To set up the project locally:
    ```
    
    This should start fetching data from Garmin and populate your InfluxDB database.
+
+6. **Run the tests:**
+
+   ```bash
+   uv run pytest
+   ```
+
+   The tests mock Garmin Connect and InfluxDB, so they need neither. Please add or update tests in `tests/` when you fix a bug or change how data is parsed.
    
 
 ## How to Contribute
@@ -81,7 +89,7 @@ We welcome suggestions to improve the project:
 
 We appreciate your efforts to improve the project. Contributions are always apprciated but if you are planning to develop a new feature that does not exist or improve one that you find useful, please open an issue first to make sure we are on the same page before you start investing your time. This way, the communication stays clear and the feature would integrate to the codebase smoother.
 
-Please test the code execution before opening an PR request and include a message in the PR request description that you have tested the new code. It saves the review time.
+Please run `uv run pytest` and test the code execution before opening an PR request and include a message in the PR request description that you have tested the new code. It saves the review time.
 
 [!IMPORTANT]
 For significant changes, it's always advised to discuss them via an issue before starting work.
@@ -101,6 +109,7 @@ garmin-grafana/
 ├── Grafana_Dashboard/     # Pre-configured Grafana dashboards
 ├── Grafana_Datasource/    # Grafana data source configurations
 ├── src/garmin_grafana/    # Main application source code
+├── tests/                 # pytest suite (mocks Garmin Connect and InfluxDB)
 ├── .gitignore             # Git ignore rules
 ├── Dockerfile             # Docker configuration
 ├── README.md              # Project overview and instructions
