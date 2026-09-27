@@ -71,6 +71,7 @@ TAG_MEASUREMENTS_WITH_USER_EMAIL = True if os.getenv("TAG_MEASUREMENTS_WITH_USER
 FORCE_REPROCESS_ACTIVITIES = False if os.getenv("FORCE_REPROCESS_ACTIVITIES") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, will enable re-processing of fit files when set to true, may skip activities if set to false (issue #30)
 USER_TIMEZONE = os.getenv("USER_TIMEZONE", "") # optional, fetches timezone info from last activity automatically if left blank
 PARSED_ACTIVITY_ID_LIST = []
+FAILED_WRITE_COUNT = 0 # incremented on every failed InfluxDB write, used to decide if a sync run completed
 IGNORE_ERRORS = True if os.getenv("IGNORE_ERRORS") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False
 
 # %%
@@ -192,6 +193,7 @@ def _is_http_status_error(err, status_code):
 
 # %%
 def write_points_to_influxdb(points):
+    global FAILED_WRITE_COUNT
     write_chunk_size = 20000
     try:
         if len(points) != 0:
@@ -207,6 +209,7 @@ def write_points_to_influxdb(points):
             logging.info("Success : updated influxDB database with new points")
     except (InfluxDBClientError, InfluxDBError) as err:
         logging.error("Write failed : Unable to connect with database! " + str(err))
+        FAILED_WRITE_COUNT += 1
 
 # %%
 def get_daily_stats(date_str):
@@ -1690,8 +1693,11 @@ def daily_fetch_write(date_str):
 
 # %%
 def fetch_write_bulk(start_date_str, end_date_str):
+    """Fetches and writes all dates in the range. Returns True only if no date was skipped and no write failed."""
     global garmin_obj
     consecutive_500_errors = 0
+    failed_writes_before = FAILED_WRITE_COUNT
+    skipped_dates = []
     logging.info("Fetching data for the given period in reverse chronological order")
     time.sleep(3)
     write_points_to_influxdb(get_last_sync())
@@ -1727,6 +1733,7 @@ def fetch_write_bulk(start_date_str, end_date_str):
                         logging.warning(f"Skipping date {current_date} due to persistent 500 errors from Garmin API")
                         logging.info(f"Waiting : for {RATE_LIMIT_CALLS_SECONDS} seconds before continuing")
                         time.sleep(RATE_LIMIT_CALLS_SECONDS)
+                        skipped_dates.append(current_date)
                         repeat_loop = False
                     else:
                         logging.info(f"HTTP 500 error encountered - will retry for date {current_date} (attempt {consecutive_500_errors}/{MAX_CONSECUTIVE_500_ERRORS})")
@@ -1739,6 +1746,7 @@ def fetch_write_bulk(start_date_str, end_date_str):
                     logging.info(f"HTTP Error (non-500) : Failed to fetch one or more metrics - skipping date {current_date}")
                     logging.info(f"Waiting : for {RATE_LIMIT_CALLS_SECONDS} seconds")
                     time.sleep(RATE_LIMIT_CALLS_SECONDS)
+                    skipped_dates.append(current_date)
                     repeat_loop = False
             except (
                     GarminConnectConnectionError,
@@ -1749,6 +1757,7 @@ def fetch_write_bulk(start_date_str, end_date_str):
                 logging.info(f"Connection Error : Failed to fetch one or more metrics - skipping date {current_date}")
                 logging.info(f"Waiting : for {RATE_LIMIT_CALLS_SECONDS} seconds")
                 time.sleep(RATE_LIMIT_CALLS_SECONDS)
+                skipped_dates.append(current_date)
                 repeat_loop = False
             except GarminConnectAuthenticationError as err:
                 logging.error(err)
@@ -1760,9 +1769,15 @@ def fetch_write_bulk(start_date_str, end_date_str):
                 if IGNORE_ERRORS:
                     logging.warning("IGNORE_ERRORS Enabled >> Failed to process %s:", current_date)
                     logging.exception(err)
+                    skipped_dates.append(current_date)
                     repeat_loop = False
                 else:
                     raise err
+    failed_writes = FAILED_WRITE_COUNT - failed_writes_before
+    if skipped_dates or failed_writes:
+        logging.warning(f"Incomplete sync : skipped dates {skipped_dates or 'none'}, {failed_writes} failed InfluxDB write(s)")
+        return False
+    return True
 
 
 if __name__ == "__main__":
@@ -1801,8 +1816,11 @@ if __name__ == "__main__":
             last_watch_sync_time_UTC = datetime.fromtimestamp(int(garmin_obj.get_device_last_used().get('lastUsedDeviceUploadTime')/1000)).astimezone(pytz.timezone("UTC"))
             if last_influxdb_sync_time_UTC < last_watch_sync_time_UTC:
                 logging.info(f"Update found : Current watch sync time is {last_watch_sync_time_UTC} UTC")
-                fetch_write_bulk((last_influxdb_sync_time_UTC + local_timediff).strftime('%Y-%m-%d'), (last_watch_sync_time_UTC + local_timediff).strftime('%Y-%m-%d')) # Using local dates for deciding which dates to fetch in current iteration (see issue #25)
-                last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
+                sync_complete = fetch_write_bulk((last_influxdb_sync_time_UTC + local_timediff).strftime('%Y-%m-%d'), (last_watch_sync_time_UTC + local_timediff).strftime('%Y-%m-%d')) # Using local dates for deciding which dates to fetch in current iteration (see issue #25)
+                if sync_complete:
+                    last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
+                else: # Keep the old sync marker so the same date range is retried on the next update cycle
+                    logging.warning(f"Sync marker not advanced : will retry from {last_influxdb_sync_time_UTC} UTC on the next update")
             else:
                 logging.info(f"No new data found : Current watch and influxdb sync time is {last_watch_sync_time_UTC} UTC")
             logging.info(f"waiting for {UPDATE_INTERVAL_SECONDS} seconds before next automatic update calls")
