@@ -56,6 +56,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO") # optional
 FETCH_FAILED_WAIT_SECONDS = int(os.getenv("FETCH_FAILED_WAIT_SECONDS", 1800)) # optional
 RATE_LIMIT_CALLS_SECONDS = int(os.getenv("RATE_LIMIT_CALLS_SECONDS", 5)) # optional
 MAX_CONSECUTIVE_500_ERRORS = int(os.getenv("MAX_CONSECUTIVE_500_ERRORS", 10)) # optional, maximum consecutive HTTP 500 errors before continuing without retrying
+MAX_INCOMPLETE_SYNC_RETRIES = int(os.getenv("MAX_INCOMPLETE_SYNC_RETRIES", 3)) # optional, number of update cycles an incomplete sync (skipped dates or failed writes) is retried before moving on
 INFLUXDB_ENDPOINT_IS_HTTP = False if os.getenv("INFLUXDB_ENDPOINT_IS_HTTP") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional
 GARMIN_DEVICENAME_AUTOMATIC = False if GARMIN_DEVICENAME != "Unknown" else True # optional
 UPDATE_INTERVAL_SECONDS = int(os.getenv("UPDATE_INTERVAL_SECONDS", 300)) # optional
@@ -1812,6 +1813,7 @@ if __name__ == "__main__":
             logging.warning(f"Unable to determine user's timezone - Defaulting to UTC. Consider providing TZ identifier with USER_TIMEZONE environment variable")
             local_timediff = timedelta(hours=0)
         
+        incomplete_sync_retries = 0
         while True:
             last_watch_sync_time_UTC = datetime.fromtimestamp(int(garmin_obj.get_device_last_used().get('lastUsedDeviceUploadTime')/1000)).astimezone(pytz.timezone("UTC"))
             if last_influxdb_sync_time_UTC < last_watch_sync_time_UTC:
@@ -1819,8 +1821,14 @@ if __name__ == "__main__":
                 sync_complete = fetch_write_bulk((last_influxdb_sync_time_UTC + local_timediff).strftime('%Y-%m-%d'), (last_watch_sync_time_UTC + local_timediff).strftime('%Y-%m-%d')) # Using local dates for deciding which dates to fetch in current iteration (see issue #25)
                 if sync_complete:
                     last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
-                else: # Keep the old sync marker so the same date range is retried on the next update cycle
-                    logging.warning(f"Sync marker not advanced : will retry from {last_influxdb_sync_time_UTC} UTC on the next update")
+                    incomplete_sync_retries = 0
+                elif incomplete_sync_retries < MAX_INCOMPLETE_SYNC_RETRIES: # Keep the old sync marker so the same date range is retried on the next update cycle
+                    incomplete_sync_retries += 1
+                    logging.warning(f"Sync marker not advanced : will retry from {last_influxdb_sync_time_UTC} UTC on the next update (retry {incomplete_sync_retries}/{MAX_INCOMPLETE_SYNC_RETRIES})")
+                else: # Give up so a persistently failing date doesn't make every future cycle re-fetch an ever-growing range
+                    logging.error(f"Sync still incomplete after {MAX_INCOMPLETE_SYNC_RETRIES} retries : advancing sync marker anyway - use MANUAL_START_DATE to backfill the skipped dates listed above")
+                    last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
+                    incomplete_sync_retries = 0
             else:
                 logging.info(f"No new data found : Current watch and influxdb sync time is {last_watch_sync_time_UTC} UTC")
             logging.info(f"waiting for {UPDATE_INTERVAL_SECONDS} seconds before next automatic update calls")
