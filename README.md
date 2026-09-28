@@ -10,7 +10,7 @@ A docker container to fetch data from Garmin servers and store the data in a loc
 > Garmin is a registered trademark of Garmin Ltd. or its subsidiaries. Grafana is a registered trademark of Grafana Labs. This project is an independent, open-source tool and is not affiliated with, endorsed by, sponsored by, or approved by Garmin Ltd. or Grafana Labs.
 
 > [!NOTE]
-> This project repository is dynamically mirrored in [Codeberg](https://codeberg.org/arpanghosh8453/garmin-grafana) as a backup. An alternative docker image is available at [codeberg.org/arpanghosh8453/garmin-grafana](https://codeberg.org/arpanghosh8453/-/packages/container/garmin-grafana).
+> This is [endosome/garmin-grafana](https://github.com/endosome/garmin-grafana), an independently maintained fork of [arpanghosh8453/garmin-grafana](https://github.com/arpanghosh8453/garmin-grafana) by Arpan Ghosh. It adds bug fixes and an automated test suite, and publishes its own Docker image as `ghcr.io/endosome/garmin-fetch-data`. Changes made here are not merged back upstream. Text written in the first person below is by the original author; please report problems with this fork in [its own issue tracker](https://github.com/endosome/garmin-grafana/issues).
 
 > [!TIP]
 > If you are a **Fitbit user**, please check out the [sister project](https://github.com/arpanghosh8453/fitbit-grafana) made for Fitbit
