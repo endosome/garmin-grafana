@@ -70,7 +70,7 @@ influxdb:
       value: "true"
 garmin:
   image:
-    repository: ghcr.io/arpanghosh8453/garmin-fetch-data
+    repository: ghcr.io/endosome/garmin-fetch-data
     tag: v0.3.0
   port: 8000
   credentials:
