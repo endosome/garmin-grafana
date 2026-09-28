@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - auth-fix
     paths:
       - 'src/garmin_grafana/garmin_fetch.py'
       - 'src/garmin_grafana/influxdb_exporter.py'
