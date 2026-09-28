@@ -24,7 +24,7 @@ To set up the project locally:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/arpanghosh8453/garmin-grafana.git
+   git clone https://github.com/endosome/garmin-grafana.git
    cd garmin-grafana
    ```
 2. **Install dependencies:**

@@ -113,7 +113,7 @@ For Linux or MacOS, simply run the following bash command from your linux comman
 Use the following command to clone this repository to your local machine
 
 ```bash
-cd ~ && git clone https://github.com/arpanghosh8453/garmin-grafana.git garmin-grafana
+cd ~ && git clone https://github.com/endosome/garmin-grafana.git garmin-grafana
 ```
 
 Use the command next to install it automatically using the easy-install script. If it fails because docker was not installed, retry the command again after installing docker.
@@ -138,7 +138,7 @@ That should be everything you need for now! The script will be running in the ba
 > [!IMPORTANT]
 > Install docker if you don't have it already. Docker is supported in all major platforms/OS. Please check the [docker installation guide](https://docs.docker.com/engine/install/). You can install it on Windows via WSL, on Unraid via Docker Compose plugin, on Proxmox via Docker-LXC, and natively on Linux and Mac.
 
-1. Clone this repository with the command `git clone https://github.com/arpanghosh8453/garmin-grafana.git`. Change your working directory with `cd garmin-grafana`. Then create a folder named `garminconnect-tokens` inside the current folder (`garmin-grafana`) with the command `mkdir garminconnect-tokens`. Run `chown -R 1000:1000 garminconnect-tokens` to change the ownership of the garminconnect-tokens folder (so the `garmin-fetch-data` container's internal user can use it to store the Authentication tokens). You can also run `chmod -R 777 garminconnect-tokens` to make the folder generally available for every user on the system if you keep getting `PermissionError` during script execution. Cloning this repository allows you to maintain the folder and file structure, and allows you to use Grafana self-provisioning database.
+1. Clone this repository with the command `git clone https://github.com/endosome/garmin-grafana.git`. Change your working directory with `cd garmin-grafana`. Then create a folder named `garminconnect-tokens` inside the current folder (`garmin-grafana`) with the command `mkdir garminconnect-tokens`. Run `chown -R 1000:1000 garminconnect-tokens` to change the ownership of the garminconnect-tokens folder (so the `garmin-fetch-data` container's internal user can use it to store the Authentication tokens). You can also run `chmod -R 777 garminconnect-tokens` to make the folder generally available for every user on the system if you keep getting `PermissionError` during script execution. Cloning this repository allows you to maintain the folder and file structure, and allows you to use Grafana self-provisioning database.
 2. Create an empty `compose.yml` file inside the current `garmin-grafana` folder with the content of the given [compose-example.yml](./compose-example.yml) or simply rename the present `compose-example.yml` file to `compose.yml` with `mv compose-example.yml compose.yml` ( Change the environment variables inside according to instructions )
 
 > [!TIP]
