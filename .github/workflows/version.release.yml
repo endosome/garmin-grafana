@@ -10,8 +10,13 @@ env:
   IMAGE_TAG: ${{ github.ref_name }}
 
 jobs:
+  tests:
+    if: ${{ github.repository == 'endosome/garmin-grafana' }}
+    uses: ./.github/workflows/tests.yml
+
   build_and_push:
     name: Build Multi-Arch Docker Image and Push to GHCR
+    needs: tests
     if: ${{ github.repository == 'endosome/garmin-grafana' }}
     runs-on: ubuntu-latest
     permissions:
