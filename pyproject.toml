@@ -19,8 +19,27 @@ garmin-fetch = "garmin_grafana:main"
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-cov>=6",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src/garmin_grafana"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = [
+    "error",
+    # third-party libraries still using deprecated datetime APIs
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:influxdb.*",
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:reactivex.*",
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:fitparse.*",
+]
+
+[tool.coverage.run]
+source = ["src/garmin_grafana"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 98

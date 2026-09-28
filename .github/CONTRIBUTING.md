@@ -56,10 +56,16 @@ To set up the project locally:
 6. **Run the tests:**
 
    ```bash
-   uv run pytest
+   uv run pytest                  # the full suite, a few seconds
+   uv run pytest --cov            # with coverage (CI fails below 98%)
+   uv run pytest -k sleep -x      # tests matching "sleep", stop at the first failure
    ```
 
-   The tests mock Garmin Connect and InfluxDB, so they need neither. Please add or update tests in `tests/` when you fix a bug or change how data is parsed.
+   The tests mock Garmin Connect and InfluxDB, so they need neither, and they ignore your `override-default-vars.env`. They also run on every push and pull request (`.github/workflows/tests.yml`). Please add or update tests in `tests/` when you fix a bug or change how data is parsed. A few conventions:
+
+   * Check new measurements with `helpers.assert_valid_points`, which verifies the points encode to InfluxDB line protocol, have at least one field, and don't mix integer and float values in a field.
+   * Build FIT test data with `tests/fit_builder.py` (it writes real FIT files that fitparse reads) rather than mocking the parser.
+   * Known bugs are recorded as strict `xfail` tests with the reason. When you fix one, pytest reports it as `XPASS(strict)` and fails: remove the `xfail` marker in the same change.
    
 
 ## How to Contribute

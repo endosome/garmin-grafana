@@ -10,3 +10,4 @@ src/garmin_grafana.egg-info/top_level.txt
 __pycache__
 .venv/
 .pytest_cache/
+.coverage

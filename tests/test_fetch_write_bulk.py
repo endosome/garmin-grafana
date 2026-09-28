@@ -144,3 +144,12 @@ def test_unexpected_error_still_raises_without_ignore_errors(gf, no_device_sync,
 
     with pytest.raises(ValueError):
         gf.fetch_write_bulk("2026-01-01", "2026-01-01")
+
+
+def test_pauses_between_days_when_rate_limited(gf, no_device_sync, monkeypatch):
+    monkeypatch.setattr(gf, "RATE_LIMIT_CALLS_SECONDS", 5)
+    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: None)
+
+    gf.fetch_write_bulk("2026-01-01", "2026-01-03")
+
+    assert [c.args[0] for c in gf.time.sleep.call_args_list] == [3, 5, 5, 5]  # startup pause, then one per day
