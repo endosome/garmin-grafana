@@ -357,7 +357,7 @@ If you find this project helpful, please consider:
 
 ## Need Help?
 
-If you're experiencing any issues with running this project or have questions, feel free to [open an issue](https://github.com/arpanghosh8453/garmin-grafana/issues/new/choose) on this repository. I'll do my best to assist you.
+If you're experiencing any issues with running this fork or have questions, feel free to [open an issue](https://github.com/endosome/garmin-grafana/issues/new/choose) on this repository. Issues with the original project belong in the [upstream issue tracker](https://github.com/arpanghosh8453/garmin-grafana/issues).
 
 ## Need a Desktop App?
 
