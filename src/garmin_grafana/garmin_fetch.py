@@ -79,13 +79,16 @@ IGNORE_ERRORS = True if os.getenv("IGNORE_ERRORS") in ['True', 'true', 'TRUE','t
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
+_log_level = logging.getLevelNamesMapping().get(LOG_LEVEL.strip().upper())
 logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    level=_log_level if _log_level is not None else logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout)
     ]
 )
+if _log_level is None:
+    logging.warning("Unknown LOG_LEVEL '%s' - defaulting to INFO", LOG_LEVEL)
 
 # %%
 try:

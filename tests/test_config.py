@@ -108,6 +108,20 @@ def test_log_level(load_script):
     assert logging.getLogger().level == logging.DEBUG
 
 
+@pytest.mark.parametrize("value, expected", [("debug", logging.DEBUG), (" Warning ", logging.WARNING), ("warn", logging.WARNING)])
+def test_log_level_is_case_insensitive(load_script, value, expected):
+    load_script(LOG_LEVEL=value)
+
+    assert logging.getLogger().level == expected
+
+
+def test_unknown_log_level_falls_back_to_info(load_script, capsys):
+    load_script(LOG_LEVEL="verbose")
+
+    assert logging.getLogger().level == logging.INFO
+    assert "Unknown LOG_LEVEL 'verbose'" in capsys.readouterr().out
+
+
 def test_override_file_takes_precedence(load_script, monkeypatch, tmp_path):
     (tmp_path / "override-default-vars.env").write_text("FETCH_SELECTION=sleep\nUPDATE_INTERVAL_SECONDS=60\n")
     monkeypatch.chdir(tmp_path)
