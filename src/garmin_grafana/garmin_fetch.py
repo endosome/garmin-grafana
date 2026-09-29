@@ -1,6 +1,7 @@
 # %%
 import traceback
 import re
+from collections import Counter
 import base64, requests, time, pytz, logging, os, sys, dotenv, io, zipfile
 from fitparse import FitFile, FitParseError
 from datetime import datetime, timedelta
@@ -210,7 +211,8 @@ def write_points_to_influxdb(points):
                     influxdbclient.write_points(points[i:i + write_chunk_size])
                 else:
                     influxdbclient.write(record=points[i:i + write_chunk_size])
-            logging.info("Success : updated influxDB database with new points")
+            per_measurement = ", ".join(f"{name}={count}" for name, count in Counter(p['measurement'] for p in points).items())
+            logging.info(f"Success : updated influxDB database with {len(points)} new points ({per_measurement})")
     except (InfluxDBClientError, InfluxDBError) as err:
         logging.error("Write failed : Unable to connect with database! " + str(err))
         FAILED_WRITE_COUNT += 1

@@ -57,6 +57,15 @@ def test_client_errors_are_logged_not_raised(gf, monkeypatch, error, caplog):
     assert "Write failed" in caplog.text
 
 
+def test_write_log_names_measurements_and_counts(gf, caplog):
+    caplog.set_level("INFO")
+    points = make_points(3) + [{"measurement": "Other", "time": 9, "tags": {}, "fields": {"v": 1}}]
+
+    gf.write_points_to_influxdb(points)
+
+    assert "updated influxDB database with 4 new points (M=3, Other=1)" in caplog.text
+
+
 @pytest.mark.parametrize("display_name, expected", [("runner42", "runner42"), (None, "Unknown")])
 def test_user_tag_added_when_enabled(gf, monkeypatch, display_name, expected):
     monkeypatch.setattr(gf, "TAG_MEASUREMENTS_WITH_USER_EMAIL", True)
