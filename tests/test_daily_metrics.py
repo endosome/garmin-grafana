@@ -91,6 +91,12 @@ def test_last_sync_defaults_when_device_unknown(gf, monkeypatch):
     assert (gf.GARMIN_DEVICENAME, gf.GARMIN_DEVICEID) == ("Unknown", None)
 
 
+def test_last_sync_without_upload_time_writes_nothing(gf):
+    gf.garmin_obj.get_device_last_used.return_value = {"lastUsedDeviceName": "fenix 8", "lastUsedDeviceUploadTime": None}
+
+    assert gf.get_last_sync() == []
+
+
 def test_last_sync_keeps_configured_device_name(gf, monkeypatch):
     monkeypatch.setattr(gf, "GARMIN_DEVICENAME_AUTOMATIC", False)
     gf.garmin_obj.get_device_last_used.return_value = {"lastUsedDeviceName": "fenix 8", "lastUsedDeviceUploadTime": ms(T0)}

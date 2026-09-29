@@ -229,8 +229,9 @@ class GarminBulkExport:
                         )
 
                     # Coerce values into the expected API format.
-                    stats["sleepEndTimestampGMT"] = iso_to_timestamp_ms(
-                        stats["sleepEndTimestampGMT"]
+                    end_timestamp = stats.get("sleepEndTimestampGMT")
+                    stats["sleepEndTimestampGMT"] = (
+                        iso_to_timestamp_ms(end_timestamp) if end_timestamp else None
                     )
                     sleep_stats[stats_date.strip()] = stats
 
@@ -543,7 +544,9 @@ if __name__ == "__main__":
     # These are the only types of data that are included in the bulk export.
     garmin_fetch.FETCH_SELECTION = "daily_avg,sleep,activity,hydration"
 
-    garmin_fetch.fetch_write_bulk(args.start_date, args.end_date)
+    if not garmin_fetch.fetch_write_bulk(args.start_date, args.end_date):
+        logging.error("Bulk import incomplete : some dates were skipped or writes failed")
+        raise SystemExit(1)
     logging.info(
         f"Bulk update success : Fetched all available health metrics for date range {args.start_date} to {args.end_date}"
     )

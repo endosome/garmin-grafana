@@ -75,6 +75,15 @@ def test_iso_timestamp_preserves_explicit_timezone():
     assert bulk.iso_to_timestamp_ms("2026-01-02T08:30:00+02:00") == ms(datetime(2026, 1, 2, 6, 30))
 
 
+def test_sleep_entry_without_end_timestamp_is_tolerated(export_dir):
+    path = export_dir / "DI_CONNECT" / "DI-Connect-Wellness" / "extra_sleepData.json"
+    write_json(path, [{"calendarDate": "2026-01-05", "deepSleepSeconds": 60}])
+
+    export = bulk.GarminBulkExport(export_dir)
+
+    assert export.get_sleep_data("2026-01-05")["dailySleepDTO"]["sleepEndTimestampGMT"] is None
+
+
 def test_wellness_data(export_dir):
     export = bulk.GarminBulkExport(export_dir)
 
@@ -309,3 +318,13 @@ def test_command_line_requires_start_date(importer_globals, export_dir, monkeypa
 
     with pytest.raises(RuntimeError, match="start_date must be set"):
         run_importer(monkeypatch, "--bulk_data_path", str(export_dir))
+
+
+def test_command_line_import_exits_nonzero_when_incomplete(importer_globals, export_dir, monkeypatch):
+    (export_dir / "DI_CONNECT" / "DI-Connect-Fitness" / "me_0_summarizedActivities.json").unlink()
+    monkeypatch.setattr(importer_globals, "fetch_write_bulk", lambda *_: False)
+
+    with pytest.raises(SystemExit) as exit_info:
+        run_importer(monkeypatch, "--bulk_data_path", str(export_dir), "--start_date", "2026-01-01", "--end_date", "2026-01-02")
+
+    assert exit_info.value.code == 1

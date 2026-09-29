@@ -264,3 +264,19 @@ def test_manual_date_range_runs_once_and_exits(offline, monkeypatch):
     assert [c.args[0] for c in garmin.get_stats.call_args_list] == ["2025-06-03", "2025-06-02", "2025-06-01"]
     time.sleep.assert_called()  # only fetch_write_bulk's short pauses...
     assert UPDATE_INTERVAL not in [c.args[0] for c in time.sleep.call_args_list]  # ...never the update loop
+
+
+def test_manual_date_range_exits_nonzero_when_dates_are_skipped(offline, monkeypatch):
+    monkeypatch.setenv("MANUAL_START_DATE", "2025-06-01")
+    monkeypatch.setenv("MANUAL_END_DATE", "2025-06-01")
+    monkeypatch.setenv("FETCH_SELECTION", "daily_avg")
+    garmin = mock.MagicMock()
+    garmin.get_device_last_used.return_value = {"lastUsedDeviceUploadTime": 1767261600000}
+    garmin.get_stats.side_effect = requests.exceptions.ConnectionError("network blip")
+    monkeypatch.setattr(garminconnect, "Garmin", mock.MagicMock(return_value=garmin))
+    monkeypatch.setattr(time, "sleep", mock.MagicMock())
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(str(SCRIPT), run_name="__main__")
+
+    assert exit_info.value.code == 1
