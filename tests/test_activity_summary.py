@@ -57,6 +57,18 @@ def test_summary_fields_and_tags(gf, monkeypatch):
     assert (gps_ids, strength_ids) == ({}, {})
 
 
+@pytest.mark.parametrize("bad_zone", [{"zoneNumber": 0}, {"zoneNumber": 6}, {"zoneNumber": None}, {}, {"zoneNumber": "x"}])
+def test_out_of_range_hr_zone_is_ignored(gf, bad_zone):
+    gf.garmin_obj.get_activities_by_date.return_value = [activity()]
+    gf.garmin_obj.get_activity_hr_in_timezones.return_value = [
+        {**bad_zone, "zoneLowBoundary": 999}, {"zoneNumber": 2, "zoneLowBoundary": 120}]
+
+    points, _, _ = gf.get_activity_summary("2026-01-01")
+
+    fields = points[0]["fields"]
+    assert [fields[f"hrZoneLowBoundary_{i}"] for i in range(1, 6)] == [None, 120, None, None, None]
+
+
 def test_activities_with_gps_are_queued_for_detail_fetch(gf, monkeypatch):
     monkeypatch.setattr(gf, "ALWAYS_PROCESS_FIT_FILES", False)
     gf.garmin_obj.get_activities_by_date.return_value = [

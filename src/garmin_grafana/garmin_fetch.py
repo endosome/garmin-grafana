@@ -200,7 +200,7 @@ def write_points_to_influxdb(points):
         if len(points) != 0:
             if TAG_MEASUREMENTS_WITH_USER_EMAIL:
                 for item in points:
-                    item['tags'].update({'User_ID': garmin_obj.display_name or 'Unknown'})
+                    item['tags'].update({'User_ID': getattr(garmin_obj, 'display_name', None) or 'Unknown'}) # bulk exports have no display name
             # Write in chunks - Issue reported for large activities data containing >20000 points - Error 413 : payload too large
             for i in range(0, len(points), write_chunk_size):
                 if INFLUXDB_VERSION == '1':
@@ -684,7 +684,12 @@ def get_activity_summary(date_str):
             hr_zone_boundaries = [None] * 5
             if hr_zones_data:
                 for zone in hr_zones_data:
-                    hr_zone_boundaries[int(zone.get('zoneNumber')) - 1] = zone.get('zoneLowBoundary')
+                    try:
+                        zone_index = int(zone.get('zoneNumber')) - 1
+                    except (TypeError, ValueError):
+                        continue
+                    if 0 <= zone_index < len(hr_zone_boundaries):
+                        hr_zone_boundaries[zone_index] = zone.get('zoneLowBoundary')
             else:
                 logging.warning(f"No HR zone data found for activity: {activity_id}")
 

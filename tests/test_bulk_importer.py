@@ -5,7 +5,7 @@ import runpy
 import socket
 import sys
 import zipfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -167,6 +167,22 @@ def test_download_falls_back_to_nearest_when_no_sport_matches(export_dir):
 
     with zipfile.ZipFile(io.BytesIO(bulk.GarminBulkExport(export_dir).download_activity(22))) as zf:
         assert zf.namelist() == ["cycling.fit"]
+
+
+def test_multisport_fit_is_indexed_by_its_first_session(export_dir):
+    archive = export_dir / "DI_CONNECT" / "DI-Connect-Uploaded-Files" / "UploadedFiles_0-_Part1.zip"
+    later = RUN_START + timedelta(hours=1)
+    multisport = build_fit([
+        ("file_id", {"type": "activity", "manufacturer": "garmin", "serial_number": 1}),
+        ("record", {"timestamp": RUN_START, "heart_rate": 130}),
+        ("session", {"timestamp": RUN_START + timedelta(seconds=60), "start_time": RUN_START, "sport": "swimming", "message_index": 0}),
+        ("session", {"timestamp": later + timedelta(seconds=60), "start_time": later, "sport": "cycling", "message_index": 1}),
+    ])
+    archive.write_bytes(zip_bytes({"tri.fit": multisport}))
+
+    (entry,) = bulk.GarminBulkExport(export_dir).fit_file_index
+
+    assert (entry.date, entry.activity) == (RUN_START.replace(tzinfo=timezone.utc), "swimming")
 
 
 def test_download_errors(export_dir):

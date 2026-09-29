@@ -67,6 +67,15 @@ def test_user_tag_added_when_enabled(gf, monkeypatch, display_name, expected):
     assert all(p["tags"]["User_ID"] == expected for p in written_points(gf.influxdbclient))
 
 
+def test_user_tag_tolerates_object_without_display_name(gf, monkeypatch):
+    monkeypatch.setattr(gf, "TAG_MEASUREMENTS_WITH_USER_EMAIL", True)
+    monkeypatch.setattr(gf, "garmin_obj", object())  # e.g. GarminBulkExport
+
+    gf.write_points_to_influxdb(make_points(1))
+
+    assert written_points(gf.influxdbclient)[0]["tags"]["User_ID"] == "Unknown"
+
+
 def test_user_tag_not_added_by_default(gf):
     gf.write_points_to_influxdb(make_points(1))
 

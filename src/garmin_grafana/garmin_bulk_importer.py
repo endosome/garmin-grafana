@@ -338,10 +338,14 @@ class GarminBulkExport:
                         for msg in fit_file.messages:
                             if msg.name == "session":
                                 session_data = get_fields(msg)
-                                session_date = session_data["start_time"].replace(
+                                start = session_data["start_time"].replace(
                                     tzinfo=timezone.utc
                                 )
-                                session_sport = session_data.get("sport", "Unknown")
+                                # Multisport files have one session per leg; the activity
+                                # starts with the first one.
+                                if session_date is None or start < session_date:
+                                    session_date = start
+                                    session_sport = session_data.get("sport", "Unknown")
 
                         if session_sport is not None and session_date is not None:
                             fit_file_index.append(
