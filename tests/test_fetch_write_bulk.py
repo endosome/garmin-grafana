@@ -137,6 +137,19 @@ def test_incomplete_run_logs_skipped_dates_and_failed_writes(gf, no_device_sync,
     assert "Incomplete sync : skipped dates ['2026-01-02'], 2 failed InfluxDB write(s)" in caplog.text
 
 
+def test_ignored_error_is_logged_once_with_traceback(gf, no_device_sync, monkeypatch, caplog):
+    monkeypatch.setattr(gf, "IGNORE_ERRORS", True)
+    daily_fetch_write, _ = fail_once(ValueError("unexpected payload"), on_date="2026-01-01")
+    monkeypatch.setattr(gf, "daily_fetch_write", daily_fetch_write)
+
+    gf.fetch_write_bulk("2026-01-01", "2026-01-01")
+
+    (record,) = [r for r in caplog.records if "Failed to process" in r.getMessage()]
+    assert record.levelname == "ERROR" and record.exc_info
+    assert record.getMessage() == "IGNORE_ERRORS Enabled >> Failed to process 2026-01-01 : skipping date"
+    assert sum("unexpected payload" in r.getMessage() for r in caplog.records) == 0  # only in the traceback
+
+
 def test_unexpected_error_still_raises_without_ignore_errors(gf, no_device_sync, monkeypatch):
     monkeypatch.setattr(gf, "IGNORE_ERRORS", False)
     daily_fetch_write, _ = fail_once(ValueError("unexpected payload"), on_date="2026-01-01")
