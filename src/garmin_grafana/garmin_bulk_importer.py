@@ -527,7 +527,7 @@ if __name__ == "__main__":
     args.start_date = args.start_date or os.getenv("MANUAL_START_DATE")
     if not args.start_date:
         raise RuntimeError(
-            "start_date must be set using --start_date or MANUAL_START_DATE environment varioable"
+            "start_date must be set using --start_date or MANUAL_START_DATE environment variable"
         )
 
     # Override the garmin_obj with GarminBulkExport that implements the same interface.
@@ -541,7 +541,7 @@ if __name__ == "__main__":
 
     if garmin_fetch.IGNORE_ERRORS:
         logging.info(
-            "IGNORE_ERRORS is enabled. We reccomend saving the output so that you can check for any failed imports afterwards."
+            "IGNORE_ERRORS is enabled. We recommend saving the output so that you can check for any failed imports afterwards."
         )
         time.sleep(5)
 
