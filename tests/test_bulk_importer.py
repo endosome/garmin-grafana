@@ -68,6 +68,11 @@ def test_activities_are_converted_to_api_format(export_dir):
     assert second == {**second, "startTimeGMT": "2026-01-02 07:00:00", "activityName": "Morning Run",
                       "activityType": {"typeKey": "running"}, "averageSpeed": 3.1, "maxHR": 150, "averageHR": 135}
     assert export.get_last_activity()["activityId"] == 22
+    assert second["duration"] == 60.0
+
+
+def test_iso_timestamp_preserves_explicit_timezone():
+    assert bulk.iso_to_timestamp_ms("2026-01-02T08:30:00+02:00") == ms(datetime(2026, 1, 2, 6, 30))
 
 
 def test_wellness_data(export_dir):
@@ -122,6 +127,37 @@ def test_nearest_of_several_candidates_wins(export_dir):
     assert len(export.fit_file_index) == 3
     with zipfile.ZipFile(io.BytesIO(export.download_activity(22))) as zf:
         assert zf.namelist() == ["me_22.fit"]
+
+
+def test_download_ignores_closer_fit_from_another_sport(export_dir):
+    archive = export_dir / "DI_CONNECT" / "DI-Connect-Uploaded-Files" / "UploadedFiles_0-_Part1.zip"
+    archive.write_bytes(zip_bytes({
+        "cycling.fit": fit_for(RUN_START, sport="cycling"),
+        "running.fit": fit_for(RUN_START + timedelta(seconds=40)),
+    }))
+
+    with zipfile.ZipFile(io.BytesIO(bulk.GarminBulkExport(export_dir).download_activity(22))) as zf:
+        assert zf.namelist() == ["running.fit"]
+
+
+@pytest.mark.parametrize("sport, type_key", [("swimming", "lap_swimming"), ("running", "trail_running"), ("training", "strength_training")])
+def test_download_matches_fine_grained_type_key(export_dir, sport, type_key):
+    archive = export_dir / "DI_CONNECT" / "DI-Connect-Uploaded-Files" / "UploadedFiles_0-_Part1.zip"
+    archive.write_bytes(zip_bytes({"other.fit": fit_for(RUN_START + timedelta(seconds=10), sport="cycling"),
+                                   "match.fit": fit_for(RUN_START + timedelta(seconds=40), sport=sport)}))
+    export = bulk.GarminBulkExport(export_dir)
+    next(a for a in export.activities if a["activityId"] == 22)["activityType"]["typeKey"] = type_key
+
+    with zipfile.ZipFile(io.BytesIO(export.download_activity(22))) as zf:
+        assert zf.namelist() == ["match.fit"]
+
+
+def test_download_falls_back_to_nearest_when_no_sport_matches(export_dir):
+    archive = export_dir / "DI_CONNECT" / "DI-Connect-Uploaded-Files" / "UploadedFiles_0-_Part1.zip"
+    archive.write_bytes(zip_bytes({"cycling.fit": fit_for(RUN_START, sport="cycling")}))
+
+    with zipfile.ZipFile(io.BytesIO(bulk.GarminBulkExport(export_dir).download_activity(22))) as zf:
+        assert zf.namelist() == ["cycling.fit"]
 
 
 def test_download_errors(export_dir):
@@ -212,9 +248,6 @@ def test_import_wellness_data(importer_globals, export_dir, monkeypatch):
     ]
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError, reason="GarminBulkExport doesn't implement "
-                   "get_activity_hr_in_timezones (called by get_activity_summary since #238), so importing "
-                   "any activity from a bulk export crashes")
 def test_import_activities(importer_globals, export_dir, monkeypatch):
     gf = importer_globals
     monkeypatch.setattr(gf, "garmin_obj", bulk.GarminBulkExport(export_dir))
@@ -225,6 +258,21 @@ def test_import_activities(importer_globals, export_dir, monkeypatch):
 
     measurements = {p["measurement"] for p in written_points(gf.influxdbclient)}
     assert {"ActivitySummary", "ActivityGPS", "ActivitySession"} <= measurements
+    summary = next(p for p in written_points(gf.influxdbclient)
+                   if p["measurement"] == "ActivitySummary" and p["fields"].get("activityName") == "Morning Run")
+    assert summary["fields"]["elapsedDuration"] == 60.0
+
+
+def test_bulk_import_keeps_existing_strength_sets(importer_globals, export_dir, monkeypatch):
+    gf = importer_globals
+    monkeypatch.setattr(gf, "garmin_obj", bulk.GarminBulkExport(export_dir))
+
+    points = gf.get_strength_training_data({22: {
+        "typeKey": "strength_training", "startTimeGMT": "2026-01-02 07:00:00", "activityName": "Workout"
+    }})
+
+    assert points == []
+    gf.influxdbclient.delete_series.assert_not_called()
 
 
 def run_importer(monkeypatch, *args):

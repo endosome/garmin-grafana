@@ -44,7 +44,8 @@ class GarminBulkImporterError(Exception):
 
 def iso_to_timestamp_ms(iso_str: str) -> int:
     dt = datetime.fromisoformat(iso_str)
-    dt = dt.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
     return int(dt.timestamp() * 1000)
 
 
@@ -196,6 +197,10 @@ class GarminBulkExport:
             a["averageSpeed"] = a.get("avgSpeed")
             a["maxHR"] = a.get("maxHr")
             a["averageHR"] = a.get("avgHr")
+            # Garmin exports activity durations in milliseconds; the API uses seconds.
+            for field in ("duration", "elapsedDuration", "movingDuration"):
+                if a.get(field) is not None:
+                    a[field] /= 1000
 
         logging.info("Loading %d activities", len(activities))
         return sorted(activities, key=lambda o: o["startTimeGMT"])
@@ -389,6 +394,14 @@ class GarminBulkExport:
         """Mimics the Garmin API's get_hydration_data endpoint"""
         return self.hydration_stats.get(date_str, {})
 
+    def get_activity_hr_in_timezones(self, activity_id):
+        """The bulk export has no activity heart rate zone breakdown."""
+        return []
+
+    def get_activity_exercise_sets(self, activity_id):
+        """Signal that the export cannot replace existing exercise sets."""
+        raise NotImplementedError("Garmin bulk exports do not include strength exercise sets")
+
     def get_activities_by_date(self, start_date_str, end_date_str):
         """Mimics the Garmin API's get_activities_by_date endpoint"""
         start_dt = datetime.strptime(start_date_str, "%Y-%m-%d")
@@ -434,16 +447,24 @@ class GarminBulkExport:
         # Allow small timestamp drift (Garmin often differs by seconds)
         MAX_TIME_DIFF_SECONDS = 300  # 5 minutes
 
+        # FIT files only carry a coarse sport (e.g. "swimming") while Garmin's typeKey is finer
+        # ("lap_swimming"), so a same-sport file is preferred rather than required.
+        type_tokens = set(activity["activityType"]["typeKey"].split("_"))
+
         best_match = None
-        best_delta = None
+        best_rank = None
 
         for entry in self.fit_file_index:
             delta = abs((entry.date - activity_start).total_seconds())
 
             if delta <= MAX_TIME_DIFF_SECONDS:
-                if best_delta is None or delta < best_delta:
+                same_sport = entry.activity == activity["activityType"]["typeKey"] or entry.activity in type_tokens
+                rank = (not same_sport, delta)
+                if best_rank is None or rank < best_rank:
                     best_match = entry
-                    best_delta = delta
+                    best_rank = rank
+
+        best_delta = best_rank[1] if best_rank else None
 
         if not best_match:
             self.fail(

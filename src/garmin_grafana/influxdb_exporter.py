@@ -35,7 +35,12 @@ else:
 
     time_label = f"{start_time.date()}_to_{end_time.date()}"
 
-time_clause = f"time >= '{start_time.isoformat()}' AND time <= '{end_time.isoformat()}'"
+if args.last_n_days is None:
+    # A date-only end value includes every reading on that calendar day.
+    end_exclusive = end_time + timedelta(days=1)
+    time_clause = f"time >= '{start_time.isoformat()}' AND time < '{end_exclusive.isoformat()}'"
+else:
+    time_clause = f"time >= '{start_time.isoformat()}' AND time <= '{end_time.isoformat()}'"
 timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 zip_filename = f"/tmp/GarminStats_Export_{timestamp_str}_{time_label}.zip"
 
@@ -81,7 +86,12 @@ if INFLUXDB_VERSION == "1":
     measurements_result = influxdbclient.query(measurements_query)
 else:
     measurements_result = influxdbclient.query(measurements_query, language="influxql")
-measurements = [m["name"] for m in measurements_result.get_points()]
+def query_rows(result):
+    """InfluxDB 1 returns a ResultSet; InfluxDB 3 returns an Arrow table."""
+    return result.to_pylist() if INFLUXDB_VERSION == "3" else result.get_points()
+
+
+measurements = [m["name"] for m in query_rows(measurements_result)]
 
 print(f"Found {len(measurements)} measurements. Skipping: {excluded_measurements}")
 
@@ -102,7 +112,7 @@ with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
                 result = influxdbclient.query(query)
             else:
                 result = influxdbclient.query(query, language="influxql")
-            points = list(result.get_points())
+            points = list(query_rows(result))
 
             if not points:
                 print(" -- ⚠️ No data within given period.")

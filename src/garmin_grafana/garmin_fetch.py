@@ -216,7 +216,7 @@ def write_points_to_influxdb(points):
 def get_daily_stats(date_str):
     points_list = []
     stats_json = garmin_obj.get_stats(date_str)
-    if stats_json['wellnessStartTimeGmt'] and datetime.strptime(date_str, "%Y-%m-%d") < datetime.today():
+    if stats_json.get('wellnessStartTimeGmt') and datetime.strptime(date_str, "%Y-%m-%d") < datetime.today():
         points_list.append({
             "measurement":  "DailyStats",
             "time": pytz.timezone("UTC").localize(datetime.strptime(stats_json['wellnessStartTimeGmt'], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
@@ -320,7 +320,7 @@ def get_sleep_data(date_str):
     points_list = []
     all_sleep_data = garmin_obj.get_sleep_data(date_str)
     sleep_json = all_sleep_data.get("dailySleepDTO", None)
-    if sleep_json["sleepEndTimestampGMT"]:
+    if sleep_json and sleep_json.get("sleepEndTimestampGMT"):
         points_list.append({
         "measurement":  "SleepSummary",
         "time": datetime.fromtimestamp(sleep_json["sleepEndTimestampGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
@@ -383,7 +383,7 @@ def get_sleep_data(date_str):
                     }
                 })
         # Add additional duplicate terminal data point (see issue #127)
-        if entry.get("endGMT"):
+        if entry.get("endGMT") and entry.get("activityLevel") is not None:
             points_list.append({
                 "measurement":  "SleepIntraday",
                 "time": pytz.timezone("UTC").localize(datetime.strptime(entry["endGMT"], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
@@ -830,9 +830,9 @@ def get_strength_training_data(strength_activity_id_dict):
                 data_fields = {
                     "Activity_ID": activity_id,
                     "ActivityName": activity_name,
-                    "SetOrder": int(exercise.get('setOrder', set_counter)),
+                    "SetOrder": int(exercise.get('setOrder') if exercise.get('setOrder') is not None else set_counter),
                     "SetType": set_type,
-                    "Reps": int(exercise.get('repetitionCount', 0)),
+                    "Reps": int(exercise.get('repetitionCount') or 0),
                     "Weight_kg": weight_kg,
                     "Duration_s": duration_s,
                 }
@@ -1114,7 +1114,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                     "Sub_Sport": str(session_record.get('sub_sport', None)),
                                     "Pool_Length": session_record.get('pool_length', None),
                                     "Pool_Length_Unit": session_record.get('pool_length_unit', None),
-                                    "Lengths": session_record.get('num_lengths', None),
+                                    "Lengths": session_record.get('num_lengths', session_record.get('unknown_33')),
                                     "Laps": session_record.get('num_laps', None),
                                     "Aerobic_Training": session_record.get('total_training_effect', None),
                                     "Anaerobic_Training": session_record.get('total_anaerobic_training_effect', None),
@@ -1298,7 +1298,7 @@ def get_lactate_threshold(date_str):
                 if value is not None:
                     points_list.append({
                         "measurement": "LactateThreshold",
-                        "time": datetime.fromtimestamp(datetime.strptime(date_str, "%Y-%m-%d").timestamp(), tz=pytz.timezone("UTC")).isoformat(),
+                        "time": datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=pytz.UTC).isoformat(),
                         "tags": {
                             "Device": GARMIN_DEVICENAME,
                             "Database_Name": INFLUXDB_DATABASE
@@ -1781,7 +1781,8 @@ def fetch_write_bulk(start_date_str, end_date_str):
     return True
 
 
-if __name__ == "__main__":
+def main():
+    global garmin_obj
     garmin_obj = garmin_login()
 
     # %%
@@ -1809,13 +1810,21 @@ if __name__ == "__main__":
                 logging.info("Using user's local timezone as UTC+" + str(local_timediff))
             else:
                 logging.info("Using user's local timezone as UTC-" + str(-local_timediff))
-        except (KeyError, TypeError) as err:
+        except (KeyError, TypeError, IndexError, AttributeError) as err:
             logging.warning(f"Unable to determine user's timezone - Defaulting to UTC. Consider providing TZ identifier with USER_TIMEZONE environment variable")
             local_timediff = timedelta(hours=0)
         
         incomplete_sync_retries = 0
         while True:
-            last_watch_sync_time_UTC = datetime.fromtimestamp(int(garmin_obj.get_device_last_used().get('lastUsedDeviceUploadTime')/1000)).astimezone(pytz.timezone("UTC"))
+            try:
+                upload_time = garmin_obj.get_device_last_used().get('lastUsedDeviceUploadTime')
+                if upload_time is None:
+                    raise ValueError("Device upload time is unavailable")
+                last_watch_sync_time_UTC = datetime.fromtimestamp(int(upload_time / 1000), tz=pytz.UTC)
+            except (GarminConnectConnectionError, requests.exceptions.RequestException, TypeError, ValueError, AttributeError, OverflowError) as err:
+                logging.warning("Unable to read the latest device sync time: %s", err)
+                time.sleep(UPDATE_INTERVAL_SECONDS)
+                continue
             if last_influxdb_sync_time_UTC < last_watch_sync_time_UTC:
                 logging.info(f"Update found : Current watch sync time is {last_watch_sync_time_UTC} UTC")
                 sync_complete = fetch_write_bulk((last_influxdb_sync_time_UTC + local_timediff).strftime('%Y-%m-%d'), (last_watch_sync_time_UTC + local_timediff).strftime('%Y-%m-%d')) # Using local dates for deciding which dates to fetch in current iteration (see issue #25)
@@ -1833,3 +1842,7 @@ if __name__ == "__main__":
                 logging.info(f"No new data found : Current watch and influxdb sync time is {last_watch_sync_time_UTC} UTC")
             logging.info(f"waiting for {UPDATE_INTERVAL_SECONDS} seconds before next automatic update calls")
             time.sleep(UPDATE_INTERVAL_SECONDS)
+
+
+if __name__ == "__main__":
+    main()

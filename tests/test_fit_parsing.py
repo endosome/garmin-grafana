@@ -116,8 +116,6 @@ def test_swim_lengths_and_laps(gf, serve):
     assert session["fields"]["Sub_Sport"] == "lap_swimming"
 
 
-@pytest.mark.xfail(strict=True, reason="fitparse 1.2.0's profile lacks the session num_lengths field (FIT SDK field 33, "
-                   "returned as unknown_33), so ActivitySession.Lengths is always empty for real FIT files")
 def test_session_lengths_from_real_fit_file(gf, serve):
     serve(zip_bytes({"swim.fit": swim_fit()}))
 

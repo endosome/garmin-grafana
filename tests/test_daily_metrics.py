@@ -57,7 +57,6 @@ def test_daily_stats_skips_future_dates(gf):
     assert gf.get_daily_stats(tomorrow) == []
 
 
-@pytest.mark.xfail(raises=KeyError, strict=True, reason="get_daily_stats indexes wellnessStartTimeGmt directly (analysis item 8)")
 def test_daily_stats_tolerates_missing_wellness_key(gf):
     gf.garmin_obj.get_stats.return_value = {}
 
@@ -181,8 +180,6 @@ def test_sleep_stage_with_unknown_level_is_skipped(gf):
     assert stages == [2.0, 2.0]
 
 
-@pytest.mark.xfail(strict=True, reason="the terminal sleep-stage point copies the last entry even when its level is "
-                   "None, producing a point without fields that makes InfluxDB reject the whole sleep write")
 def test_sleep_terminal_point_is_valid_when_last_level_unknown(gf):
     start = datetime(2025, 12, 31, 23, 0)
     levels = [
@@ -200,7 +197,6 @@ def test_no_sleep_recorded(gf):
     assert gf.get_sleep_data(DAY) == []
 
 
-@pytest.mark.xfail(raises=TypeError, strict=True, reason="get_sleep_data indexes dailySleepDTO without a None check (analysis item 8)")
 def test_sleep_tolerates_missing_daily_sleep_dto(gf):
     gf.garmin_obj.get_sleep_data.return_value = {}
 

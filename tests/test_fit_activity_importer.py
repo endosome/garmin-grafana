@@ -47,7 +47,7 @@ def test_summary_points(gf):
     assert start["fields"] == {
         "Device_ID": 1234, "activityType": "running", "activityName": "Running 2026-01-01", "distance": 5000.0,
         "elapsedDuration": 1830.5, "movingDuration": 1800.0, "averageSpeed": pytest.approx(2.73), "maxSpeed": pytest.approx(3.9),
-        "calories": 380, "averageHR": 150, "maxHR": 172, "lapCount": 5,
+        "calories": 380.0, "averageHR": 150.0, "maxHR": 172.0, "lapCount": 5,
     }
     assert end["fields"]["activityName"] == "END" and end["tags"] == start["tags"]
 
@@ -65,8 +65,6 @@ def test_session_without_start_time_is_rejected(gf):
         importer.get_fit_activity_summary(parsed(fit_bytes(session={"sport": "running"})))
 
 
-@pytest.mark.xfail(strict=True, reason="FIT imports write averageHR/maxHR/calories as integers while Garmin's activity "
-                   "API returns them as floats, so InfluxDB rejects one source with a field type conflict")
 def test_summary_field_types_match_api_import(gf):
     gf.garmin_obj.get_activities_by_date.return_value = [{
         "activityId": 1, "startTimeGMT": "2026-01-02 10:00:00", "activityType": {"typeKey": "running"},

@@ -80,7 +80,7 @@ def test_exports_each_measurement_to_csv(exporter, capsys):
         {"measurement": "HeartRateIntraday", "time": "2026-01-01T00:02:00Z", "HeartRate": "62", "Device": "W"},
     ]
     assert result["zip_filename"].startswith("/tmp/GarminStats_Export_") and result["zip_filename"].endswith("_2026-01-01_to_2026-01-31.zip")
-    assert 'SELECT * FROM "HeartRateIntraday" WHERE time >= \'2026-01-01T00:00:00+00:00\' AND time <= \'2026-01-31T00:00:00+00:00\'' in queries
+    assert 'SELECT * FROM "HeartRateIntraday" WHERE time >= \'2026-01-01T00:00:00+00:00\' AND time < \'2026-02-01T00:00:00+00:00\'' in queries
     out = capsys.readouterr().out
     assert "Skipping: DemoPoint" in out and "Skipping: DeviceSync" in out  # never queried
     assert "No data within given period" in out  # SleepSummary
@@ -129,8 +129,6 @@ def test_https_connection(exporter, monkeypatch):
     assert (kwargs["ssl"], kwargs["verify_ssl"]) == (True, True)
 
 
-@pytest.mark.xfail(strict=True, raises=AttributeError, reason="InfluxDBClient3.query returns a pyarrow Table, which "
-                   "has no get_points(), so exporting from InfluxDB 3 fails (analysis item 10)")
 @pytest.mark.parametrize("is_http", ["True", "False"])
 def test_influxdb_v3_export(exporter, monkeypatch, is_http):
     monkeypatch.setenv("INFLUXDB_VERSION", "3")

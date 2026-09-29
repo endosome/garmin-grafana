@@ -81,9 +81,9 @@ def get_fit_activity_summary(fit_file: FitFile) -> List[Dict[str, Any]]:
             "movingDuration": moving_duration,
             "averageSpeed": session_data.get("avg_speed"),
             "maxSpeed": session_data.get("max_speed"),
-            "calories": session_data.get("total_calories"),
-            "averageHR": session_data.get("avg_heart_rate"),
-            "maxHR": session_data.get("max_heart_rate"),
+            "calories": float(session_data["total_calories"]) if session_data.get("total_calories") is not None else None,
+            "averageHR": float(session_data["avg_heart_rate"]) if session_data.get("avg_heart_rate") is not None else None,
+            "maxHR": float(session_data["max_heart_rate"]) if session_data.get("max_heart_rate") is not None else None,
             "lapCount": session_data.get("num_laps"),
         },
     }

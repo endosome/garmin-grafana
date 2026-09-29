@@ -62,8 +62,6 @@ def test_exercise_without_details_is_unknown(gf, sets):
 
 
 @pytest.mark.parametrize("field", ["repetitionCount", "setOrder"])
-@pytest.mark.xfail(strict=True, reason="int(None) on a null repetitionCount/setOrder (e.g. timed sets like planks) "
-                   "raises and drops every exercise set of the workout")
 def test_timed_set_without_reps_keeps_other_sets(gf, sets, field):
     sets(exercise_set(), exercise_set(category="PLANK", name="PLANK", **{field: None}))
 

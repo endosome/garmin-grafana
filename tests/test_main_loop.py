@@ -209,6 +209,15 @@ def test_unknown_timezone_falls_back_to_utc(offline, monkeypatch, capsys, last_a
     assert "Unable to determine user's timezone" in capsys.readouterr().out
 
 
+def test_no_activities_falls_back_to_utc(offline, monkeypatch, capsys):
+    def configure(garmin):
+        garmin.get_last_activity.side_effect = IndexError("no activities")
+
+    run_update_cycles(monkeypatch, cycles=1, configure=configure)
+
+    assert "Unable to determine user's timezone" in capsys.readouterr().out
+
+
 def test_no_new_watch_sync_fetches_nothing(offline, monkeypatch, capsys):
     set_last_point(utc_now() + timedelta(hours=1))  # InfluxDB already has data newer than the watch's last upload
 
@@ -222,8 +231,6 @@ def test_no_new_watch_sync_fetches_nothing(offline, monkeypatch, capsys):
     {"lastUsedDeviceUploadTime": None},
     requests.exceptions.ConnectionError("network blip"),
 ], ids=["no-upload-time", "network-error"])
-@pytest.mark.xfail(strict=True, reason="the update loop has no error handling, so one bad get_device_last_used() "
-                   "response ends the process (analysis section 2)")
 def test_update_loop_survives_device_sync_errors(offline, monkeypatch, failure):
     def configure(garmin):
         responses = iter([failure])

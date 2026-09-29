@@ -56,8 +56,6 @@ def test_lactate_threshold_timestamp_in_utc_container(gf, monkeypatch, local_tim
     assert gf.get_lactate_threshold(DAY)[0]["time"] == MIDNIGHT
 
 
-@pytest.mark.xfail(strict=True, reason="lactate threshold timestamps use the container's local timezone instead of "
-                   "UTC midnight like other daily metrics (analysis item 7)")
 def test_lactate_threshold_timestamp_is_utc_midnight_in_any_timezone(gf, monkeypatch, local_timezone):
     local_timezone("America/New_York")
     gf.garmin_obj.connectapi.return_value = [{"value": 3.9}]

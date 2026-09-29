@@ -24,8 +24,6 @@ def package(offline, monkeypatch):
         sys.modules.pop(name, None)
 
 
-@pytest.mark.xfail(strict=True, reason="main() only imports garmin_fetch, whose sync loop lives under "
-                   "`if __name__ == '__main__'`, so the console script exits without syncing (analysis item 9)")
 def test_main_starts_syncing(package):
     with pytest.raises(LoginAttempted):
         package.main()
