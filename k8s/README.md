@@ -27,7 +27,7 @@ influxdb:
 garmin:
   image:
     repository: ghcr.io/endosome/garmin-fetch-data
-    tag: v0.3.0
+    tag: v0.6.0
   port: 8000
   tokens:
     persistence:
@@ -45,10 +45,10 @@ Now you can install the application using Helm:
 
 ```bash
 helm upgrade --install garmin-grafana oci://ghcr.io/endosome/garmin-grafana \
-     --version v0.3.1-helm --namespace garmin-grafana --create-namespace -f values.yaml --wait
+     --version v0.6.0-helm --namespace garmin-grafana --create-namespace -f values.yaml --wait
 ```
 
-Image and chart versions refer to this fork's releases: pushing a git tag such as `v0.3.1` runs the release workflow, which publishes the image `ghcr.io/endosome/garmin-fetch-data:v0.3.1` and the chart version `v0.3.1-helm`. Use a version that has been released.
+Image and chart versions refer to this fork's releases: pushing a git tag such as `v0.6.0` runs the release workflow, which publishes the image `ghcr.io/endosome/garmin-fetch-data:v0.6.0` and the chart version `v0.6.0-helm`. Use a version that has been released.
 
 ## MFA on a K8s Cluster
 
@@ -65,8 +65,8 @@ kubectl scale deployment garmin-grafana-garmin -n garmin-grafana --replicas=0
 
 ```bash
 kubectl run -it garmin-auth -n garmin-grafana --rm \
-  --image=ghcr.io/endosome/garmin-fetch-data:v0.3.0 \
-  --overrides='{"spec":{"volumes":[{"name":"tokens","persistentVolumeClaim":{"claimName":"garmin-grafana-tokens"}}],"containers":[{"name":"garmin-auth","image":"ghcr.io/endosome/garmin-fetch-data:v0.3.0","command":["/bin/bash"],"stdin":true,"tty":true,"env":[{"name":"GARMINCONNECT_EMAIL","value":"address@xyz.com"},{"name":"GARMINCONNECT_BASE64_PASSWORD","value":"12345678ABC"},{"name":"INFLUXDB_HOST","value":"garmin-grafana-influxdb"},{"name":"INFLUXDB_PORT","value":"8086"},{"name":"INFLUXDB_DATABASE","value":"GarminStats"},{"name":"INFLUXDB_USERNAME","value":"admin"},{"name":"INFLUXDB_PASSWORD","value":"yourPassword"}],"volumeMounts":[{"name":"tokens","mountPath":"/home/appuser/.garminconnect"}]}]}}'
+  --image=ghcr.io/endosome/garmin-fetch-data:v0.6.0 \
+  --overrides='{"spec":{"volumes":[{"name":"tokens","persistentVolumeClaim":{"claimName":"garmin-grafana-tokens"}}],"containers":[{"name":"garmin-auth","image":"ghcr.io/endosome/garmin-fetch-data:v0.6.0","command":["/bin/bash"],"stdin":true,"tty":true,"env":[{"name":"GARMINCONNECT_EMAIL","value":"address@xyz.com"},{"name":"GARMINCONNECT_BASE64_PASSWORD","value":"12345678ABC"},{"name":"INFLUXDB_HOST","value":"garmin-grafana-influxdb"},{"name":"INFLUXDB_PORT","value":"8086"},{"name":"INFLUXDB_DATABASE","value":"GarminStats"},{"name":"INFLUXDB_USERNAME","value":"admin"},{"name":"INFLUXDB_PASSWORD","value":"yourPassword"}],"volumeMounts":[{"name":"tokens","mountPath":"/home/appuser/.garminconnect"}]}]}}'
 ```
 
 ### 3. Inside the pod, run the script

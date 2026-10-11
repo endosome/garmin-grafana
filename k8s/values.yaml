@@ -71,7 +71,7 @@ influxdb:
 garmin:
   image:
     repository: ghcr.io/endosome/garmin-fetch-data
-    tag: v0.3.0
+    tag: v0.6.0
   port: 8000
   credentials:
     email: example@example.com

@@ -147,7 +147,7 @@ spec:
     spec:
       containers:
         - name: garmin-fetch-data
-          image: ghcr.io/endosome/garmin-fetch-data:latest
+          image: ghcr.io/endosome/garmin-fetch-data:v0.6.0
           envFrom:
             - configMapRef:
                 name: fetch-data-config

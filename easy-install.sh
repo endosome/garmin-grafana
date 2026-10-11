@@ -53,7 +53,7 @@ fi
 # fi
 
 echo "🐳 Pulling the latest ghcr.io/endosome/garmin-fetch-data Docker image..."
-docker pull ghcr.io/endosome/garmin-fetch-data:latest || { echo "Docker pull failed. Do you have docker installed and can run docker commands?"; exit 1; }
+docker pull ghcr.io/endosome/garmin-fetch-data:v0.6.0 || { echo "Docker pull failed. Do you have docker installed and can run docker commands?"; exit 1; }
 
 echo "🐳Terminating any previous running containers from this stack"
 docker compose down
