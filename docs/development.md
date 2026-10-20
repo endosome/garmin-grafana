@@ -8,7 +8,15 @@ collector environment and mock persistence; no Garmin credentials are required.
 uv run --locked pytest
 ```
 
-Integration tests skip unless `TEST_DATABASE=1`. To run the full coverage gate
+Integration tests skip unless `TEST_DATABASE=1`. The shared database fixture
+applies migrations and writes synthetic data/roles, so this is an explicit opt-in
+to using a disposable database. The real legacy HTTP round trip also needs
+`TEST_INFLUX_URL`. Neither requires Garmin credentials. Enabled tests fail on
+connection or assertion errors rather than silently skipping. CI provides both
+services and flags. An ordinary `uv run pytest` is a unit-only check unless those
+settings are supplied.
+
+To run the full coverage gate
 (unchanged at 98%), use disposable databases, never your real health database:
 
 ```bash

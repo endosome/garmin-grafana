@@ -86,3 +86,37 @@ unit definitions, benchmark typed high-frequency streams before adding COPY
 staging, and add opt-in aggregates/columnstore only for measured query workloads
 and a deliberately chosen Timescale edition. Large FIT activities still parse in
 memory as in the original project; the historical database importer is bounded.
+
+## Integration skip investigation and rerun
+
+The last unit-only check before the implementation commit reported 402 passed
+and 24 skips because the required opt-in environment was absent. There are two
+explicit skip guards:
+
+- `tests/test_storage.py::db` requires `TEST_DATABASE=1`. It applies schema
+  migrations and writes synthetic records/roles, so it must target a disposable
+  database. This shared fixture also serves legacy-import and export tests.
+- `tests/test_legacy_import.py::test_real_legacy_http_roundtrip` additionally
+  requires `TEST_INFLUX_URL`; it creates a synthetic legacy database and imports
+  from the actual InfluxDB HTTP service.
+
+These are service-availability configuration gates, not credential requirements
+or expected-failure markers. With the flags supplied, failed connections and
+assertions fail the tests; they do not fall back to skipping. The CI workflow
+already starts both services and supplies both settings.
+
+After the user requested investigation, the existing isolated test containers
+were restarted and the full command above was executed again against the
+committed implementation. Result: **426 passed, zero skipped, 99.01% coverage**
+in 14.88 seconds. All 24 previously skipped tests executed. No Garmin credentials
+were used, and no production database was touched. The disposable test services
+were stopped again after the checks.
+
+Next acceptance step: live Garmin authentication and ingestion into a separate
+validation database, followed by a repeated import, persisted-token restart and
+browser inspection of both dashboards. Use a protected local copy of compatible
+Garmin tokens or interactive login; never put token contents/passwords in chat,
+commits or test fixtures. Supply only the token path, IANA timezone and desired
+small date range to coordinate the run. A copied token store may be refreshed by
+the client; keep the original store separate. Live health values must remain in
+the private validation database rather than being included in the test report.
