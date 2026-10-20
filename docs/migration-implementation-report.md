@@ -39,7 +39,7 @@ migration was performed, and no existing user database or volume was removed.
 | Installer | `easy-install.sh` | Random initial secrets, interactive authentication/backfill, no world-writable token directory or automatic teardown of an existing stack |
 | Kubernetes / Helm | `k8s/`, `kubernetes-spec-example.yaml` | PostgreSQL deployment/service, persistent claims, migration init container, external Secret, bundled dashboards and datasource; standalone manifest generated from Helm |
 | Packaging | `pyproject.toml`, `uv.lock` | psycopg replaces Influx clients; explicit runtime dependencies; installable entry point and distribution containing SQL migrations |
-| CI / regression tests | `.github/workflows/tests.yml`, `tests/` | Real Timescale/Influx test services, unchanged coverage gate, Grafana checks and retained Garmin/FIT regression coverage |
+| CI / regression tests | `.github/workflows/tests.yml`, `tests/` | Real Timescale test service, unchanged coverage gate, Grafana checks and retained Garmin/FIT regression coverage |
 | Supporting material | `.github/CONTRIBUTING.md`, `Extra/garmin-fetch.ipynb`, `.gitignore`, documentation | Current development instructions; notebook delegates to maintained code; secret/build artifact exclusions |
 
 Removed: the Influx datasource, Influx runtime clients/configuration and demo
@@ -124,8 +124,9 @@ actual Grafana datasource. Database queries were also executed with a non-UTC
 session. Fixtures exercise empty/populated responses, null/zero gaps, local-date
 markers, DST, strength totals, native field types, account/provider/device
 isolation, idempotency, corrections and transaction rollback after a flushed
-batch. A real InfluxDB 1.11 HTTP round trip tests historical migration and archive
-validation. See [verification.md](verification.md) for exact commands and scope.
+batch. A real InfluxDB 1.11 HTTP round trip was verified during migration development;
+that server-dependent regression was subsequently removed at the user’s request.
+Current migration tests use synthetic/mocked sources and real PostgreSQL. See [verification.md](verification.md) for exact commands and scope.
 
 Container and package builds passed. Compose PostgreSQL/migration/Grafana startup,
 reader connectivity, five applied schema versions, UID 1000 and writable named
@@ -188,3 +189,16 @@ an item is completed, including the command/environment or operator observation.
 Production acceptance should cite that evidence; code existence alone is not
 completion. The implementation and this handoff report are committed together;
 `git log -1 -- docs/migration-implementation-report.md` identifies the change.
+
+## Follow-up: remove the legacy test-service requirement
+
+At the user's request, the real InfluxDB HTTP regression and the InfluxDB CI
+service were removed. No test endpoint environment variable or separate legacy
+server test suite remains. PostgreSQL-backed migration tests and mocked HTTP
+response tests still exercise the standalone importer. The importer remains
+solely to preserve the documented historical migration path, with no InfluxDB
+Python dependency, datasource, deployment service or normal-runtime backend.
+
+Current follow-up verification: **428 passed, zero skips, 99.01% coverage** with
+PostgreSQL alone; the new interactive login helper has three tests and stores
+tokens outside the repository. Its live authentication remains an operator step.

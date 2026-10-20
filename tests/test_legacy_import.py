@@ -1,12 +1,10 @@
 """Bounded legacy conversion, resume safety, validation and HTTP query behavior."""
 from datetime import datetime, timezone
 import json
-import os
 import runpy
 import sys
 from unittest import mock
 import pytest
-import requests
 from garmin_grafana import legacy_import as legacy
 from garmin_grafana import storage, migrate
 from garmin_grafana.domain import Record
@@ -120,32 +118,6 @@ def test_migrate_cli_and_checksum_match(db,monkeypatch):
         migrate.main()
         configure.assert_called_once_with(connection)
 
-
-def test_real_legacy_http_roundtrip(db):
-    url=os.getenv('TEST_INFLUX_URL')
-    if not url:
-        pytest.skip('Set TEST_INFLUX_URL for actual InfluxDB 1.x smoke test')
-    database='test_'+db.account.replace('-','_')
-    res=requests.post(url+'/query',params={'q':f'CREATE DATABASE "{database}"'},timeout=10)
-    res.raise_for_status()
-    lines='\n'.join([
-        'HeartRateIntraday,Device=watch HeartRate=70.5 1767225600123456788',
-        'HeartRateIntraday,Device=watch HeartRate=71.5 1767225600123456789',
-        'HeartRateIntraday,Device=other HeartRate=80.5,note="ok" 1767225600123456789',
-        'StrengthExerciseSet,ActivityID=42,ExerciseLabel=old SetOrder=1i,Reps=8i 1767225600000000000',
-        'StrengthExerciseSet,ActivityID=42,ExerciseLabel=new SetOrder=1i,Reps=10i 1767225600000000000',
-        'Unknown,sensor=ambient value=20.5,enabled=true,text="arbitrary" 1767225600000000000'])
-    res=requests.post(url+'/write',params={'db':database,'precision':'ns'},data=lines,timeout=10)
-    res.raise_for_status()
-    reader=legacy.LegacyReader(url,database)
-    assert set(reader.measurements())=={'HeartRateIntraday','StrengthExerciseSet','Unknown'}
-    for measurement in reader.measurements():
-        start,end=reader.bounds(measurement)
-        legacy.import_measurement(reader,db,measurement,start,end,migration_id='http',window_ns=86400_000_000_000)
-        legacy.import_measurement(reader,db,measurement,start,end,migration_id='http',window_ns=86400_000_000_000,validate=True)
-    assert query(db,'SELECT count(*) FROM legacy_archive WHERE source_id=%s',(source(db),))==[(6,)]
-    assert query(db,'SELECT count(*) FROM samples WHERE source_id=%s',(source(db),))==[(3,)]
-    reader.session.close()
 
 
 def test_legacy_user_filter_and_multiuser_guard(monkeypatch):

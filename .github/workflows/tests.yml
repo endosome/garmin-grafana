@@ -19,15 +19,8 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U postgres -d garmin"
           --health-interval 5s --health-timeout 5s --health-retries 20
-      influx:
-        image: influxdb:1.11
-        ports: [8086:8086]
-        options: >-
-          --health-cmd "influx -execute 'SHOW DATABASES'"
-          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       TEST_DATABASE: "1"
-      TEST_INFLUX_URL: http://localhost:8086
       PGHOST: localhost
       PGPORT: "5432"
       PGDATABASE: garmin

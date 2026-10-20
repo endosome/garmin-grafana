@@ -11,8 +11,8 @@ data. Existing user services/databases and historical volumes were not modified.
 | Check | Executed result |
 | --- | --- |
 | Pre-change `uv run pytest --cov --cov-report=term` | 478 passed; 99.89% coverage |
-| Full migrated suite, including real database and legacy HTTP tests | 426 passed; 99.01% coverage; unchanged 98% gate |
-| Unit run without integration environment | 402 passed, 24 integration tests skipped |
+| Current full suite: PostgreSQL integration and private-login command tests | 428 passed; zero skips; 99.01% coverage; unchanged 98% gate |
+| Current unit run without PostgreSQL integration settings | 405 passed, 23 integration tests skipped |
 | `python scripts/validate_dashboard_queries.py` | All 169 panel/variable queries executed successfully in PostgreSQL |
 | `python scripts/smoke_grafana.py` | Both dashboards provisioned, datasource healthy; all 169 queries passed through Grafana |
 | `docker build -t garmin-grafana:timescale .` | Passed; non-root runtime image built from current source |
@@ -28,7 +28,7 @@ data. Existing user services/databases and historical volumes were not modified.
 Full suite command (test-only passwords and endpoints):
 
 ```bash
-TEST_DATABASE=1 TEST_INFLUX_URL=http://localhost:58089 \
+TEST_DATABASE=1 \
 PGHOST=localhost PGPORT=55439 PGDATABASE=garmin PGUSER=postgres \
 PGPASSWORD=test-only-password \
 uv run --locked pytest -q --cov --cov-report=term-missing
@@ -87,36 +87,37 @@ staging, and add opt-in aggregates/columnstore only for measured query workloads
 and a deliberately chosen Timescale edition. Large FIT activities still parse in
 memory as in the original project; the historical database importer is bounded.
 
-## Integration skip investigation and rerun
+## Integration skip investigation and follow-up
 
-The last unit-only check before the implementation commit reported 402 passed
-and 24 skips because the required opt-in environment was absent. There are two
-explicit skip guards:
+The original unit-only check reported 402 passed and 24 skips because database
+integration settings were absent. The shared `tests/test_storage.py::db` fixture
+requires `TEST_DATABASE=1`: it applies schema migrations and writes synthetic
+records/roles, so it must target a disposable PostgreSQL database. Enabled tests
+fail on connection or assertion errors rather than falling back to skipping.
 
-- `tests/test_storage.py::db` requires `TEST_DATABASE=1`. It applies schema
-  migrations and writes synthetic records/roles, so it must target a disposable
-  database. This shared fixture also serves legacy-import and export tests.
-- `tests/test_legacy_import.py::test_real_legacy_http_roundtrip` additionally
-  requires `TEST_INFLUX_URL`; it creates a synthetic legacy database and imports
-  from the actual InfluxDB HTTP service.
-
-These are service-availability configuration gates, not credential requirements
-or expected-failure markers. With the flags supplied, failed connections and
-assertions fail the tests; they do not fall back to skipping. The CI workflow
-already starts both services and supplies both settings.
-
-After the user requested investigation, the existing isolated test containers
-were restarted and the full command above was executed again against the
-committed implementation. Result: **426 passed, zero skipped, 99.01% coverage**
-in 14.88 seconds. All 24 previously skipped tests executed. No Garmin credentials
-were used, and no production database was touched. The disposable test services
-were stopped again after the checks.
+The full original suite was rerun after investigation: **426 passed, zero
+skipped, 99.01% coverage** in 14.88 seconds. That historical run included one
+InfluxDB HTTP round-trip migration test. At the user's subsequent request, that
+server-dependent test, its endpoint environment variable, and the InfluxDB CI
+service were removed. There is no separate legacy-server test job. The normal
+integration suite now requires PostgreSQL only. Bounded migration, resume,
+archive and field-validation tests remain, using PostgreSQL and synthetic or
+mocked source responses; the historical real-server run remains evidence, not a
+current service dependency.
 
 Next acceptance step: live Garmin authentication and ingestion into a separate
 validation database, followed by a repeated import, persisted-token restart and
-browser inspection of both dashboards. Use a protected local copy of compatible
-Garmin tokens or interactive login; never put token contents/passwords in chat,
-commits or test fixtures. Supply only the token path, IANA timezone and desired
-small date range to coordinate the run. A copied token store may be refreshed by
-the client; keep the original store separate. Live health values must remain in
-the private validation database rather than being included in the test report.
+browser inspection of both dashboards. Use a protected local token directory
+or interactive login; never put token contents/passwords in chat, commits or
+test fixtures. A copied token store may be refreshed by the client; keep the
+original separate. Live health values must stay in the private validation
+database rather than being included in the test report.
+
+After removing the legacy-server dependency and adding the private interactive
+login command, the current suite passed **428 tests, zero skipped, 99.01%
+coverage** with only TimescaleDB running (14.29 seconds). The unit-only run
+passed **405 tests with 23 PostgreSQL integration skips**. Login-command tests
+verify terminal-only input, private directory/file permissions, restored umask,
+no ingestion call and detection of failed token persistence. No real login has
+yet been performed. Run `uv run --locked python scripts/garmin_login.py` locally
+to complete that next step.

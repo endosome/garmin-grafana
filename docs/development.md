@@ -10,22 +10,21 @@ uv run --locked pytest
 
 Integration tests skip unless `TEST_DATABASE=1`. The shared database fixture
 applies migrations and writes synthetic data/roles, so this is an explicit opt-in
-to using a disposable database. The real legacy HTTP round trip also needs
-`TEST_INFLUX_URL`. Neither requires Garmin credentials. Enabled tests fail on
-connection or assertion errors rather than silently skipping. CI provides both
-services and flags. An ordinary `uv run pytest` is a unit-only check unless those
+to using a disposable database. Neither database tests nor unit tests require Garmin credentials. Enabled tests
+fail on connection or assertion errors rather than silently skipping. CI provides
+PostgreSQL and its settings. No InfluxDB server is required or started by tests.
+An ordinary `uv run pytest` is a unit-only check unless the PostgreSQL integration
 settings are supplied.
 
 To run the full coverage gate
-(unchanged at 98%), use disposable databases, never your real health database:
+(unchanged at 98%), use a disposable database, never your real health database:
 
 ```bash
 docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
   -e POSTGRES_DB=garmin -p 127.0.0.1:55439:5432 timescale/timescaledb:2.26.4-pg17-oss
-docker run -d --name garmin-test-influx -p 127.0.0.1:58089:8086 influxdb:1.11
-# Wait for pg_isready and the Influx /ping endpoint.
+# Wait for pg_isready.
 export PGHOST=localhost PGPORT=55439 PGUSER=postgres PGDATABASE=garmin
-export PGPASSWORD=test-only-password TEST_DATABASE=1 TEST_INFLUX_URL=http://localhost:58089
+export PGPASSWORD=test-only-password TEST_DATABASE=1
 uv run --locked pytest --cov --cov-report=term-missing
 uv run --locked python scripts/validate_dashboard_queries.py
 ```
@@ -33,8 +32,7 @@ uv run --locked python scripts/validate_dashboard_queries.py
 Tests insert synthetic data under randomized source identities. They exercise
 real hypertables, idempotent migrations, upserts, chunked import, archive
 validation, snapshot rollback, source isolation, progress holes, and all
-provisioned SQL queries with empty and representative data. CI starts both
-services. Unit-only coverage is lower because it omits real persistence tests;
+provisioned SQL queries with empty and representative data. CI starts PostgreSQL. Unit-only coverage is lower because it omits real persistence tests;
 the coverage gate applies to the complete suite.
 
 For local operation, export PG* credentials and ACCOUNT_ID/USER_TIMEZONE, then:
@@ -91,3 +89,22 @@ uv run python scripts/smoke_grafana.py
 Use a protected environment or prompt rather than putting real passwords in
 shell history. This command makes read-only queries using the provisioned reader
 role; it does not authenticate to Garmin or alter health data.
+
+## Interactive Garmin acceptance login
+
+Run this in your own terminal on the workspace machine; passwords use a hidden
+prompt, and MFA is entered locally. Do not put secrets in chat or shell arguments.
+
+```bash
+cd /home/debian/garmin-grafana
+uv run --locked python scripts/garmin_login.py
+```
+
+The default token directory is
+`~/.local/share/garmin-grafana/live-validation/tokens`, outside the repository.
+The directory uses mode 700 and new files use a private umask. `--token-dir`
+selects another directory. This command only authenticates and persists tokens;
+it does not fetch measurements or connect to PostgreSQL. Tokens are credentials
+and may be refreshed in place. After success, provide only the token directory
+path and your IANA timezone to coordinate a bounded live ingestion check into a
+separate validation database. Never add this token directory to version control.
