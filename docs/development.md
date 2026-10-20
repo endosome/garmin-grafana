@@ -29,7 +29,10 @@ uv run --locked pytest --cov --cov-report=term-missing
 uv run --locked python scripts/validate_dashboard_queries.py
 ```
 
-Tests insert synthetic data under randomized source identities. They exercise
+Tests insert synthetic data under randomized source identities. Fresh-schema
+tests also create and drop randomly named temporary databases, so the disposable
+test role needs CREATEDB as well as the role/extension privileges used by the
+existing integration tests. Only databases created by those tests are dropped. They exercise
 real hypertables, idempotent migrations, upserts, chunked import, archive
 validation, snapshot rollback, source isolation, progress holes, and all
 provisioned SQL queries with empty and representative data. CI starts PostgreSQL. Unit-only coverage is lower because it omits real persistence tests;

@@ -130,3 +130,16 @@ def test_command_line_corrupt_file(gf, monkeypatch, tmp_path):
 
     with pytest.raises(RuntimeError, match="Failed to parse FIT file"):
         run_importer(monkeypatch, "--fit_file", str(path))
+
+
+def test_package_import_parses_a_real_fit(gf, monkeypatch):
+    import importlib
+    import garmin_grafana
+    monkeypatch.setattr(garmin_grafana, 'garmin_fetch', gf, raising=False)
+    monkeypatch.delitem(sys.modules, 'garmin_grafana.fit_activity_importer', raising=False)
+    packaged = importlib.import_module('garmin_grafana.fit_activity_importer')
+    activity_id, sport, start, end = packaged.get_fit_activity_summary(parsed(fit_bytes()))
+    assert sport == 'running'
+    assert start['fields']['distance'] == 5000
+    assert start['tags']['ActivityID'] == end['tags']['ActivityID'] == activity_id
+    assert end['fields']['activityName'] == 'END'

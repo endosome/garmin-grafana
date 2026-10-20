@@ -180,3 +180,22 @@ def test_refresh_disabled_by_default(gf, getters, monkeypatch):
     gf.daily_fetch_write(OLD_DAY)
 
     gf.garmin_obj.connectapi.assert_not_called()
+
+
+def test_failed_activity_clears_parse_cache_and_other_datasets_still_commit(gf, getters, monkeypatch):
+    monkeypatch.setattr(gf, 'FETCH_SELECTION', 'activity,heartrate')
+    gf.PARSED_ACTIVITY_ID_LIST.extend([101, 102])
+    failure = RuntimeError('FIT download interrupted before persistence')
+    getters['gps'].side_effect = failure
+
+    with pytest.raises(RuntimeError, match='FIT download interrupted'):
+        gf.daily_fetch_write(DAY)
+
+    assert gf.PARSED_ACTIVITY_ID_LIST == []
+    assert written_markers(getters) == ['heartrate']
+    assert getters['write'].call_args.kwargs['checkpoint'] == ('heartrate', DAY)
+
+    getters['gps'].side_effect = None
+    gf.daily_fetch_write(DAY)
+    assert getters['gps'].call_count == 2
+    assert 'activity' in written_markers(getters)

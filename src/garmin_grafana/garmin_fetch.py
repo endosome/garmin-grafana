@@ -222,8 +222,7 @@ def get_daily_stats(date_str):
                 "lowestSpo2": stats_json.get("lowestSpo2"),
             }
         })
-        if points_list:
-            logging.info(f"Success : Fetching daily metrics for date {date_str}")
+        logging.info(f"Success : Fetching daily metrics for date {date_str}")
         return points_list
     else:
         logging.debug("No daily stat data available for the given date " + date_str)

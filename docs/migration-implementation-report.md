@@ -202,3 +202,13 @@ Python dependency, datasource, deployment service or normal-runtime backend.
 Current follow-up verification: **428 passed, zero skips, 99.01% coverage** with
 PostgreSQL alone; the new interactive login helper has three tests and stores
 tokens outside the repository. Its live authentication remains an operator step.
+
+## Follow-up: stronger coverage
+
+The subsequent coverage expansion passed **439 tests, zero skipped, with 100%
+line and branch coverage of the configured Python package** (1,520 statements,
+596 branch exits). The gate remains 98%; its scope and exclusions are unchanged.
+New tests cover fresh-schema installation, atomic failed DDL upgrades, activity
+retry/cache recovery, package execution and the documented module commands. See
+the verification report for the detailed scenarios and acceptance boundaries.
+Live Garmin and browser acceptance remain open despite complete measured coverage.

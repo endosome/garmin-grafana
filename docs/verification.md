@@ -11,8 +11,8 @@ data. Existing user services/databases and historical volumes were not modified.
 | Check | Executed result |
 | --- | --- |
 | Pre-change `uv run pytest --cov --cov-report=term` | 478 passed; 99.89% coverage |
-| Current full suite: PostgreSQL integration and private-login command tests | 428 passed; zero skips; 99.01% coverage; unchanged 98% gate |
-| Current unit run without PostgreSQL integration settings | 405 passed, 23 integration tests skipped |
+| Current full suite: PostgreSQL integration and command regressions | 439 passed; zero skips; 100% line and branch coverage; unchanged 98% gate |
+| Current unit run without PostgreSQL integration settings | 412 passed, 27 integration tests skipped |
 | `python scripts/validate_dashboard_queries.py` | All 169 panel/variable queries executed successfully in PostgreSQL |
 | `python scripts/smoke_grafana.py` | Both dashboards provisioned, datasource healthy; all 169 queries passed through Grafana |
 | `docker build -t garmin-grafana:timescale .` | Passed; non-root runtime image built from current source |
@@ -121,3 +121,39 @@ verify terminal-only input, private directory/file permissions, restored umask,
 no ingestion call and detection of failed token persistence. No real login has
 yet been performed. Run `uv run --locked python scripts/garmin_login.py` locally
 to complete that next step.
+
+## Coverage expansion
+
+The PostgreSQL-only suite was expanded from 428 to **439 tests**, improving
+measured coverage from **99.01% to 100.00%**. The full run passed with zero skips
+in 16.13 seconds. Coverage reports **1,520 statements, 596 branch exits, zero
+uncovered statements and zero partial branches** across the nine Python package
+files. The existing 98% gate, measured source scope and exclusions were unchanged.
+The unit-only mode passed 412 tests with 27 database-dependent skips.
+
+Added regression scenarios:
+
+- Install all migrations into a newly created, isolated PostgreSQL database;
+  repeat the migration and verify the hypertable and device constraints.
+- Execute a valid pending DDL change followed by a broken migration; verify both
+  DDL and migration-history inserts roll back and the old schema remains usable.
+- Fail an activity fetch, invalidate its parse cache, persist an independent
+  successful dataset, and retry the activity successfully.
+- Propagate the completed-dataset skip policy during automatic backfills.
+- Treat an empty sleep DTO as unknown duration; exercise package imports against
+  real synthetic FIT and account-export files.
+- Exercise the documented module entry points: real PostgreSQL schema bootstrap,
+  real account export, authentication dispatch with a mocked Garmin client, and
+  historical-import preview using synthetic HTTP responses without PostgreSQL
+  access. These execute module bodies through runpy under coverage.
+
+One redundant condition after an unconditional point append was removed from
+the daily-stat collector; logging/output behavior is preserved. No coverage
+exclusions or artificial input types were added to manufacture an impossible
+branch. Fresh-schema tests drop only databases they successfully created under
+a randomized `garmin_test_schema_` name; they never drop the configured database.
+
+This is Python line/branch coverage for the configured application package. It
+does not establish browser rendering, real Garmin API behavior, every data
+combination, or production performance; the live acceptance checklist remains
+open. No real credentials or health data were used.

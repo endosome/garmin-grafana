@@ -155,3 +155,29 @@ def test_legacy_date_only_dataset_recovers_calendar_date():
         record=list(reader.records('VO2_Max',0,1767225600000000001))[0]
         assert str(record.local_date)=='2026-01-01'
     reader.session.close()
+
+
+def test_module_preview_reads_source_without_postgresql(monkeypatch, caplog):
+    import logging
+    from helpers import run_module_command
+    session = mock.MagicMock()
+    timestamp = 1767225600123456789
+    def http_response(url, *, params, **kwargs):
+        if params['q'].startswith('SHOW TAG VALUES'):
+            return response({'results': []})
+        return response({'results': [{'series': [{
+            'name': 'HeartRateIntraday', 'tags': {'Device': 'synthetic-watch'},
+            'columns': ['time', 'HeartRate'], 'values': [[timestamp, 72]],
+        }]}]})
+    session.get.side_effect = http_response
+    with mock.patch.object(legacy.requests, 'Session', return_value=session), \
+            mock.patch.object(storage, 'connect', side_effect=AssertionError('preview must not connect')) as connect, \
+            caplog.at_level(logging.INFO):
+        run_module_command(
+            monkeypatch, 'garmin_grafana.legacy_import', '--account', 'synthetic',
+            '--migration-id', 'module-preview', '--measurement', 'HeartRateIntraday', '--dry-run',
+        )
+    connect.assert_not_called()
+    assert session.get.call_count == 4  # account tags, two bounds, one streamed window
+    session.close.assert_called_once()
+    assert 'Previewed 1 records' in caplog.text

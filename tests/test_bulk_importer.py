@@ -354,3 +354,20 @@ def test_read_only_account_export_does_not_require_cache_writes(export_dir,monke
     exported=bulk.GarminBulkExport(export_dir)
     assert len(exported.fit_file_index)==2
     assert 'continuing without cache' in caplog.text
+
+
+def test_empty_sleep_dto_keeps_duration_unknown(export_dir, monkeypatch):
+    exported = bulk.GarminBulkExport(export_dir)
+    monkeypatch.setattr(exported, 'get_sleep_data', lambda day: {'dailySleepDTO': {}})
+    assert exported.calculate_sleeping_seconds('2026-01-02') is None
+
+
+def test_package_import_reads_an_account_export(export_dir, gf, monkeypatch):
+    import importlib
+    import garmin_grafana
+    monkeypatch.setattr(garmin_grafana, 'garmin_fetch', gf, raising=False)
+    monkeypatch.delitem(sys.modules, 'garmin_grafana.garmin_bulk_importer', raising=False)
+    packaged = importlib.import_module('garmin_grafana.garmin_bulk_importer')
+    exported = packaged.GarminBulkExport(export_dir)
+    assert exported.get_stats('2026-01-02')['totalSteps'] == 12000
+    assert exported.get_activities_by_date('2026-01-02', '2026-01-02')[0]['activityId'] == 22

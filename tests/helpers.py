@@ -56,3 +56,14 @@ def written_points(client):
     """Expose persisted domain records in the collector shape for regression assertions."""
     return [dict(measurement=r.dataset, time=r.original_time, tags=r.tags, fields=r.values)
             for r in client.persisted]
+
+
+def run_module_command(monkeypatch, module_name, *arguments):
+    """Exercise a documented python -m entry point without spawning an unmeasured child."""
+    import runpy
+    import sys
+    with monkeypatch.context() as context:
+        context.setattr(sys, 'argv', [module_name, *arguments])
+        # runpy otherwise warns if an earlier test imported the target module.
+        context.delitem(sys.modules, module_name, raising=False)
+        return runpy.run_module(module_name, run_name='__main__')

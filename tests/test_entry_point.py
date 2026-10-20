@@ -27,3 +27,10 @@ def package(offline, monkeypatch):
 def test_main_starts_syncing(package):
     with pytest.raises(LoginAttempted):
         package.main()
+
+
+def test_module_entry_point_starts_authentication(package, monkeypatch):
+    from helpers import run_module_command
+    with pytest.raises(LoginAttempted):
+        run_module_command(monkeypatch, 'garmin_grafana.garmin_fetch')
+    garminconnect.Garmin.assert_called_once()

@@ -154,3 +154,13 @@ def test_invalid_backfill_range_fails_before_fetch(gf):
     with pytest.raises(ValueError,match='Start date'):
         gf.fetch_write_bulk('2026-01-02','2026-01-01')
     gf.store.request_range.assert_not_called()
+
+
+def test_automatic_backfill_passes_completed_dataset_policy(gf, no_device_sync, monkeypatch):
+    daily = mock.Mock()
+    monkeypatch.setattr(gf, 'daily_fetch_write', daily)
+    assert gf.fetch_write_bulk('2026-01-01', '2026-01-02', skip_completed=True) is True
+    assert daily.call_args_list == [
+        mock.call('2026-01-02', skip_completed=True),
+        mock.call('2026-01-01', skip_completed=True),
+    ]

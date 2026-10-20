@@ -60,3 +60,24 @@ def test_export_refuses_to_overwrite_existing_backup(db,tmp_path):
     with pytest.raises(FileExistsError):
         exporter.export(db.connection,path,account=db.account,start=start,end=end)
     assert path.read_bytes()==b'original backup'
+
+
+def test_module_export_writes_a_portable_archive(db, monkeypatch, tmp_path, capsys):
+    from garmin_grafana import storage
+    from helpers import run_module_command
+    db.write([Record.from_mapping(point())])
+    connection = db.connection
+    path = tmp_path / 'module-export.zip'
+    monkeypatch.setattr(storage, 'connect', lambda: connection)
+    run_module_command(
+        monkeypatch, 'garmin_grafana.export', '--account', db.account,
+        '--output', str(path), '--start-date', '2026-01-01', '--end-date', '2026-01-01',
+    )
+    with zipfile.ZipFile(path) as archive:
+        row = json.loads(archive.read('HeartRateIntraday.jsonl'))
+        manifest = json.loads(archive.read('manifest.json'))
+    assert row['values']['HeartRate'] == 72
+    assert row['nanoseconds'] == 789
+    assert manifest['account'] == db.account
+    assert 'Exported 1 records' in capsys.readouterr().out
+    assert connection.closed
