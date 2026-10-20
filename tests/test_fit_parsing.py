@@ -194,7 +194,7 @@ def test_tcx_fallback(gf, serve, fit_download):
 
     assert_valid_points(points)
     first, second = points
-    assert first["time"] == "2026-01-01T10:00:00"  # naive UTC; InfluxDB's client treats it as UTC
+    assert first["time"] == "2026-01-01T10:00:00+00:00"  # TCX timestamps retain their UTC offset
     assert first["tags"]["ActivitySelector"] == "20260101T100000UTC-running"
     assert first["fields"] == {"ActivityName": "running", "Activity_ID": 12345, "Latitude": 52.52, "Longitude": 13.405,
                                "Altitude": 34.4, "Distance": 0.0, "DurationSeconds": 0.0, "HeartRate": 140.0, "Speed": 3.1, "lap": 1}

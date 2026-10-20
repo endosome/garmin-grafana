@@ -46,7 +46,7 @@ def test_summary_fields_and_tags(gf, monkeypatch):
 
     assert_valid_points(points)
     start_point, end_point = points
-    assert start_point["tags"] == {"Device": "Forerunner 965", "Database_Name": gf.INFLUXDB_DATABASE, "ActivityID": 1,
+    assert start_point["tags"] == {"Device": "Forerunner 965", "Database_Name": gf.DATABASE_NAME, "ActivityID": 1,
                                    "ActivitySelector": "20260101T100000UTC-running"}
     fields = start_point["fields"]
     assert (fields["activityName"], fields["activityType"], fields["distance"], fields["Device_ID"]) == ("Morning Run", "running", 5000.0, 99)

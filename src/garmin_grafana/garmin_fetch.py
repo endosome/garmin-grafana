@@ -1,13 +1,14 @@
 # %%
+import getpass
+import psycopg
 import traceback
 import re
-from collections import Counter
 import base64, requests, time, pytz, logging, os, sys, dotenv, io, zipfile
 from fitparse import FitFile, FitParseError
 from datetime import datetime, timedelta
-from influxdb import InfluxDBClient
-from influxdb.exceptions import InfluxDBClientError
-from influxdb_client_3 import InfluxDBClient3, InfluxDBError
+from garmin_grafana.domain import Record, RecordBatch
+from garmin_grafana.storage import PostgresStore
+from zoneinfo import ZoneInfo
 import xml.etree.ElementTree as ET
 from garminconnect import (
     Garmin,
@@ -27,22 +28,14 @@ By Arpan Ghosh | Please consider supporting the project if you love it
 ______________________________________________________________________
 
 """
-print(banner_text)
 
 env_override = dotenv.load_dotenv("override-default-vars.env", override=True)
 if env_override:
     logging.warning("System ENV variables are overridden with override-default-vars.env")
 
 # %%
-INFLUXDB_VERSION = os.getenv("INFLUXDB_VERSION",'1') # Your influxdb database version (accepted values are '1' or '3')
-assert INFLUXDB_VERSION in ['1','3'], "Only InfluxDB version 1 or 3 is allowed - please ensure to set this value to either 1 or 3"
-INFLUXDB_HOST = os.getenv("INFLUXDB_HOST",'localhost') # Required
-INFLUXDB_PORT = int(os.getenv("INFLUXDB_PORT", 8086)) # Required
-INFLUXDB_USERNAME = os.getenv("INFLUXDB_USERNAME", 'influxdb_username') # Required
-INFLUXDB_PASSWORD = os.getenv("INFLUXDB_PASSWORD", 'influxdb_access_password') # Required
-INFLUXDB_DATABASE = os.getenv("INFLUXDB_DATABASE", 'GarminStats') # Required
-INFLUXDB_V3_ACCESS_TOKEN = os.getenv("INFLUXDB_V3_ACCESS_TOKEN",'') # InfluxDB V3 Access token, required only for InfluxDB V3
-INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", 'default') # required only for InfluxDB V3 
+DATABASE_NAME = os.getenv("PGDATABASE", "garmin")
+store = PostgresStore()
 TOKEN_DIR = os.getenv("TOKEN_DIR", "~/.garminconnect") # optional
 GARMINCONNECT_EMAIL = (os.environ.get("GARMINCONNECT_EMAIL") or "").strip() or None # optional, asks in prompt on run if not provided
 _garmin_pw_b64 = os.getenv("GARMINCONNECT_BASE64_PASSWORD")
@@ -50,15 +43,12 @@ GARMINCONNECT_PASSWORD = base64.b64decode(_garmin_pw_b64).decode("utf-8").strip(
 GARMINCONNECT_IS_CN = True if os.getenv("GARMINCONNECT_IS_CN") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional if you are using a Chinese account
 GARMIN_DEVICENAME = os.getenv("GARMIN_DEVICENAME", "Unknown")  # optional, attempts to set the name automatically if not given
 GARMIN_DEVICEID = os.getenv("GARMIN_DEVICEID", None)  # optional, attempts to set the id automatically if not given
-AUTO_DATE_RANGE = False if os.getenv("AUTO_DATE_RANGE") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional
 MANUAL_START_DATE = os.getenv("MANUAL_START_DATE", None) # optional, in YYYY-MM-DD format, if you want to bulk update only from specific date
-MANUAL_END_DATE = os.getenv("MANUAL_END_DATE", datetime.today().strftime('%Y-%m-%d')) # optional, in YYYY-MM-DD format, if you want to bulk update until a specific date
+MANUAL_END_DATE = (os.getenv("MANUAL_END_DATE") or datetime.today().strftime('%Y-%m-%d')) # optional, in YYYY-MM-DD format, if you want to bulk update until a specific date
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO") # optional
 FETCH_FAILED_WAIT_SECONDS = int(os.getenv("FETCH_FAILED_WAIT_SECONDS", 1800)) # optional
 RATE_LIMIT_CALLS_SECONDS = int(os.getenv("RATE_LIMIT_CALLS_SECONDS", 5)) # optional
 MAX_CONSECUTIVE_500_ERRORS = int(os.getenv("MAX_CONSECUTIVE_500_ERRORS", 10)) # optional, maximum consecutive HTTP 500 errors before continuing without retrying
-MAX_INCOMPLETE_SYNC_RETRIES = int(os.getenv("MAX_INCOMPLETE_SYNC_RETRIES", 3)) # optional, number of update cycles an incomplete sync (skipped dates or failed writes) is retried before moving on
-INFLUXDB_ENDPOINT_IS_HTTP = False if os.getenv("INFLUXDB_ENDPOINT_IS_HTTP") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional
 GARMIN_DEVICENAME_AUTOMATIC = False if GARMIN_DEVICENAME != "Unknown" else True # optional
 UPDATE_INTERVAL_SECONDS = int(os.getenv("UPDATE_INTERVAL_SECONDS", 300)) # optional
 FETCH_SELECTION = os.getenv("FETCH_SELECTION", "daily_avg,sleep,steps,heartrate,stress,breathing,hrv,fitness_age,vo2,activity,race_prediction,body_composition,lifestyle") # additional available values are lactate_threshold,training_status,training_readiness,hill_score,endurance_score,blood_pressure,hydration,solar_intensity,cycling_dynamics which you can add to the list separated by , without any space
@@ -69,11 +59,10 @@ FIT_FILE_STORAGE_LOCATION = os.getenv("FIT_FILE_STORAGE_LOCATION", os.path.join(
 ALWAYS_PROCESS_FIT_FILES = True if os.getenv("ALWAYS_PROCESS_FIT_FILES") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional, will process all FIT files for all activities including indoor ones lacking GPS data
 REQUEST_INTRADAY_DATA_REFRESH = True if os.getenv("REQUEST_INTRADAY_DATA_REFRESH") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional, This requests data refresh for the intraday data (older than 6 months) - see issue #77. Pauses the script for 24 hours when the daily limit is reached.
 IGNORE_INTRADAY_DATA_REFRESH_DAYS = int(os.getenv("IGNORE_INTRADAY_DATA_REFRESH_DAYS", 30)) # optional, ignores the REQUEST_INTRADAY_DATA_REFRESH for the specified number of days from current date. 
-TAG_MEASUREMENTS_WITH_USER_EMAIL = True if os.getenv("TAG_MEASUREMENTS_WITH_USER_EMAIL") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # Adds an additional "User_ID" tag in each measurement for multi user database support - see #96
 FORCE_REPROCESS_ACTIVITIES = False if os.getenv("FORCE_REPROCESS_ACTIVITIES") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, will enable re-processing of fit files when set to true, may skip activities if set to false (issue #30)
 USER_TIMEZONE = os.getenv("USER_TIMEZONE", "") # optional, fetches timezone info from last activity automatically if left blank
 PARSED_ACTIVITY_ID_LIST = []
-FAILED_WRITE_COUNT = 0 # incremented on every failed InfluxDB write, used to decide if a sync run completed
+SYNC_NAMESPACE = "" # Account-export availability checks are separate from online API checkpoints.
 IGNORE_ERRORS = True if os.getenv("IGNORE_ERRORS") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False
 
 # %%
@@ -90,45 +79,6 @@ logging.basicConfig(
 )
 if _log_level is None:
     logging.warning("Unknown LOG_LEVEL '%s' - defaulting to INFO", LOG_LEVEL)
-
-# %%
-try:
-    if INFLUXDB_ENDPOINT_IS_HTTP:
-        if INFLUXDB_VERSION == '1':
-            influxdbclient = InfluxDBClient(host=INFLUXDB_HOST, port=INFLUXDB_PORT, username=INFLUXDB_USERNAME, password=INFLUXDB_PASSWORD)
-            influxdbclient.switch_database(INFLUXDB_DATABASE)
-        else:
-            influxdbclient = InfluxDBClient3(
-            host=f"http://{INFLUXDB_HOST}:{INFLUXDB_PORT}",
-            token=INFLUXDB_V3_ACCESS_TOKEN,
-            org=INFLUXDB_ORG,
-            database=INFLUXDB_DATABASE
-            )
-    else:
-        if INFLUXDB_VERSION == '1':
-            influxdbclient = InfluxDBClient(host=INFLUXDB_HOST, port=INFLUXDB_PORT, username=INFLUXDB_USERNAME, password=INFLUXDB_PASSWORD, ssl=True, verify_ssl=True)
-            influxdbclient.switch_database(INFLUXDB_DATABASE)
-        else:
-            influxdbclient = InfluxDBClient3(
-            host=f"https://{INFLUXDB_HOST}:{INFLUXDB_PORT}",
-            token=INFLUXDB_V3_ACCESS_TOKEN,
-            org=INFLUXDB_ORG,
-            database=INFLUXDB_DATABASE
-            )
-    demo_point = {
-    'measurement': 'DemoPoint',
-    'time': (datetime.now(pytz.utc) - timedelta(minutes=1)).isoformat(timespec='seconds'),
-    'tags': {'DemoTag': 'DemoTagValue'},
-    'fields': {'DemoField': 0}
-     }
-    # The following code block tests the connection by writing/overwriting a demo point. raises error and aborts if connection fails. 
-    if INFLUXDB_VERSION == '1':
-        influxdbclient.write_points([demo_point])
-    else:
-        influxdbclient.write(record=[demo_point])
-except (InfluxDBClientError, InfluxDBError) as err:
-    logging.error("Unable to connect with influxdb database! Aborted")
-    raise InfluxDBClientError("InfluxDB connection failed:" + str(err))
 
 # %%
 def iter_days(start_date: str, end_date: str):
@@ -165,7 +115,7 @@ def garmin_login():
         logging.warning("Session is expired or login information not present/incorrect. You'll need to log in again...login with your Garmin Connect credentials to generate them.")
         try:
             user_email = (GARMINCONNECT_EMAIL or "").strip() or input("Enter Garminconnect Login e-mail: ").strip()
-            user_password = (GARMINCONNECT_PASSWORD or "").strip() or input("Enter Garminconnect password (characters will be visible): ").strip()
+            user_password = (GARMINCONNECT_PASSWORD or "").strip() or getpass.getpass("Enter Garminconnect password: ").strip()
             garmin = Garmin(
                 email=user_email, password=user_password, is_cn=GARMINCONNECT_IS_CN,
                 prompt_mfa=lambda: input("MFA one-time code (via email or SMS): ").strip(),
@@ -197,25 +147,12 @@ def _is_http_status_error(err, status_code):
     return re.search(rf"\b{status_code}\b", str(err)) is not None
 
 # %%
-def write_points_to_influxdb(points):
-    global FAILED_WRITE_COUNT
-    write_chunk_size = 20000
-    try:
-        if len(points) != 0:
-            if TAG_MEASUREMENTS_WITH_USER_EMAIL:
-                for item in points:
-                    item['tags'].update({'User_ID': getattr(garmin_obj, 'display_name', None) or 'Unknown'}) # bulk exports have no display name
-            # Write in chunks - Issue reported for large activities data containing >20000 points - Error 413 : payload too large
-            for i in range(0, len(points), write_chunk_size):
-                if INFLUXDB_VERSION == '1':
-                    influxdbclient.write_points(points[i:i + write_chunk_size])
-                else:
-                    influxdbclient.write(record=points[i:i + write_chunk_size])
-            per_measurement = ", ".join(f"{name}={count}" for name, count in Counter(p['measurement'] for p in points).items())
-            logging.info(f"Success : updated influxDB database with {len(points)} new points ({per_measurement})")
-    except (InfluxDBClientError, InfluxDBError) as err:
-        logging.error("Write failed : Unable to connect with database! " + str(err))
-        FAILED_WRITE_COUNT += 1
+def write_records(points, *, checkpoint=None, day=None):
+    """Normalize connector output and commit it with its synchronization checkpoint."""
+    return store.write(
+        (Record.from_mapping(p, local_date=datetime.strptime(day, '%Y-%m-%d').date() if day else None, timezone=USER_TIMEZONE or 'UTC') for p in points),
+        replacements=getattr(points, 'replacements', ()), checkpoint=checkpoint,
+    )
 
 # %%
 def get_daily_stats(date_str):
@@ -227,7 +164,7 @@ def get_daily_stats(date_str):
             "time": pytz.timezone("UTC").localize(datetime.strptime(stats_json['wellnessStartTimeGmt'], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
             "tags": {
                 "Device": GARMIN_DEVICENAME,
-                "Database_Name": INFLUXDB_DATABASE
+                "Database_Name": DATABASE_NAME
             },
             "fields": {
                 "activeKilocalories": stats_json.get('activeKilocalories'),
@@ -309,7 +246,7 @@ def get_last_sync():
             "time": datetime.fromtimestamp(upload_time/1000, tz=pytz.timezone("UTC")).isoformat(),
             "tags": {
                 "Device": GARMIN_DEVICENAME,
-                "Database_Name": INFLUXDB_DATABASE
+                "Database_Name": DATABASE_NAME
             },
             "fields": {
                 "imageUrl": sync_data.get('imageUrl'),
@@ -333,7 +270,7 @@ def get_sleep_data(date_str):
         "time": datetime.fromtimestamp(sleep_json["sleepEndTimestampGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
         "tags": {
             "Device": GARMIN_DEVICENAME,
-            "Database_Name": INFLUXDB_DATABASE
+            "Database_Name": DATABASE_NAME
             },
         "fields": {
             "sleepTimeSeconds": sleep_json.get("sleepTimeSeconds"),
@@ -366,7 +303,7 @@ def get_sleep_data(date_str):
                 "time": pytz.timezone("UTC").localize(datetime.strptime(entry["startGMT"], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE
+                    "Database_Name": DATABASE_NAME
                 },
                 "fields": {
                     "SleepMovementActivityLevel": entry.get("activityLevel",-1),
@@ -382,7 +319,7 @@ def get_sleep_data(date_str):
                     "time": pytz.timezone("UTC").localize(datetime.strptime(entry["startGMT"], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "SleepStageLevel": entry.get("activityLevel"),
@@ -396,7 +333,7 @@ def get_sleep_data(date_str):
                 "time": pytz.timezone("UTC").localize(datetime.strptime(entry["endGMT"], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE
+                    "Database_Name": DATABASE_NAME
                 },
                 "fields": {"SleepStageLevel": entry.get("activityLevel")} # Duplicating last entry for visualization in Grafana
             })
@@ -409,7 +346,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "sleepRestlessValue": entry.get("value")
@@ -424,7 +361,7 @@ def get_sleep_data(date_str):
                     "time": pytz.timezone("UTC").localize(datetime.strptime(entry["epochTimestamp"], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "spo2Reading": entry.get("spo2Reading")
@@ -439,7 +376,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startTimeGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "respirationValue": entry.get("respirationValue")
@@ -454,7 +391,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "heartRate": entry.get("value")
@@ -469,7 +406,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "stressValue": entry.get("value")
@@ -484,7 +421,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "bodyBattery": entry.get("value")
@@ -499,7 +436,7 @@ def get_sleep_data(date_str):
                     "time": datetime.fromtimestamp(entry["startGMT"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "hrvData": entry.get("value")
@@ -520,7 +457,7 @@ def get_intraday_hr(date_str):
                     "time": datetime.fromtimestamp(entry[0]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "HeartRate": entry[1]
@@ -541,7 +478,7 @@ def get_intraday_steps(date_str):
                     "time": pytz.timezone("UTC").localize(datetime.strptime(entry['startGMT'], "%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "StepsCount": entry["steps"]
@@ -562,7 +499,7 @@ def get_intraday_stress(date_str):
                     "time": datetime.fromtimestamp(entry[0]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "stressLevel": entry[1]
@@ -576,7 +513,7 @@ def get_intraday_stress(date_str):
                     "time": datetime.fromtimestamp(entry[0]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "BodyBatteryLevel": entry[2]
@@ -597,7 +534,7 @@ def get_intraday_br(date_str):
                     "time": datetime.fromtimestamp(entry[0]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "BreathingRate": entry[1]
@@ -618,7 +555,7 @@ def get_intraday_hrv(date_str):
                     "time": pytz.timezone("UTC").localize(datetime.strptime(entry['readingTimeGMT'],"%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {
                         "hrvValue": entry.get('hrvValue')
@@ -652,7 +589,7 @@ def get_body_composition(date_str):
                     "time": datetime.fromtimestamp((weight_dict['timestampGMT']/1000) , tz=pytz.timezone("UTC")).isoformat() if weight_dict['timestampGMT'] else datetime.strptime(date_str, "%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 is timestamp is not available (issue #15)
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE,
+                        "Database_Name": DATABASE_NAME,
                         "Frequency" : "Intraday",
                         "SourceType" : weight_dict.get('sourceType', "Unknown")
                     },
@@ -703,7 +640,7 @@ def get_activity_summary(date_str):
                 "time": datetime.strptime(activity["startTimeGMT"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC).isoformat(),
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE,
+                    "Database_Name": DATABASE_NAME,
                     "ActivityID": activity.get('activityId'),
                     "ActivitySelector": datetime.strptime(activity["startTimeGMT"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC).strftime('%Y%m%dT%H%M%SUTC-') + (activity.get('activityType') or {}).get('typeKey', "Unknown")
                 },
@@ -749,7 +686,7 @@ def get_activity_summary(date_str):
                 "time": (datetime.strptime(activity["startTimeGMT"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC) + timedelta(seconds=int(activity.get('elapsedDuration') or activity.get('duration') or 0))).isoformat(),
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE,
+                    "Database_Name": DATABASE_NAME,
                     "ActivityID": activity.get('activityId'),
                     "ActivitySelector": datetime.strptime(activity["startTimeGMT"], "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.UTC).strftime('%Y%m%dT%H%M%SUTC-') + (activity.get('activityType') or {}).get('typeKey', "Unknown")
                 },
@@ -766,48 +703,13 @@ def get_activity_summary(date_str):
     return points_list, activity_with_gps_id_dict, strength_activity_id_dict
 
 # %%
-def purge_existing_strength_exercise_sets(activity_id):
-    """Delete stale strength rows before rewriting the current Garmin snapshot.
-
-    Edited Garmin exercises can change exercise tags. Without removing the
-    previous series first, InfluxDB keeps the stale and corrected rows in
-    parallel because the tags no longer match.
-    """
-    if INFLUXDB_VERSION != '1':
-        logging.warning(
-            f"InfluxDB version {INFLUXDB_VERSION} does not support purging StrengthExerciseSet series for activity {activity_id}. "
-            "Applying the default refresh behavior; edited exercises may produce duplicated rows."
-        )
-        return True
-
-    if not hasattr(influxdbclient, 'delete_series'):
-        logging.warning(
-            f"InfluxDB client does not support purging StrengthExerciseSet series for activity {activity_id}. "
-            "Applying the default refresh behavior; edited exercises may produce duplicated rows."
-        )
-        return True
-
-    try:
-        influxdbclient.delete_series(
-            measurement='StrengthExerciseSet',
-            tags={'ActivityID': str(activity_id)},
-        )
-        logging.info(f"Purged existing StrengthExerciseSet series for activity {activity_id}")
-        return True
-    except (InfluxDBClientError, InfluxDBError) as err:
-        logging.warning(
-            f"Failed to purge existing StrengthExerciseSet series for activity {activity_id}: {err}"
-        )
-        return False
-
-
 # %%
 def get_strength_training_data(strength_activity_id_dict):
     """Fetch strength training exercise sets and HR zones from Garmin Connect API.
     Uses API data (not FIT files) to get corrected exercise names and details.
     See: https://github.com/arpanghosh8453/garmin-grafana/issues/189
     """
-    points_list = []
+    points_list = RecordBatch()
     for activity_id, activity_info in strength_activity_id_dict.items():
         activity_type = activity_info['typeKey']
         start_time_str = activity_info['startTimeGMT']
@@ -830,12 +732,12 @@ def get_strength_training_data(strength_activity_id_dict):
                 category = exercise_info.get('category', 'UNKNOWN')
                 exercise_name = exercise_info.get('name', '')
                 exercise_label = f"{category}/{exercise_name}" if exercise_name else category
-                weight_g = float(exercise.get('weight', 0) or 0)
-                weight_kg = weight_g / 1000.0
-                duration_s = float(exercise.get('duration', 0) or 0)
+                weight_kg = float(exercise['weight']) / 1000.0 if exercise.get('weight') is not None else None
+                duration_s = float(exercise['duration']) if exercise.get('duration') is not None else None
                 start_ts = exercise.get('startTime')
                 if start_ts:
-                    set_time = datetime.strptime(start_ts.split('.')[0], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=pytz.UTC).isoformat()
+                    parsed_time = datetime.fromisoformat(start_ts.replace('Z', '+00:00'))
+                    set_time = (parsed_time if parsed_time.tzinfo else parsed_time.replace(tzinfo=pytz.UTC)).isoformat()
                 else:
                     set_time = (activity_start_time + timedelta(seconds=set_counter)).isoformat()
 
@@ -844,7 +746,7 @@ def get_strength_training_data(strength_activity_id_dict):
                     "ActivityName": activity_name,
                     "SetOrder": int(exercise.get('setOrder') if exercise.get('setOrder') is not None else set_counter),
                     "SetType": set_type,
-                    "Reps": int(exercise.get('repetitionCount') or 0),
+                    "Reps": int(exercise['repetitionCount']) if exercise.get('repetitionCount') is not None else None,
                     "Weight_kg": weight_kg,
                     "Duration_s": duration_s,
                 }
@@ -853,7 +755,7 @@ def get_strength_training_data(strength_activity_id_dict):
                     "time": set_time,
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE,
+                        "Database_Name": DATABASE_NAME,
                         "ActivityID": activity_id,
                         "ActivitySelector": activity_selector,
                         "ExerciseCategory": category,
@@ -862,16 +764,16 @@ def get_strength_training_data(strength_activity_id_dict):
                     "fields": data_fields
                 })
             logging.info(f"Success : Fetching {set_counter} strength exercise sets for activity {activity_id}")
-        except Exception as err:
-            logging.warning(f"Failed to fetch exercise sets for activity {activity_id}: {err}")
+        except NotImplementedError:
+            # Account exports lack this API data; never interpret that as an empty snapshot.
+            logging.info("Strength snapshots unavailable in account export; preserving stored sets")
+            continue
+        except Exception:
+            logging.error("Failed to fetch strength exercise snapshot; retry required")
+            raise
 
-        if exercise_set_points is not None:
-            if purge_existing_strength_exercise_sets(activity_id):
-                points_list.extend(exercise_set_points)
-            else:
-                logging.warning(
-                    f"Skipped : StrengthExerciseSet refresh for activity {activity_id} because stale rows could not be purged"
-                )
+        points_list.replacements.append(('StrengthExerciseSet', activity_id))
+        points_list.extend(exercise_set_points)
 
         try:
             hr_zones_data = garmin_obj.get_activity_hr_in_timezones(activity_id)
@@ -891,15 +793,17 @@ def get_strength_training_data(strength_activity_id_dict):
                     "time": (activity_start_time + timedelta(milliseconds=int(zone_number))).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE,
+                        "Database_Name": DATABASE_NAME,
                         "ActivityID": activity_id,
                         "ActivitySelector": activity_selector,
                     },
                     "fields": data_fields
                 })
+            points_list.replacements.append(('StrengthHRZones', activity_id))
             logging.info(f"Success : Fetching strength HR zones for activity {activity_id}")
-        except Exception as err:
-            logging.warning(f"Failed to fetch HR zones for activity {activity_id}: {err}")
+        except Exception:
+            logging.error("Failed to fetch strength HR zones; retry required")
+            raise
 
     return points_list
 
@@ -1034,7 +938,7 @@ def _build_cycling_dynamics_point(all_records_list, all_sessions_list, activityI
         "time": activity_start_time.isoformat(),
         "tags": {
             "Device": GARMIN_DEVICENAME,
-            "Database_Name": INFLUXDB_DATABASE,
+            "Database_Name": DATABASE_NAME,
             "ActivityID": activityID,
             "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
         },
@@ -1079,7 +983,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                 "time": parsed_record['timestamp'].replace(tzinfo=pytz.UTC).isoformat(), 
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
-                                    "Database_Name": INFLUXDB_DATABASE,
+                                    "Database_Name": DATABASE_NAME,
                                     "ActivityID": activityID,
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
@@ -1114,7 +1018,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                 "time": (session_record.get('start_time') or session_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
-                                    "Database_Name": INFLUXDB_DATABASE,
+                                    "Database_Name": DATABASE_NAME,
                                     "ActivityID": activityID,
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
@@ -1142,7 +1046,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                 "time": (length_record.get('start_time') or length_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
-                                    "Database_Name": INFLUXDB_DATABASE,
+                                    "Database_Name": DATABASE_NAME,
                                     "ActivityID": activityID,
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
@@ -1166,7 +1070,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                                 "time": (lap_record.get('start_time') or lap_record.get('timestamp')).replace(tzinfo=pytz.UTC).isoformat(),
                                 "tags": {
                                     "Device": GARMIN_DEVICENAME,
-                                    "Database_Name": INFLUXDB_DATABASE,
+                                    "Database_Name": DATABASE_NAME,
                                     "ActivityID": activityID,
                                     "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                                 },
@@ -1226,25 +1130,25 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                 root = ET.fromstring(tcx_file_data)
                 if KEEP_FIT_FILES:
                     os.makedirs(FIT_FILE_STORAGE_LOCATION, exist_ok=True)
-                    activity_start_time = datetime.fromisoformat(root.findall("tcx:Activities/tcx:Activity", ns)[0].find("tcx:Id", ns).text.strip("Z"))
+                    activity_start_time = datetime.fromisoformat(root.findall("tcx:Activities/tcx:Activity", ns)[0].find("tcx:Id", ns).text.replace("Z", "+00:00"))
                     tcx_path = os.path.join(FIT_FILE_STORAGE_LOCATION, activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type + ".tcx")
                     with open(tcx_path, "w") as f:
                         f.write(tcx_file_data)
                     logging.info(f"Success : Activity ID {activityID} stored in output file {tcx_path}")
             except requests.exceptions.Timeout as err:
-                logging.warning(f"Request timeout for fetching large activity record {activityID} - skipping record")
-                continue
+                logging.warning("Request timeout fetching activity; retry required")
+                raise
             except Exception as err:
-                logging.exception(f"Unable to fetch TCX for activity record {activityID} : skipping record")
-                continue
+                logging.error("Unable to fetch TCX activity; retry required")
+                raise
 
             for activity in root.findall("tcx:Activities/tcx:Activity", ns):
-                activity_start_time = datetime.fromisoformat(activity.find("tcx:Id", ns).text.strip("Z"))
+                activity_start_time = datetime.fromisoformat(activity.find("tcx:Id", ns).text.replace("Z", "+00:00"))
                 lap_index = 1
                 for lap in activity.findall("tcx:Lap", ns):
-                    lap_start_time = datetime.fromisoformat(lap.attrib.get("StartTime").strip("Z"))
+                    lap_start_time = datetime.fromisoformat(lap.attrib.get("StartTime").replace("Z", "+00:00"))
                     for tp in lap.findall(".//tcx:Trackpoint", ns):
-                        time_obj = datetime.fromisoformat(tp.findtext("tcx:Time", default=None, namespaces=ns).strip("Z"))
+                        time_obj = datetime.fromisoformat(tp.findtext("tcx:Time", default=None, namespaces=ns).replace("Z", "+00:00"))
                         lat = tp.findtext("tcx:Position/tcx:LatitudeDegrees", default=None, namespaces=ns)
                         lon = tp.findtext("tcx:Position/tcx:LongitudeDegrees", default=None, namespaces=ns)
                         alt = tp.findtext("tcx:AltitudeMeters", default=None, namespaces=ns)
@@ -1270,7 +1174,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                             "time": time_obj.isoformat(), 
                             "tags": {
                                 "Device": GARMIN_DEVICENAME,
-                                "Database_Name": INFLUXDB_DATABASE,
+                                "Database_Name": DATABASE_NAME,
                                 "ActivityID": activityID,
                                 "ActivitySelector": activity_start_time.strftime('%Y%m%dT%H%M%SUTC-') + activity_type
                             },
@@ -1313,7 +1217,7 @@ def get_lactate_threshold(date_str):
                         "time": datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=pytz.UTC).isoformat(),
                         "tags": {
                             "Device": GARMIN_DEVICENAME,
-                            "Database_Name": INFLUXDB_DATABASE
+                            "Database_Name": DATABASE_NAME
                         },
                         "fields": {f"{label}": value}
                     })
@@ -1347,7 +1251,8 @@ def get_training_status(date_str):
                     "time": datetime.fromtimestamp(ts_dict["timestamp"]/1000, tz=pytz.timezone("UTC")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "DeviceID": str(device_id),
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": data_fields
                 })
@@ -1378,7 +1283,7 @@ def get_training_readiness(date_str):
                     "time": pytz.timezone("UTC").localize(datetime.strptime(tr_dict['timestamp'],"%Y-%m-%dT%H:%M:%S.%f")).isoformat(),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": data_fields
                 })
@@ -1404,7 +1309,7 @@ def get_hillscore(date_str):
                 "time": datetime.strptime(date_str,"%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 for daily record
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE
+                    "Database_Name": DATABASE_NAME
                 },
                 "fields": data_fields
             })
@@ -1429,7 +1334,7 @@ def get_race_predictions(date_str):
                 "time": datetime.strptime(date_str,"%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 for daily record
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE
+                    "Database_Name": DATABASE_NAME
                 },
                 "fields": data_fields
             })
@@ -1453,7 +1358,7 @@ def get_fitness_age(date_str):
                     "time": datetime.strptime(date_str,"%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 for daily record
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": data_fields
                 })
@@ -1473,7 +1378,7 @@ def get_vo2_max(date_str):
                     "time": datetime.strptime(date_str,"%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 for daily record
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": {"VO2_max_value" : vo2_max_value, "VO2_max_value_cycling" : vo2_max_value_cycling}
                 })
@@ -1492,7 +1397,7 @@ def get_endurance_score(date_str):
                 "time": pytz.timezone("UTC").localize(datetime.strptime(date_str,"%Y-%m-%d")).isoformat(), # Use GMT 00:00 is timestamp is not available
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE
+                    "Database_Name": DATABASE_NAME
                 },
                 "fields": {
                     "EnduranceScore": endurance_dict.get("overallScore")
@@ -1518,7 +1423,7 @@ def get_blood_pressure(date_str):
                     "time": pytz.UTC.localize(datetime.strptime(bp_measurement['measurementTimestampGMT'], '%Y-%m-%dT%H:%M:%S.%f')),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE,
+                        "Database_Name": DATABASE_NAME,
                         "Source": bp_measurement.get('sourceType', None)
                     },
                     "fields": data_fields
@@ -1541,7 +1446,7 @@ def get_hydration(date_str):
             "time": datetime.strptime(date_str,"%Y-%m-%d").replace(hour=0, tzinfo=pytz.UTC).isoformat(), # Use GMT 00:00 for daily record
             "tags": {
                 "Device": GARMIN_DEVICENAME,
-                "Database_Name": INFLUXDB_DATABASE
+                "Database_Name": DATABASE_NAME
             },
             "fields": data_fields
         })
@@ -1570,7 +1475,7 @@ def get_solar_intensity(date_str):
                     "time": pytz.UTC.localize(datetime.strptime(si_measurement['readingTimestampGmt'], '%Y-%m-%dT%H:%M:%S.%f')),
                     "tags": {
                         "Device": GARMIN_DEVICENAME,
-                        "Database_Name": INFLUXDB_DATABASE
+                        "Database_Name": DATABASE_NAME
                     },
                     "fields": data_fields
                 })
@@ -1618,7 +1523,7 @@ def get_lifestyle_data(date_str):
                 "time": pytz.timezone("UTC").localize(datetime.strptime(date_str, "%Y-%m-%d")).isoformat(),
                 "tags": {
                     "Device": GARMIN_DEVICENAME,
-                    "Database_Name": INFLUXDB_DATABASE,
+                    "Database_Name": DATABASE_NAME,
                     "behavior": behavior_name,
                     "category": category
                 },
@@ -1628,13 +1533,16 @@ def get_lifestyle_data(date_str):
         logging.info(f"Success : Fetching Lifestyle Journaling data for date {date_str}")
 
     except Exception as e:
-        logging.warning(f"Failed to fetch Lifestyle Journaling data for date {date_str}: {e}")
+        logging.warning(f"Failed to fetch Lifestyle Journaling data for date {date_str}")
+        raise
     
     return points_list
 
 
 # %%
-def daily_fetch_write(date_str):
+def daily_fetch_write(date_str, *, skip_completed=False):
+    today = datetime.now(ZoneInfo(USER_TIMEZONE or 'UTC')).date()
+    completed = store.completed_datasets(date_str) if skip_completed and datetime.strptime(date_str, '%Y-%m-%d').date() < today - timedelta(days=2) else set()
     if REQUEST_INTRADAY_DATA_REFRESH and (datetime.strptime(date_str, "%Y-%m-%d") <= (datetime.today() - timedelta(days=IGNORE_INTRADAY_DATA_REFRESH_DAYS))):
         data_refresh_response = garmin_obj.connectapi(f"wellness-service/wellness/epoch/request/{date_str}", method="POST").get("status", "Unknown")
         logging.info(f"Intraday data refresh request status: {data_refresh_response}")
@@ -1644,8 +1552,7 @@ def daily_fetch_write(date_str):
         elif data_refresh_response == "COMPLETE":
             logging.info(f"Data for date {date_str} is already available")
         elif data_refresh_response == "NO_FILES_FOUND":
-            logging.info(f"No Data is available for date {date_str} to refresh")
-            return None
+            logging.info(f"No intraday files available for date {date_str}; checking other datasets")
         elif data_refresh_response == "DENIED":
             logging.info(f"Daily refresh limit reached. Pausing script for 24 hours to ensure Intraday data fetching. Disable REQUEST_INTRADAY_DATA_REFRESH to avoid this!")
             time.sleep(86500)
@@ -1656,69 +1563,72 @@ def daily_fetch_write(date_str):
         else:
             logging.info(f"Refresh response is unknown!")
             time.sleep(5)
-    if 'daily_avg' in FETCH_SELECTION:
-        write_points_to_influxdb(get_daily_stats(date_str))
-    if 'sleep' in FETCH_SELECTION:
-        write_points_to_influxdb(get_sleep_data(date_str))
-    if 'steps' in FETCH_SELECTION:
-        write_points_to_influxdb(get_intraday_steps(date_str))
-    if 'heartrate' in FETCH_SELECTION:
-        write_points_to_influxdb(get_intraday_hr(date_str))
-    if 'stress' in FETCH_SELECTION:
-        write_points_to_influxdb(get_intraday_stress(date_str))
-    if 'breathing' in FETCH_SELECTION:
-        write_points_to_influxdb(get_intraday_br(date_str))
-    if 'hrv' in FETCH_SELECTION:
-        write_points_to_influxdb(get_intraday_hrv(date_str))
-    if 'fitness_age' in FETCH_SELECTION:
-        write_points_to_influxdb(get_fitness_age(date_str))
-    if 'vo2' in FETCH_SELECTION:
-        write_points_to_influxdb(get_vo2_max(date_str))
-    if 'race_prediction' in FETCH_SELECTION:
-        write_points_to_influxdb(get_race_predictions(date_str))
-    if 'body_composition' in FETCH_SELECTION:
-        write_points_to_influxdb(get_body_composition(date_str))
-    if 'lactate_threshold' in FETCH_SELECTION:
-        write_points_to_influxdb(get_lactate_threshold(date_str))
-    if 'training_status' in FETCH_SELECTION:
-        write_points_to_influxdb(get_training_status(date_str))
-    if 'training_readiness' in FETCH_SELECTION:
-        write_points_to_influxdb(get_training_readiness(date_str))
-    if 'hill_score' in FETCH_SELECTION:
-        write_points_to_influxdb(get_hillscore(date_str))
-    if 'endurance_score' in FETCH_SELECTION:
-        write_points_to_influxdb(get_endurance_score(date_str))
-    if 'blood_pressure' in FETCH_SELECTION:
-        write_points_to_influxdb(get_blood_pressure(date_str))
-    if 'hydration' in FETCH_SELECTION:
-        write_points_to_influxdb(get_hydration(date_str))
-    if 'activity' in FETCH_SELECTION:
-        activity_summary_points_list, activity_with_gps_id_dict, strength_activity_id_dict = get_activity_summary(date_str)
-        write_points_to_influxdb(activity_summary_points_list)
-        write_points_to_influxdb(fetch_activity_GPS(activity_with_gps_id_dict))
-        if strength_activity_id_dict:
-            write_points_to_influxdb(get_strength_training_data(strength_activity_id_dict))
-    if 'solar_intensity' in FETCH_SELECTION:
-        write_points_to_influxdb(get_solar_intensity(date_str))
-    if 'lifestyle' in FETCH_SELECTION:
-        write_points_to_influxdb(get_lifestyle_data(date_str))
+    getters = {
+        'daily_avg': get_daily_stats, 'sleep': get_sleep_data,
+        'steps': get_intraday_steps, 'heartrate': get_intraday_hr,
+        'stress': get_intraday_stress, 'breathing': get_intraday_br,
+        'hrv': get_intraday_hrv, 'fitness_age': get_fitness_age,
+        'vo2': get_vo2_max, 'race_prediction': get_race_predictions,
+        'body_composition': get_body_composition, 'lactate_threshold': get_lactate_threshold,
+        'training_status': get_training_status, 'training_readiness': get_training_readiness,
+        'hill_score': get_hillscore, 'endurance_score': get_endurance_score,
+        'blood_pressure': get_blood_pressure, 'hydration': get_hydration,
+        'solar_intensity': get_solar_intensity, 'lifestyle': get_lifestyle_data,
+    }
+    failures = []
+    for dataset in selected_datasets():
+        if SYNC_NAMESPACE + dataset in completed:
+            continue
+        try:
+            if dataset == 'activity':
+                summary, gps, strength = get_activity_summary(date_str)
+                points = RecordBatch(summary)
+                points.extend(fetch_activity_GPS(gps))
+                if strength:
+                    sets = get_strength_training_data(strength)
+                    points.extend(sets)
+                    points.replacements.extend(sets.replacements)
+            else:
+                points = getters[dataset](date_str)
+            write_records(points if points is not None else [], checkpoint=(SYNC_NAMESPACE + dataset, date_str), day=date_str)
+        except Exception as err:
+            # Successful datasets commit independently; failed ones keep their ledger hole.
+            logging.error("Dataset %s failed for %s (%s); checkpoint retained", dataset, date_str, type(err).__name__)
+            if dataset == 'activity':
+                PARSED_ACTIVITY_ID_LIST.clear()
+            failures.append(err)
+    if failures:
+        raise failures[0]
+
+
+def selected_datasets():
+    return [value.strip() for value in FETCH_SELECTION.split(',') if value.strip() and value.strip() != 'cycling_dynamics']
 
 
 # %%
-def fetch_write_bulk(start_date_str, end_date_str):
+def fetch_write_bulk(start_date_str, end_date_str, *, skip_completed=False):
     """Fetches and writes all dates in the range. Returns True only if no date was skipped and no write failed."""
     global garmin_obj
+    if datetime.strptime(start_date_str, '%Y-%m-%d') > datetime.strptime(end_date_str, '%Y-%m-%d'):
+        raise ValueError('Start date must be on or before end date')
+    store.request_range([SYNC_NAMESPACE + dataset for dataset in selected_datasets()], start_date_str)
     consecutive_500_errors = 0
-    failed_writes_before = FAILED_WRITE_COUNT
     skipped_dates = []
     logging.info("Fetching data for the given period in reverse chronological order")
     time.sleep(3)
-    write_points_to_influxdb(get_last_sync())
+    try:
+        write_records(get_last_sync())
+    except psycopg.Error:
+        logging.error("Device sync metadata write failed; retry required")
+        return False
     for current_date in iter_days(start_date_str, end_date_str):
         repeat_loop = True
         while repeat_loop:
             try:
-                daily_fetch_write(current_date)
+                if skip_completed:
+                    daily_fetch_write(current_date, skip_completed=True)
+                else:
+                    daily_fetch_write(current_date)
                 # Reset consecutive 500 error counter on successful fetch
                 if consecutive_500_errors > 0:
                     logging.info(f"Successfully fetched data after {consecutive_500_errors} consecutive 500 errors - resetting error counter")
@@ -1778,6 +1688,10 @@ def fetch_write_bulk(start_date_str, end_date_str):
                 garmin_obj = garmin_login()
                 time.sleep(5)
                 repeat_loop = True
+            except psycopg.Error:
+                logging.error("Database write failed for %s; retry required", current_date)
+                skipped_dates.append(current_date)
+                repeat_loop = False
             except Exception as err:
                 if IGNORE_ERRORS:
                     logging.exception("IGNORE_ERRORS Enabled >> Failed to process %s : skipping date", current_date)
@@ -1785,76 +1699,31 @@ def fetch_write_bulk(start_date_str, end_date_str):
                     repeat_loop = False
                 else:
                     raise err
-    failed_writes = FAILED_WRITE_COUNT - failed_writes_before
-    if skipped_dates or failed_writes:
-        logging.warning(f"Incomplete sync : skipped dates {skipped_dates or 'none'}, {failed_writes} failed InfluxDB write(s)")
+    if skipped_dates:
+        logging.warning("Incomplete sync : skipped dates %s", skipped_dates)
         return False
     return True
 
 
 def main():
     global garmin_obj
+    print(banner_text)
+    # Validate IANA timezone before contacting Garmin. UTC is a deterministic fallback.
+    user_zone = ZoneInfo(USER_TIMEZONE or 'UTC')
     garmin_obj = garmin_login()
-
-    # %%
     if MANUAL_START_DATE:
         if not fetch_write_bulk(MANUAL_START_DATE, MANUAL_END_DATE):
-            logging.error(f"Bulk update incomplete : some dates were skipped or writes failed for date range {MANUAL_START_DATE} to {MANUAL_END_DATE}")
-            exit(1)
-        logging.info(f"Bulk update success : Fetched all available health metrics for date range {MANUAL_START_DATE} to {MANUAL_END_DATE}")
-        exit(0)
-    else:
+            logging.error("Historical import incomplete; rerun the same range to retry")
+            raise SystemExit(1)
+        raise SystemExit(0)
+    while True:
+        today = datetime.now(user_zone).date()
         try:
-            if INFLUXDB_VERSION == "1":
-                last_influxdb_sync_time_UTC = pytz.utc.localize(datetime.strptime(list(influxdbclient.query(f"SELECT * FROM HeartRateIntraday ORDER BY time DESC LIMIT 1").get_points())[0]['time'],"%Y-%m-%dT%H:%M:%SZ"))
-            else:
-                last_influxdb_sync_time_UTC = pytz.utc.localize(influxdbclient.query(query="SELECT * FROM HeartRateIntraday ORDER BY time DESC LIMIT 1", language="influxql").to_pylist()[0]['time'])
+            start = store.pending_start(selected_datasets(), today)
+            fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True)
         except Exception as err:
-            logging.error(err)
-            logging.warning("No previously synced data found in local InfluxDB database, defaulting to 7 day initial fetching. Use specific start date ENV variable to bulk update past data")
-            last_influxdb_sync_time_UTC = (datetime.today() - timedelta(days=7)).astimezone(pytz.timezone("UTC"))
-        try:
-            if USER_TIMEZONE: # If provided by user, using that. 
-                local_timediff = datetime.now(tz=pytz.timezone(USER_TIMEZONE)).utcoffset()
-            else: # otherwise try to set automatically
-                last_activity_dict = garmin_obj.get_last_activity() # (very unlikely event that this will be empty given Garmin's userbase, everyone should have at least one activity)
-                local_timediff = datetime.strptime(last_activity_dict['startTimeLocal'], '%Y-%m-%d %H:%M:%S') - datetime.strptime(last_activity_dict['startTimeGMT'], '%Y-%m-%d %H:%M:%S')
-            if local_timediff >= timedelta(0):
-                logging.info("Using user's local timezone as UTC+" + str(local_timediff))
-            else:
-                logging.info("Using user's local timezone as UTC-" + str(-local_timediff))
-        except (KeyError, TypeError, IndexError, AttributeError) as err:
-            logging.warning(f"Unable to determine user's timezone - Defaulting to UTC. Consider providing TZ identifier with USER_TIMEZONE environment variable")
-            local_timediff = timedelta(hours=0)
-        
-        incomplete_sync_retries = 0
-        while True:
-            try:
-                upload_time = garmin_obj.get_device_last_used().get('lastUsedDeviceUploadTime')
-                if upload_time is None:
-                    raise ValueError("Device upload time is unavailable")
-                last_watch_sync_time_UTC = datetime.fromtimestamp(int(upload_time / 1000), tz=pytz.UTC)
-            except (GarminConnectConnectionError, requests.exceptions.RequestException, TypeError, ValueError, AttributeError, OverflowError) as err:
-                logging.warning("Unable to read the latest device sync time: %s", err)
-                time.sleep(UPDATE_INTERVAL_SECONDS)
-                continue
-            if last_influxdb_sync_time_UTC < last_watch_sync_time_UTC:
-                logging.info(f"Update found : Current watch sync time is {last_watch_sync_time_UTC} UTC")
-                sync_complete = fetch_write_bulk((last_influxdb_sync_time_UTC + local_timediff).strftime('%Y-%m-%d'), (last_watch_sync_time_UTC + local_timediff).strftime('%Y-%m-%d')) # Using local dates for deciding which dates to fetch in current iteration (see issue #25)
-                if sync_complete:
-                    last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
-                    incomplete_sync_retries = 0
-                elif incomplete_sync_retries < MAX_INCOMPLETE_SYNC_RETRIES: # Keep the old sync marker so the same date range is retried on the next update cycle
-                    incomplete_sync_retries += 1
-                    logging.warning(f"Sync marker not advanced : will retry from {last_influxdb_sync_time_UTC} UTC on the next update (retry {incomplete_sync_retries}/{MAX_INCOMPLETE_SYNC_RETRIES})")
-                else: # Give up so a persistently failing date doesn't make every future cycle re-fetch an ever-growing range
-                    logging.error(f"Sync still incomplete after {MAX_INCOMPLETE_SYNC_RETRIES} retries : advancing sync marker anyway - use MANUAL_START_DATE to backfill the skipped dates listed above")
-                    last_influxdb_sync_time_UTC = last_watch_sync_time_UTC
-                    incomplete_sync_retries = 0
-            else:
-                logging.info(f"No new data found : Current watch and influxdb sync time is {last_watch_sync_time_UTC} UTC")
-            logging.info(f"waiting for {UPDATE_INTERVAL_SECONDS} seconds before next automatic update calls")
-            time.sleep(UPDATE_INTERVAL_SECONDS)
+            logging.error("Synchronization failed (%s); retrying next cycle", type(err).__name__)
+        time.sleep(UPDATE_INTERVAL_SECONDS)
 
 
 if __name__ == "__main__":

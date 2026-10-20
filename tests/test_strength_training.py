@@ -2,7 +2,6 @@
 from unittest import mock
 
 import pytest
-from influxdb.exceptions import InfluxDBClientError
 
 from helpers import assert_valid_points, only
 
@@ -43,13 +42,13 @@ def test_exercise_sets(gf, sets):
     assert_valid_points(points)
     first, second = only(points, "StrengthExerciseSet")
     assert first["time"] == "2026-01-01T10:05:00+00:00"
-    assert first["tags"] == {"Device": gf.GARMIN_DEVICENAME, "Database_Name": gf.INFLUXDB_DATABASE, "ActivityID": 3,
+    assert first["tags"] == {"Device": gf.GARMIN_DEVICENAME, "Database_Name": gf.DATABASE_NAME, "ActivityID": 3,
                              "ActivitySelector": "20260101T100000UTC-strength_training",
                              "ExerciseCategory": "BENCH_PRESS", "ExerciseLabel": "BENCH_PRESS/BARBELL_BENCH_PRESS"}
     assert first["fields"] == {"Activity_ID": 3, "ActivityName": "Push day", "SetOrder": 1, "SetType": "ACTIVE",
                                "Reps": 8, "Weight_kg": 60.0, "Duration_s": 45.5}
     assert second["tags"]["ExerciseLabel"] == "SQUAT"  # no exercise name: category only
-    assert second["fields"]["Weight_kg"] == 0.0
+    assert second["fields"]["Weight_kg"] is None
     assert second["time"] == "2026-01-01T10:00:02+00:00"  # no start time: activity start + set counter (REST not counted)
 
 
@@ -89,60 +88,27 @@ def test_hr_zone_without_number_is_skipped_and_zone_key_is_accepted(gf, sets):
     assert [z["fields"]["ZoneNumber"] for z in zones] == [4]
 
 
-def test_hr_zone_errors_are_logged(gf, sets, caplog):
+def test_failed_zone_fetch_raises_for_retry(gf, sets):
     sets(exercise_set())
     gf.garmin_obj.get_activity_hr_in_timezones.return_value = None
-
-    points = gf.get_strength_training_data(ACTIVITY)
-
-    assert only(points, "StrengthExerciseSet") and not only(points, "StrengthHRZones")
-    assert "Failed to fetch HR zones for activity 3" in caplog.text
+    with pytest.raises(TypeError):
+        gf.get_strength_training_data(ACTIVITY)
+    gf.store.write.assert_not_called()
 
 
-def test_existing_sets_are_purged_before_refresh(gf, sets):
-    sets(exercise_set())
-
-    gf.get_strength_training_data(ACTIVITY)
-
-    gf.influxdbclient.delete_series.assert_called_once_with(measurement="StrengthExerciseSet", tags={"ActivityID": "3"})
-
-
-def test_failed_set_fetch_neither_purges_nor_drops_hr_zones(gf, caplog):
-    gf.garmin_obj.get_activity_exercise_sets.side_effect = RuntimeError("API error")
-
-    points = gf.get_strength_training_data(ACTIVITY)
-
-    gf.influxdbclient.delete_series.assert_not_called()
-    assert not only(points, "StrengthExerciseSet") and only(points, "StrengthHRZones")
-    assert "Failed to fetch exercise sets for activity 3" in caplog.text
+def test_failed_set_fetch_raises_without_persistence(gf):
+    gf.garmin_obj.get_activity_exercise_sets.side_effect = RuntimeError('API error')
+    with pytest.raises(RuntimeError):
+        gf.get_strength_training_data(ACTIVITY)
+    gf.store.write.assert_not_called()
 
 
-def test_failed_purge_skips_sets_to_avoid_duplicates(gf, sets, caplog):
-    sets(exercise_set())
-    gf.influxdbclient.delete_series.side_effect = InfluxDBClientError("delete failed")
-
-    points = gf.get_strength_training_data(ACTIVITY)
-
-    assert not only(points, "StrengthExerciseSet") and only(points, "StrengthHRZones")
-    assert "stale rows could not be purged" in caplog.text
-
-
-def test_influxdb_v3_writes_sets_without_purging(gf, sets, monkeypatch):
-    monkeypatch.setattr(gf, "INFLUXDB_VERSION", "3")
-    sets(exercise_set())
-
-    points = gf.get_strength_training_data(ACTIVITY)
-
-    gf.influxdbclient.delete_series.assert_not_called()
-    assert only(points, "StrengthExerciseSet")
-
-
-def test_client_without_delete_series_writes_sets(gf, sets, monkeypatch):
-    monkeypatch.setattr(gf, "influxdbclient", mock.MagicMock(spec=["write_points"]))
-    sets(exercise_set())
-
-    assert gf.purge_existing_strength_exercise_sets(3) is True
-    assert only(gf.get_strength_training_data(ACTIVITY), "StrengthExerciseSet")
+def test_empty_snapshot_is_explicit(gf, sets):
+    sets()
+    gf.garmin_obj.get_activity_hr_in_timezones.return_value = []
+    batch = gf.get_strength_training_data(ACTIVITY)
+    assert batch == []
+    assert batch.replacements == [('StrengthExerciseSet', 3), ('StrengthHRZones', 3)]
 
 
 def test_multiple_activities(gf, sets):
@@ -152,4 +118,14 @@ def test_multiple_activities(gf, sets):
     points = gf.get_strength_training_data(activities)
 
     assert {p["tags"]["ActivityID"] for p in points} == {3, 4}
-    assert gf.influxdbclient.delete_series.call_count == 2
+    assert len(points.replacements) == 4
+    gf.store.write.assert_not_called()
+
+
+def test_missing_strength_metrics_remain_unknown(gf, sets):
+    sets(exercise_set(weight=None,repetitionCount=None,duration=None,startTime='2026-01-01T11:00:00.123+01:00'))
+    row=only(gf.get_strength_training_data(ACTIVITY),'StrengthExerciseSet')[0]
+    assert row['fields']['Weight_kg'] is None
+    assert row['fields']['Reps'] is None
+    assert row['fields']['Duration_s'] is None
+    assert row['time']=='2026-01-01T11:00:00.123000+01:00'

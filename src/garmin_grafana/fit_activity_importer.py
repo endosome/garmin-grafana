@@ -1,4 +1,7 @@
-import garmin_fetch
+if __package__:
+    from . import garmin_fetch
+else:
+    import garmin_fetch
 
 import argparse
 import json
@@ -68,7 +71,7 @@ def get_fit_activity_summary(fit_file: FitFile) -> List[Dict[str, Any]]:
         "time": start_time.isoformat(),
         "tags": {
             "Device": file_data.get("garmin_product", "Garmin"),
-            "Database_Name": garmin_fetch.INFLUXDB_DATABASE,
+            "Database_Name": garmin_fetch.DATABASE_NAME,
             "ActivityID": activity_id,
             "ActivitySelector": activity_selector,
         },
@@ -96,7 +99,7 @@ def get_fit_activity_summary(fit_file: FitFile) -> List[Dict[str, Any]]:
         "time": end_time.isoformat(),
         "tags": {
             "Device": file_data.get("garmin_product", "Garmin"),
-            "Database_Name": garmin_fetch.INFLUXDB_DATABASE,
+            "Database_Name": garmin_fetch.DATABASE_NAME,
             "ActivityID": activity_id,
             "ActivitySelector": activity_selector,
         },
@@ -182,5 +185,5 @@ if __name__ == "__main__":
     if args.dry_run:
         print(json.dumps([start_point, end_point], indent=4))
     else:
-        garmin_fetch.write_points_to_influxdb([start_point, end_point])
-        garmin_fetch.write_points_to_influxdb(gps_points)
+        garmin_fetch.write_records([start_point, end_point])
+        garmin_fetch.write_records(gps_points)

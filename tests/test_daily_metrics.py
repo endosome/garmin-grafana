@@ -12,7 +12,7 @@ T0 = datetime(2026, 1, 1, 0, 0)
 @pytest.fixture(autouse=True)
 def device(gf, monkeypatch):
     monkeypatch.setattr(gf, "GARMIN_DEVICENAME", "Forerunner 965")
-    monkeypatch.setattr(gf, "INFLUXDB_DATABASE", "GarminStats")
+    monkeypatch.setattr(gf, "DATABASE_NAME", "GarminStats")
 
 
 def assert_standard_tags(points):

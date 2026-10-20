@@ -29,7 +29,10 @@ import logging
 import json
 import re
 import socket
-import garmin_fetch
+if __package__:
+    from . import garmin_fetch
+else:
+    import garmin_fetch
 
 # The FIT file index contains a list of all activites and
 # their date, filename, and activity type. This index makes lookups
@@ -358,7 +361,10 @@ class GarminBulkExport:
                             )
 
         logging.info("Found %d activity .fit files", len(fit_file_index))
-        cache_fit_file_index(fit_file_index, self.cached_fit_file_index)
+        try:
+            cache_fit_file_index(fit_file_index, self.cached_fit_file_index)
+        except OSError:
+            logging.warning("Optional FIT index cache is not writable; continuing without cache")
         return fit_file_index
 
     def get_device_last_used(self):
@@ -547,6 +553,7 @@ if __name__ == "__main__":
 
     # These are the only types of data that are included in the bulk export.
     garmin_fetch.FETCH_SELECTION = "daily_avg,sleep,activity,hydration"
+    garmin_fetch.SYNC_NAMESPACE = "account-export:"
 
     if not garmin_fetch.fetch_write_bulk(args.start_date, args.end_date):
         logging.error("Bulk import incomplete : some dates were skipped or writes failed")

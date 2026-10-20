@@ -5,8 +5,7 @@ import runpy
 from unittest import mock
 
 import dotenv
-import influxdb
-import influxdb_client_3
+from garmin_grafana import storage
 import pytest
 
 from helpers import GARMIN_FETCH, zip_bytes
@@ -14,8 +13,6 @@ from helpers import GARMIN_FETCH, zip_bytes
 # Every environment variable garmin_fetch reads is cleared, apart from these pinned
 # values, so a developer's shell environment can't change what the tests exercise.
 TEST_ENV = {
-    "INFLUXDB_VERSION": "1",
-    "INFLUXDB_ENDPOINT_IS_HTTP": "True",
     "RATE_LIMIT_CALLS_SECONDS": "0",
 }
 READ_ENV = sorted(set(re.findall(r'os\.(?:getenv|environ\.get)\(\s*"([A-Z0-9_]+)"', GARMIN_FETCH.read_text())))
@@ -31,8 +28,7 @@ def _pin_environment(setenv, delenv):
 def _import_garmin_fetch():
     with mock.patch.dict(os.environ), \
             mock.patch.object(dotenv, "load_dotenv", return_value=False), \
-            mock.patch.object(influxdb, "InfluxDBClient", return_value=mock.MagicMock()), \
-            mock.patch.object(influxdb_client_3, "InfluxDBClient3", return_value=mock.MagicMock()):
+            mock.patch.object(storage, "PostgresStore", return_value=mock.MagicMock()):
         _pin_environment(os.environ.__setitem__, lambda name: os.environ.pop(name, None))
         import garmin_fetch
         return garmin_fetch
@@ -43,15 +39,10 @@ _garmin_fetch = _import_garmin_fetch()
 
 @pytest.fixture
 def offline(monkeypatch):
-    """Pinned environment and mocked InfluxDB clients for tests that run garmin_fetch.py as a script.
-
-    influxdb.InfluxDBClient / influxdb_client_3.InfluxDBClient3 are MagicMocks whose
-    return_value is the client the script will use. load_dotenv is disabled.
-    """
+    """Pinned environment with mocked persistence for standalone script tests."""
     _pin_environment(monkeypatch.setenv, lambda name: monkeypatch.delenv(name, raising=False))
     monkeypatch.setattr(dotenv, "load_dotenv", mock.MagicMock(return_value=False))
-    monkeypatch.setattr(influxdb, "InfluxDBClient", mock.MagicMock(return_value=mock.MagicMock()))
-    monkeypatch.setattr(influxdb_client_3, "InfluxDBClient3", mock.MagicMock(return_value=mock.MagicMock()))
+    monkeypatch.setattr(storage, "PostgresStore", mock.MagicMock(return_value=mock.MagicMock()))
     # The script replaces the root logger's handlers and level; restore them for later tests.
     root = logging.getLogger()
     handlers, level = root.handlers[:], root.level
@@ -74,12 +65,20 @@ def load_script(offline, monkeypatch):
 
 @pytest.fixture
 def gf(monkeypatch):
-    """The garmin_fetch module with a fresh Garmin/InfluxDB mock and no sleeping.
+    """The garmin_fetch module with a fresh Garmin/persistence mock and no sleeping.
 
     Module globals the code under test mutates are restored after each test.
     """
     monkeypatch.setattr(_garmin_fetch, "garmin_obj", mock.MagicMock())
-    monkeypatch.setattr(_garmin_fetch, "influxdbclient", mock.MagicMock())
+    persisted = []
+    def capture(records, **kwargs):
+        rows = list(records)
+        persisted.extend(rows)
+        return len(rows)
+    backend = mock.MagicMock()
+    backend.write.side_effect = capture
+    backend.persisted = persisted
+    monkeypatch.setattr(_garmin_fetch, "store", backend)
     monkeypatch.setattr(_garmin_fetch, "PARSED_ACTIVITY_ID_LIST", [])
     monkeypatch.setattr(_garmin_fetch, "GARMIN_DEVICENAME", _garmin_fetch.GARMIN_DEVICENAME)
     monkeypatch.setattr(_garmin_fetch, "GARMIN_DEVICEID", _garmin_fetch.GARMIN_DEVICEID)

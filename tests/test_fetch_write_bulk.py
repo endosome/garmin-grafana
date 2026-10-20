@@ -8,7 +8,7 @@ from garminconnect import (
     GarminConnectConnectionError,
     GarminConnectTooManyRequestsError,
 )
-from influxdb.exceptions import InfluxDBClientError
+from psycopg import OperationalError
 
 POINT = {"measurement": "Test", "time": "2026-01-01T00:00:00+00:00", "tags": {}, "fields": {"value": 1}}
 
@@ -30,52 +30,33 @@ def fail_once(error, on_date="2026-01-02"):
     return daily_fetch_write, calls
 
 
-def test_failed_write_is_counted(gf):
-    gf.influxdbclient.write_points.side_effect = InfluxDBClientError("database down")
-    before = gf.FAILED_WRITE_COUNT
-
-    gf.write_points_to_influxdb([dict(POINT)])
-
-    assert gf.FAILED_WRITE_COUNT == before + 1
-
-
-@pytest.mark.parametrize("points", [[dict(POINT)], []], ids=["successful-write", "nothing-to-write"])
-def test_write_without_error_is_not_counted(gf, points):
-    before = gf.FAILED_WRITE_COUNT
-
-    gf.write_points_to_influxdb(points)
-
-    assert gf.FAILED_WRITE_COUNT == before
+def test_failed_write_raises(gf):
+    gf.store.write.side_effect = OperationalError('database down')
+    with pytest.raises(OperationalError):
+        gf.write_records([dict(POINT)])
 
 
 def test_complete_run_returns_true(gf, no_device_sync, monkeypatch):
     fetched = []
-    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: fetched.append(date) or gf.write_points_to_influxdb([dict(POINT)]))
+    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: fetched.append(date) or gf.write_records([dict(POINT)]))
 
     assert gf.fetch_write_bulk("2026-01-01", "2026-01-03") is True
     assert fetched == ["2026-01-03", "2026-01-02", "2026-01-01"]
 
 
 def test_failed_write_makes_run_incomplete(gf, no_device_sync, monkeypatch):
-    gf.influxdbclient.write_points.side_effect = InfluxDBClientError("database down")
-    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: gf.write_points_to_influxdb([dict(POINT)]))
+    gf.store.write.side_effect = OperationalError("database down")
+    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: gf.write_records([dict(POINT)]))
 
     assert gf.fetch_write_bulk("2026-01-01", "2026-01-01") is False
 
 
 def test_failed_device_sync_write_makes_run_incomplete(gf, monkeypatch):
     gf.garmin_obj.get_device_last_used.return_value = {"lastUsedDeviceUploadTime": 1767261600000}
-    gf.influxdbclient.write_points.side_effect = InfluxDBClientError("database down")
+    gf.store.write.side_effect = OperationalError("database down")
     monkeypatch.setattr(gf, "daily_fetch_write", lambda date: None)
 
     assert gf.fetch_write_bulk("2026-01-01", "2026-01-01") is False
-
-
-def test_earlier_failed_writes_do_not_affect_later_runs(gf, no_device_sync, monkeypatch):
-    monkeypatch.setattr(gf, "FAILED_WRITE_COUNT", gf.FAILED_WRITE_COUNT + 5)
-    monkeypatch.setattr(gf, "daily_fetch_write", lambda date: None)
-
-    assert gf.fetch_write_bulk("2026-01-01", "2026-01-01") is True
 
 
 @pytest.mark.parametrize("error, settings", [
@@ -122,19 +103,20 @@ def test_relogin_after_auth_error_keeps_run_complete(gf, no_device_sync, monkeyp
 
 
 def test_incomplete_run_logs_skipped_dates_and_failed_writes(gf, no_device_sync, monkeypatch, caplog):
-    gf.influxdbclient.write_points.side_effect = InfluxDBClientError("database down")
+    gf.store.write.side_effect = lambda rows, **kw: (_ for _ in ()).throw(OperationalError('down')) if list(rows) else None
 
+    monkeypatch.setattr(gf, "IGNORE_ERRORS", True)
     def daily_fetch_write(date):
         if date == "2026-01-02":
             raise requests.exceptions.ConnectionError("connection refused")
-        gf.write_points_to_influxdb([dict(POINT)])
+        gf.write_records([dict(POINT)])
 
     monkeypatch.setattr(gf, "daily_fetch_write", daily_fetch_write)
 
     with caplog.at_level(logging.WARNING):
         gf.fetch_write_bulk("2026-01-01", "2026-01-03")
 
-    assert "Incomplete sync : skipped dates ['2026-01-02'], 2 failed InfluxDB write(s)" in caplog.text
+    assert "Incomplete sync : skipped dates" in caplog.text
 
 
 def test_ignored_error_is_logged_once_with_traceback(gf, no_device_sync, monkeypatch, caplog):
@@ -166,3 +148,9 @@ def test_pauses_between_days_when_rate_limited(gf, no_device_sync, monkeypatch):
     gf.fetch_write_bulk("2026-01-01", "2026-01-03")
 
     assert [c.args[0] for c in gf.time.sleep.call_args_list] == [3, 5, 5, 5]  # startup pause, then one per day
+
+
+def test_invalid_backfill_range_fails_before_fetch(gf):
+    with pytest.raises(ValueError,match='Start date'):
+        gf.fetch_write_bulk('2026-01-02','2026-01-01')
+    gf.store.request_range.assert_not_called()

@@ -1,25 +1,57 @@
 name: Tests
-
 on:
   push:
   pull_request:
   workflow_dispatch:
   workflow_call:
-
 permissions:
   contents: read
-
 jobs:
   pytest:
-    name: pytest
     runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: timescale/timescaledb:2.26.4-pg17-oss
+        env:
+          POSTGRES_DB: garmin
+          POSTGRES_PASSWORD: test-only-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d garmin"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      influx:
+        image: influxdb:1.11
+        ports: [8086:8086]
+        options: >-
+          --health-cmd "influx -execute 'SHOW DATABASES'"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE: "1"
+      TEST_INFLUX_URL: http://localhost:8086
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGDATABASE: garmin
+      PGUSER: postgres
+      PGPASSWORD: test-only-password
     steps:
       - uses: actions/checkout@v7
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-
-      - name: Run tests with coverage
-        run: uv run --locked pytest --cov --cov-report=term-missing
+      - run: uv run --locked pytest --cov --cov-report=term-missing
+      - run: uv run --locked python scripts/validate_dashboard_queries.py
+      - name: Validate Compose and build runtime
+        env:
+          GRAFANA_PASSWORD: test-admin-password
+          GRAFANA_DB_PASSWORD: test-reader-password
+        run: |
+          docker compose -f compose-example.yml config --quiet
+          docker build -t garmin-grafana:timescale .
+      - name: Verify Grafana provisioning and queries
+        env:
+          GRAFANA_PASSWORD: test-admin-password
+          GRAFANA_DB_PASSWORD: test-reader-password
+        run: |
+          docker compose -f compose-example.yml up -d --no-build postgres migrate grafana
+          timeout 60 sh -c 'until curl -fsS http://localhost:3000/api/health >/dev/null; do sleep 2; done'
+          uv run --locked python scripts/smoke_grafana.py

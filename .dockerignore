@@ -1,0 +1,9 @@
+.git
+.venv
+.pytest_cache
+.coverage
+.env
+override-default-vars.env
+garminconnect-tokens
+__pycache__
+dist

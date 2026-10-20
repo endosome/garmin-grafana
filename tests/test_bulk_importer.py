@@ -253,6 +253,7 @@ def importer_globals(gf, monkeypatch):
     """The importer overrides garmin_fetch settings; make sure they are restored afterwards."""
     for name in ["FETCH_SELECTION", "UPDATE_INTERVAL_SECONDS", "RATE_LIMIT_CALLS_SECONDS", "ALWAYS_PROCESS_FIT_FILES", "IGNORE_ERRORS"]:
         monkeypatch.setattr(gf, name, getattr(gf, name))
+    monkeypatch.setattr(gf, "SYNC_NAMESPACE", "")
     return gf
 
 
@@ -263,7 +264,7 @@ def test_import_wellness_data(importer_globals, export_dir, monkeypatch):
 
     assert gf.fetch_write_bulk("2026-01-01", "2026-01-03") is True
 
-    points = written_points(gf.influxdbclient)
+    points = written_points(gf.store)
     assert_valid_points(points)
     assert sorted((p["measurement"], p["time"]) for p in points if p["measurement"] != "DeviceSync") == [
         ("DailyStats", "2026-01-01T00:00:00+00:00"),
@@ -281,9 +282,9 @@ def test_import_activities(importer_globals, export_dir, monkeypatch):
 
     assert gf.fetch_write_bulk("2026-01-02", "2026-01-02") is True
 
-    measurements = {p["measurement"] for p in written_points(gf.influxdbclient)}
+    measurements = {p["measurement"] for p in written_points(gf.store)}
     assert {"ActivitySummary", "ActivityGPS", "ActivitySession"} <= measurements
-    summary = next(p for p in written_points(gf.influxdbclient)
+    summary = next(p for p in written_points(gf.store)
                    if p["measurement"] == "ActivitySummary" and p["fields"].get("activityName") == "Morning Run")
     assert summary["fields"]["elapsedDuration"] == 60.0
 
@@ -297,7 +298,7 @@ def test_bulk_import_keeps_existing_strength_sets(importer_globals, export_dir, 
     }})
 
     assert points == []
-    gf.influxdbclient.delete_series.assert_not_called()
+    gf.store.delete_series.assert_not_called()
 
 
 def run_importer(monkeypatch, *args):
@@ -314,7 +315,7 @@ def test_command_line_import(importer_globals, export_dir, monkeypatch):
     assert type(gf.garmin_obj).__name__ == "GarminBulkExport"  # the script's own copy of the class
     assert gf.FETCH_SELECTION == "daily_avg,sleep,activity,hydration"
     assert (gf.RATE_LIMIT_CALLS_SECONDS, gf.ALWAYS_PROCESS_FIT_FILES, gf.IGNORE_ERRORS) == (0, True, False)
-    measurements = {p["measurement"] for p in written_points(gf.influxdbclient)}
+    measurements = {p["measurement"] for p in written_points(gf.store)}
     assert {"DailyStats", "SleepSummary", "Hydration"} <= measurements
 
 
@@ -325,7 +326,7 @@ def test_command_line_start_date_from_environment(importer_globals, export_dir, 
     run_importer(monkeypatch, "--bulk_data_path", str(export_dir), "--end_date", "2026-01-02", "--ignore_errors")
 
     assert importer_globals.IGNORE_ERRORS is True
-    dates = {p["time"][:10] for p in written_points(importer_globals.influxdbclient) if p["measurement"] == "DailyStats"}
+    dates = {p["time"][:10] for p in written_points(importer_globals.store) if p["measurement"] == "DailyStats"}
     assert dates == {"2026-01-02"}
 
 
@@ -344,3 +345,12 @@ def test_command_line_import_exits_nonzero_when_incomplete(importer_globals, exp
         run_importer(monkeypatch, "--bulk_data_path", str(export_dir), "--start_date", "2026-01-01", "--end_date", "2026-01-02")
 
     assert exit_info.value.code == 1
+
+
+def test_read_only_account_export_does_not_require_cache_writes(export_dir,monkeypatch,caplog):
+    def denied(*args):
+        raise PermissionError('read-only export mount')
+    monkeypatch.setattr(bulk,'cache_fit_file_index',denied)
+    exported=bulk.GarminBulkExport(export_dir)
+    assert len(exported.fit_file_index)==2
+    assert 'continuing without cache' in caplog.text

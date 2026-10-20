@@ -42,10 +42,10 @@ def getters(gf, monkeypatch):
     monkeypatch.setattr(gf, "get_activity_summary", mocks["activity"])
     mocks["gps"] = mock.MagicMock(return_value=[{"marker": "gps"}])
     monkeypatch.setattr(gf, "fetch_activity_GPS", mocks["gps"])
-    mocks["strength"] = mock.MagicMock(return_value=[{"marker": "strength"}])
+    mocks["strength"] = mock.MagicMock(return_value=gf.RecordBatch([{"marker": "strength"}]))
     monkeypatch.setattr(gf, "get_strength_training_data", mocks["strength"])
     mocks["write"] = mock.MagicMock()
-    monkeypatch.setattr(gf, "write_points_to_influxdb", mocks["write"])
+    monkeypatch.setattr(gf, "write_records", mocks["write"])
     return mocks
 
 
@@ -145,8 +145,8 @@ def test_refresh_then_fetch(gf, getters, refresh, status, expected_sleeps):
 def test_refresh_no_files_skips_the_day(gf, getters, refresh):
     refresh("NO_FILES_FOUND")
 
-    assert gf.daily_fetch_write(OLD_DAY) is None
-    getters["heartrate"].assert_not_called()
+    gf.daily_fetch_write(OLD_DAY)
+    getters["heartrate"].assert_called_once()
 
 
 def test_refresh_denied_waits_a_day_and_retries(gf, getters, refresh):

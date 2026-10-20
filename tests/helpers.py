@@ -5,20 +5,14 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from influxdb.line_protocol import make_lines
+from garmin_grafana.domain import Record
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "garmin_grafana"
 GARMIN_FETCH = SRC / "garmin_fetch.py"
 
 
 def assert_valid_points(points):
-    """Asserts points would be accepted by InfluxDB as a single write.
-
-    Every point needs a measurement, a time and at least one non-None field (a point
-    without fields encodes to an invalid line that fails the whole batch). A field
-    must not mix integer and float values within a measurement, which InfluxDB
-    rejects as a field type conflict. Finally the points must encode to line protocol.
-    """
+    """Validate connector envelopes, consistent field types and domain normalization."""
     field_types = defaultdict(set)
     for point in points:
         assert point.get("measurement"), point
@@ -30,8 +24,8 @@ def assert_valid_points(points):
             field_types[(point["measurement"], key)].add(kind)
     conflicts = {key: kinds for key, kinds in field_types.items() if len(kinds) > 1}
     assert not conflicts, f"field type conflicts: {conflicts}"
-    lines = make_lines({"points": points}).strip().split("\n") if points else []
-    assert len(lines) == len(points)
+    for point in points:
+        Record.from_mapping(point)
 
 
 def only(points, measurement):
@@ -59,5 +53,6 @@ def zip_bytes(files):
 
 
 def written_points(client):
-    """All points passed to a mocked InfluxDB v1 client's write_points, in order."""
-    return [p for call in client.write_points.call_args_list for p in call.args[0]]
+    """Expose persisted domain records in the collector shape for regression assertions."""
+    return [dict(measurement=r.dataset, time=r.original_time, tags=r.tags, fields=r.values)
+            for r in client.persisted]

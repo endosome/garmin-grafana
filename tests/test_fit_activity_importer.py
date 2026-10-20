@@ -42,7 +42,7 @@ def test_summary_points(gf):
     assert_valid_points([start, end])
     assert start["time"] == "2026-01-01T10:00:00+00:00"
     assert end["time"] == "2026-01-01T10:30:30+00:00"  # whole seconds of total_elapsed_time
-    assert start["tags"] == {"Device": "Garmin", "Database_Name": gf.INFLUXDB_DATABASE, "ActivityID": activity_id,
+    assert start["tags"] == {"Device": "Garmin", "Database_Name": gf.DATABASE_NAME, "ActivityID": activity_id,
                              "ActivitySelector": "20260101T100000UTC-running"}
     assert start["fields"] == {
         "Device_ID": 1234, "activityType": "running", "activityName": "Running 2026-01-01", "distance": 5000.0,
@@ -103,7 +103,7 @@ def test_command_line_dry_run(gf, monkeypatch, tmp_path, capsys):
 
     start, end = json.loads(capsys.readouterr().out)
     assert start["fields"]["activityName"] == "Running 2026-01-01" and end["fields"]["activityName"] == "END"
-    gf.influxdbclient.write_points.assert_not_called()
+    gf.store.write.assert_not_called()
 
 
 def test_command_line_import_writes_summary_and_records(gf, monkeypatch, tmp_path):
@@ -112,7 +112,7 @@ def test_command_line_import_writes_summary_and_records(gf, monkeypatch, tmp_pat
 
     run_importer(monkeypatch, "--fit_file", str(path))
 
-    points = written_points(gf.influxdbclient)
+    points = written_points(gf.store)
     assert_valid_points(points)
     assert [p["measurement"] for p in points].count("ActivitySummary") == 2
     assert [p["fields"]["HeartRate"] for p in points if p["measurement"] == "ActivityGPS"] == [140.0, 141.0]

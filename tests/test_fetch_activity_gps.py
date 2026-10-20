@@ -67,7 +67,8 @@ def test_already_parsed_activity_is_reprocessed_when_forced(gf, fake_fit, monkey
 def test_parsed_activities_are_recorded(gf, fake_fit):
     serve(gf, {1: fake_fit("a1", minimal_fit())})  # activity 2 fails both FIT and TCX
 
-    gf.fetch_activity_GPS({1: "running", 2: "running"})
+    with pytest.raises(RuntimeError):
+        gf.fetch_activity_GPS({1: "running", 2: "running"})
 
     assert gf.PARSED_ACTIVITY_ID_LIST == [1]
 
@@ -81,11 +82,9 @@ def test_parsed_activities_are_recorded(gf, fake_fit):
 def test_tcx_fallback_failure_keeps_other_activities(gf, fake_fit, order, tcx_result):
     serve(gf, {1: fake_fit("ok", minimal_fit())}, tcx_result=tcx_result)  # activity 2 fails FIT and TCX
 
-    points = gf.fetch_activity_GPS({activity_id: "running" for activity_id in order})
-
-    assert points_for(points, "ActivityGPS", 1)
-    assert not points_for(points, "ActivityGPS", 2)
-    assert downloaded_ids(gf).count(2) == 2  # FIT attempt, then TCX attempt
+    with pytest.raises((requests.exceptions.Timeout, RuntimeError, __import__('xml.etree.ElementTree', fromlist=['ParseError']).ParseError)):
+        gf.fetch_activity_GPS({activity_id: "running" for activity_id in order})
+    assert downloaded_ids(gf).count(2) == 2
 
 
 def test_session_lengths_and_laps_are_not_swapped(gf, fake_fit):

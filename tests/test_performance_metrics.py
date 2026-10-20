@@ -250,5 +250,6 @@ def test_lifestyle_journal(gf):
 def test_lifestyle_errors_are_swallowed(gf, caplog):
     gf.garmin_obj.get_lifestyle_logging_data.side_effect = RuntimeError("endpoint unavailable")
 
-    assert gf.get_lifestyle_data(DAY) == []
+    with pytest.raises(RuntimeError):
+        gf.get_lifestyle_data(DAY)
     assert "Failed to fetch Lifestyle Journaling data" in caplog.text

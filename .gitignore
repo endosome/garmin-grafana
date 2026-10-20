@@ -11,3 +11,7 @@ __pycache__
 .venv/
 .pytest_cache/
 .coverage
+.env
+*.whl
+dist/
+htmlcov/

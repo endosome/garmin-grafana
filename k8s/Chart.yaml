@@ -1,11 +1,6 @@
 apiVersion: v2
 name: garmin-grafana
-description: Helm chart for the arpanghosh8453/garmin-grafana
+description: Garmin ingestion, PostgreSQL with TimescaleDB, and Grafana
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "0.6.0"
-dependencies:
-  - name: grafana
-    version: 9.2.7
-    repository: https://grafana.github.io/helm-charts
-    condition: grafana.enabled

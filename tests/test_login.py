@@ -64,6 +64,7 @@ def test_prompts_for_missing_credentials_and_mfa(gf, garmin_cls, monkeypatch):
     monkeypatch.setattr(gf, "GARMINCONNECT_PASSWORD", None)
     answers = iter(["  typed@example.com ", " typed-secret ", " 123456 "])
     monkeypatch.setattr("builtins.input", lambda prompt: next(answers))
+    monkeypatch.setattr(gf.getpass, "getpass", lambda prompt: next(answers))
     token_client, credential_client = mock.MagicMock(), mock.MagicMock()
     token_client.login.side_effect = FileNotFoundError
     garmin_cls.side_effect = [token_client, credential_client]

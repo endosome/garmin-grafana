@@ -29,29 +29,29 @@ To set up the project locally:
    ```
 2. **Install dependencies:**
 
-   Ensure you have Python 3.12+ and uv package manager installed. Then, install the required packages:
+   Ensure you have Python 3.13 and uv package manager installed. Then, install the required packages:
 
    ```bash
    uv sync --locked
    ```
 
-   Alternatively, you can use the `pyproject.toml` file to install the dependencies with pip.  
-   
+   Alternatively, you can use the `pyproject.toml` file to install the dependencies with pip.
+
 3. **Configure environment variables:**
 
-   Create a `override-default-vars.env` file in the root directory and add necessary ENV variables (make sure to add this to the .gitignore file so you don't accidentally commit that file). You can also export the ENV varibles to the shell environment directly.  
-   
-4. **Set up external InfluxDB and Grafana with Containers**
+   Create a `override-default-vars.env` file in the root directory and add necessary ENV variables (make sure to add this to the .gitignore file so you don't accidentally commit that file). You can also export the ENV varibles to the shell environment directly.
 
-   You should deploy an external InfluxDB database and Grafana container for full test environment setup. This is important if you are adding now measurement or modifying an existing one.  
-   
+4. **Set up external PostgreSQL + TimescaleDB and Grafana with Containers**
+
+   You should deploy an external PostgreSQL + TimescaleDB database and Grafana container for full test environment setup. This is important if you are adding now measurement or modifying an existing one.
+
 5. **Run the application:**
 
    ```bash
-   uv run src/garmin_grafana/garmin_fetch.py
+   uv run garmin-fetch
    ```
-   
-   This should start fetching data from Garmin and populate your InfluxDB database.
+
+   This should start fetching data from Garmin and populate your PostgreSQL + TimescaleDB database.
 
 6. **Run the tests:**
 
@@ -61,12 +61,12 @@ To set up the project locally:
    uv run pytest -k sleep -x      # tests matching "sleep", stop at the first failure
    ```
 
-   The tests mock Garmin Connect and InfluxDB, so they need neither, and they ignore your `override-default-vars.env`. They also run on every push and pull request (`.github/workflows/tests.yml`). Please add or update tests in `tests/` when you fix a bug or change how data is parsed. A few conventions:
+   Unit tests mock Garmin and persistence; integration tests require disposable TimescaleDB and InfluxDB instances. See [development.md](../docs/development.md) for the full coverage command. Tests ignore your `override-default-vars.env`. They also run on every push and pull request (`.github/workflows/tests.yml`). Please add or update tests in `tests/` when you fix a bug or change how data is parsed. A few conventions:
 
-   * Check new measurements with `helpers.assert_valid_points`, which verifies the points encode to InfluxDB line protocol, have at least one field, and don't mix integer and float values in a field.
+   * Check new measurements with `helpers.assert_valid_points`, which verifies the points normalize to domain records, have at least one field, and don't mix integer and float values in a field.
    * Build FIT test data with `tests/fit_builder.py` (it writes real FIT files that fitparse reads) rather than mocking the parser.
    * Known bugs are recorded as strict `xfail` tests with the reason. When you fix one, pytest reports it as `XPASS(strict)` and fails: remove the `xfail` marker in the same change.
-   
+
 
 ## How to Contribute
 
@@ -115,7 +115,7 @@ garmin-grafana/
 ├── Grafana_Dashboard/     # Pre-configured Grafana dashboards
 ├── Grafana_Datasource/    # Grafana data source configurations
 ├── src/garmin_grafana/    # Main application source code
-├── tests/                 # pytest suite (mocks Garmin Connect and InfluxDB)
+├── tests/                 # pytest suite (mocks Garmin Connect and PostgreSQL + TimescaleDB)
 ├── .gitignore             # Git ignore rules
 ├── Dockerfile             # Docker configuration
 ├── README.md              # Project overview and instructions
@@ -143,3 +143,5 @@ We appreciate your interest in contributing to Garmin-Grafana. Your efforts help
 
 ---
 
+
+See [developer instructions](../docs/development.md) for schema migrations and the real database coverage suite.
