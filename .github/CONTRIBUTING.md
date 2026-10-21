@@ -61,7 +61,7 @@ To set up the project locally:
    uv run pytest -k sleep -x      # tests matching "sleep", stop at the first failure
    ```
 
-   Unit tests mock Garmin and persistence; integration tests require disposable TimescaleDB and InfluxDB instances. See [development.md](../docs/development.md) for the full coverage command. Tests ignore your `override-default-vars.env`. They also run on every push and pull request (`.github/workflows/tests.yml`). Please add or update tests in `tests/` when you fix a bug or change how data is parsed. A few conventions:
+   Unit tests mock Garmin and persistence; integration tests require a disposable TimescaleDB instance. See [development.md](../docs/development.md) for the full coverage command. Tests ignore your `override-default-vars.env`. They also run on every push and pull request (`.github/workflows/tests.yml`). Please add or update tests in `tests/` when you fix a bug or change how data is parsed. A few conventions:
 
    * Check new measurements with `helpers.assert_valid_points`, which verifies the points normalize to domain records, have at least one field, and don't mix integer and float values in a field.
    * Build FIT test data with `tests/fit_builder.py` (it writes real FIT files that fitparse reads) rather than mocking the parser.
