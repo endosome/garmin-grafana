@@ -642,7 +642,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Stress\" FROM (SELECT time AS time, health_number(fields, 'stressLevel') AS value FROM all_records WHERE dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Stress\" FROM (SELECT time AS time, health_number(fields, 'stressLevel') AS value FROM all_records WHERE (health_number(fields, 'stressLevel')) IS NOT NULL AND dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -654,7 +654,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Body Battery\" FROM (SELECT time AS time, health_number(fields, 'BodyBatteryLevel') AS value FROM all_records WHERE dataset='BodyBatteryIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Body Battery\" FROM (SELECT time AS time, health_number(fields, 'BodyBatteryLevel') AS value FROM all_records WHERE (health_number(fields, 'BodyBatteryLevel')) IS NOT NULL AND dataset='BodyBatteryIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -1655,7 +1655,7 @@
           },
           "refId": "E",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Sleeping Movement Activity\" FROM (SELECT time AS time, health_number(fields, 'SleepMovementActivityLevel') AS value FROM all_records WHERE dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Sleeping Movement Activity\" FROM (SELECT time AS time, health_number(fields, 'SleepMovementActivityLevel') AS value FROM all_records WHERE (health_number(fields, 'SleepMovementActivityLevel')) IS NOT NULL AND dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2021,7 +2021,7 @@
           },
           "refId": "C",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Sleeping Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'heartRate') AS value FROM all_records WHERE dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Sleeping Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'heartRate') AS value FROM all_records WHERE (health_number(fields, 'heartRate')) IS NOT NULL AND dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2033,7 +2033,7 @@
           },
           "refId": "D",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"SpO2\" FROM (SELECT time AS time, health_number(fields, 'spo2Reading') AS value FROM all_records WHERE dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"SpO2\" FROM (SELECT time AS time, health_number(fields, 'spo2Reading') AS value FROM all_records WHERE (health_number(fields, 'spo2Reading')) IS NOT NULL AND dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2045,7 +2045,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"HRV\" FROM (SELECT time AS time, health_number(fields, 'hrvValue') AS value FROM all_records WHERE dataset='HRV_Intraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"HRV\" FROM (SELECT time AS time, health_number(fields, 'hrvValue') AS value FROM all_records WHERE (health_number(fields, 'hrvValue')) IS NOT NULL AND dataset='HRV_Intraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2682,7 +2682,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"calories\" FROM (SELECT time AS time, health_number(fields, 'calories') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"calories\" FROM (SELECT time AS time, health_number(fields, 'calories') AS value FROM all_records WHERE (health_number(fields, 'calories')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2694,7 +2694,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"BMR calories\" FROM (SELECT time AS time, health_number(fields, 'bmrCalories') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"BMR calories\" FROM (SELECT time AS time, health_number(fields, 'bmrCalories') AS value FROM all_records WHERE (health_number(fields, 'bmrCalories')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -2976,7 +2976,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'distance') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'distance') AS value FROM all_records WHERE (health_number(fields, 'distance')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3144,7 +3144,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'elapsedDuration') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'elapsedDuration') AS value FROM all_records WHERE (health_number(fields, 'elapsedDuration')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3344,7 +3344,7 @@
           },
           "refId": "I",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE (health_number(fields, 'Latitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3356,7 +3356,7 @@
           },
           "refId": "J",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE (health_number(fields, 'Longitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3368,7 +3368,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE (health_number(fields, 'HeartRate')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3380,7 +3380,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"speed (Km/h)\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"speed (Km/h)\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE ((health_number(fields, 'Speed')) * 3.6) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3598,7 +3598,7 @@
           },
           "refId": "I",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE (health_number(fields, 'Latitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3610,7 +3610,7 @@
           },
           "refId": "J",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE (health_number(fields, 'Longitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3622,7 +3622,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE (health_number(fields, 'HeartRate')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3634,7 +3634,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"speed\" FROM (SELECT time AS time, health_number(fields, 'Speed') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"speed\" FROM (SELECT time AS time, health_number(fields, 'Speed') AS value FROM all_records WHERE (health_number(fields, 'Speed')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3779,7 +3779,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"HR\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE (health_number(fields, 'HeartRate')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -3931,7 +3931,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Cadence\" FROM (SELECT time AS time, (health_number(fields, 'Cadence')) * 2 AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Cadence\" FROM (SELECT time AS time, (health_number(fields, 'Cadence')) * 2 AS value FROM all_records WHERE ((health_number(fields, 'Cadence')) * 2) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4101,7 +4101,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'Distance') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'Distance') AS value FROM all_records WHERE (health_number(fields, 'Distance')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4113,7 +4113,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE (health_number(fields, 'HeartRate')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4125,7 +4125,7 @@
           },
           "refId": "C",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Pace\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Pace\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE ((health_number(fields, 'Speed')) * 3.6) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4137,7 +4137,7 @@
           },
           "refId": "D",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'DurationSeconds') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'DurationSeconds') AS value FROM all_records WHERE (health_number(fields, 'DurationSeconds')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4297,7 +4297,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Speed (Km/h)\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Speed (Km/h)\" FROM (SELECT time AS time, (health_number(fields, 'Speed')) * 3.6 AS value FROM all_records WHERE ((health_number(fields, 'Speed')) * 3.6) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4309,7 +4309,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Heart Rate\" FROM (SELECT time AS time, health_number(fields, 'HeartRate') AS value FROM all_records WHERE (health_number(fields, 'HeartRate')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4468,7 +4468,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"m/s\" FROM (SELECT time AS time, health_number(fields, 'Speed') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"m/s\" FROM (SELECT time AS time, health_number(fields, 'Speed') AS value FROM all_records WHERE (health_number(fields, 'Speed')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4480,7 +4480,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'DurationSeconds') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'DurationSeconds') AS value FROM all_records WHERE (health_number(fields, 'DurationSeconds')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4713,7 +4713,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Altitude\" FROM (SELECT time AS time, health_number(fields, 'Altitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"Altitude\" FROM (SELECT time AS time, health_number(fields, 'Altitude') AS value FROM all_records WHERE (health_number(fields, 'Altitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' IN (${ActivityGPS:sqlstring}) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -4978,7 +4978,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Activity Type\" FROM (SELECT time, value AS \"Activity Type\" FROM (SELECT time AS time, fields->>'activityType' AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Activity Type\" FROM (SELECT time, value AS \"Activity Type\" FROM (SELECT time AS time, fields->>'activityType' AS value FROM all_records WHERE (fields->>'activityType') IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -4990,7 +4990,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Duration\" FROM (SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'elapsedDuration') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Duration\" FROM (SELECT time, value AS \"Duration\" FROM (SELECT time AS time, health_number(fields, 'elapsedDuration') AS value FROM all_records WHERE (health_number(fields, 'elapsedDuration')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -5002,7 +5002,7 @@
           },
           "refId": "C",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Max HR\" FROM (SELECT time, value AS \"Max HR\" FROM (SELECT time AS time, health_number(fields, 'maxHR') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Max HR\" FROM (SELECT time, value AS \"Max HR\" FROM (SELECT time AS time, health_number(fields, 'maxHR') AS value FROM all_records WHERE (health_number(fields, 'maxHR')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -5014,7 +5014,7 @@
           },
           "refId": "E",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Max Speed\" FROM (SELECT time, value AS \"Max Speed\" FROM (SELECT time AS time, (health_number(fields, 'maxSpeed')) * 3.6 AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Max Speed\" FROM (SELECT time, value AS \"Max Speed\" FROM (SELECT time AS time, (health_number(fields, 'maxSpeed')) * 3.6 AS value FROM all_records WHERE ((health_number(fields, 'maxSpeed')) * 3.6) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -5026,7 +5026,7 @@
           },
           "refId": "F",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Distance\" FROM (SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'distance') AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Distance\" FROM (SELECT time, value AS \"Distance\" FROM (SELECT time AS time, health_number(fields, 'distance') AS value FROM all_records WHERE (health_number(fields, 'distance')) IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -5038,7 +5038,7 @@
           },
           "refId": "D",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Location\" FROM (SELECT time, value AS \"Location\" FROM (SELECT time AS time, fields->>'locationName' AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Location\" FROM (SELECT time, value AS \"Location\" FROM (SELECT time AS time, fields->>'locationName' AS value FROM all_records WHERE (fields->>'locationName') IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityType' != 'No Activity' ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -5149,7 +5149,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Activity Timeline\" FROM (SELECT time, value AS \"Activity Timeline\" FROM (SELECT time AS time, fields->>'activityType' AS value FROM all_records WHERE dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
+          "rawSql": "SELECT q.\"time\" AS \"Time\", q.\"Activity Timeline\" FROM (SELECT time, value AS \"Activity Timeline\" FROM (SELECT time AS time, fields->>'activityType' AS value FROM all_records WHERE (fields->>'activityType') IS NOT NULL AND dataset='ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time) q ORDER BY \"Time\" ASC",
           "format": "table",
           "editorMode": "code",
           "hide": false
@@ -6880,7 +6880,7 @@
           },
           "refId": "I",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE (health_number(fields, 'Latitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -6892,7 +6892,7 @@
           },
           "refId": "J",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE (health_number(fields, 'Longitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
