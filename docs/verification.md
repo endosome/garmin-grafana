@@ -157,3 +157,19 @@ This is Python line/branch coverage for the configured application package. It
 does not establish browser rendering, real Garmin API behavior, every data
 combination, or production performance; the live acceptance checklist remains
 open. No real credentials or health data were used.
+
+## Live account and legacy-deployment comparison (2026-10-25)
+
+- Real Garmin account into a private validation database: interactive login with
+  MFA, then a persisted-token run over 4 days (13 datasets, 25 records, 20,562
+  samples, 52 checkpoints). A repeat run left counts unchanged. A null
+  `dailyLogsReport` lifestyle response caused a `TypeError`; fixed with tests.
+- `pg_dump -Fc` restored into a second database (with `timescaledb_pre_restore` /
+  `post_restore`): counts, five migrations and hypertable matched.
+- Existing InfluxDB 1.11 instance imported into a scratch database;
+  `legacy_import --validate` exit 0; 169 queries pass through Grafana. Dashboard
+  differences (null rows, empty hourly buckets) were fixed and the panels were
+  confirmed visually against the old Grafana. Full suite: 440 passed, 100% coverage.
+- Operator-confirmed against Garmin Connect: activity calories/BMR and sleep stages.
+- Not covered: long historical backfill, long-running incremental loop,
+  Kubernetes, CI on the remote, release image.

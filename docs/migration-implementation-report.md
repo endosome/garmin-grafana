@@ -234,4 +234,30 @@ database (TimescaleDB 2.26.4 / PG 17, separate from any existing data):
   queries pass through Grafana against live data. **A2 (browser inspection) is
   still open.**
 - Full suite after the fix: 440 passed, 100% coverage.
-- A4 and A5 are not performed: no Influx migration was run, no CI run or release.
+- A4 and A5 are not performed for production: no cutover, CI run or release.
+
+### Comparison with the running InfluxDB deployment, 2026-10-25
+
+The `main` instance's InfluxDB 1.11 (read-only HTTP) was imported with
+`legacy_import` into a scratch database, and its dashboards were compared with
+the old Grafana side by side. `legacy_import --validate` passed. Differences found
+and fixed, all in row presence rather than values:
+
+- **Null rows.** InfluxDB never returned a point for a field it lacks (for example
+  the activity END marker has no `calories`); the JSONB model returned a NULL row.
+  Means were diluted, bar charts had an extra bar and lines had gaps. The 38
+  single-field series in 17 panels now filter `value IS NOT NULL`. Activity
+  calorie means over 7/30/90 days equal InfluxQL exactly.
+- **Empty hourly buckets.** InfluxQL `GROUP BY time(1h)` returns empty hours as
+  nulls and Sleep Regularity paints them gray. The query now generates every
+  bucket in the dashboard range.
+- Operator checks against Garmin Connect: activity calories/BMR agree. Sleep
+  stages agree. On the 2026-10-25 DST-change night Connect shows the bed time
+  with one winter offset (1:16) while the dashboard shows the real wall clock
+  (02:16); the stored UTC timestamps are identical to InfluxDB's.
+- Known upstream quirk, intentionally unchanged: Sleep Regularity takes the hourly
+  median of a 0-3 stage level on a 0-0.6 color scale, so it cannot distinguish
+  light, REM and awake sleep. The sleep-movement series is one hour wider than the
+  stage series on each side on the DST night (same on the old deployment).
+- `DemoPoint` (upstream demo writes, ~58k rows) and the `%` battery measurement were
+  imported; exclude `DemoPoint` with `--measurement` in a real cutover.
