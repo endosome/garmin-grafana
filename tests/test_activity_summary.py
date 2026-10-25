@@ -54,7 +54,7 @@ def test_summary_fields_and_tags(gf, monkeypatch):
     assert [fields[f"hrZoneLowBoundary_{i}"] for i in range(1, 6)] == [100, None, 140, None, None]
     assert end_point["tags"] == start_point["tags"]
     assert end_point["fields"] == {"Activity_ID": 1, "Device_ID": 99, "activityName": "END", "activityType": "No Activity"}
-    assert (gps_ids, strength_ids) == ({}, {})
+    assert (gps_ids, strength_ids) == ({1: "running"}, {})  # no GPS, but ALWAYS_PROCESS_FIT_FILES defaults on
 
 
 @pytest.mark.parametrize("bad_zone", [{"zoneNumber": 0}, {"zoneNumber": 6}, {"zoneNumber": None}, {}, {"zoneNumber": "x"}])

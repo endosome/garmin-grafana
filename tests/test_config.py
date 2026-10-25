@@ -21,10 +21,9 @@ def test_defaults(load_script):
     assert config["ACTIVITY_TYPE_FILTER"] == []
     assert config["LACTATE_THRESHOLD_SPORTS"] == ["RUNNING"]
     assert config["MANUAL_START_DATE"] is None
-    for flag in ["KEEP_FIT_FILES", "ALWAYS_PROCESS_FIT_FILES", "REQUEST_INTRADAY_DATA_REFRESH",
-                 "IGNORE_ERRORS", "GARMINCONNECT_IS_CN"]:
+    for flag in ["KEEP_FIT_FILES", "REQUEST_INTRADAY_DATA_REFRESH", "IGNORE_ERRORS", "GARMINCONNECT_IS_CN"]:
         assert config[flag] is False, flag
-    for flag in ["FORCE_REPROCESS_ACTIVITIES"]:
+    for flag in ["FORCE_REPROCESS_ACTIVITIES", "ALWAYS_PROCESS_FIT_FILES"]:
         assert config[flag] is True, flag
 
 
@@ -32,8 +31,8 @@ def test_defaults(load_script):
     ("True", True), ("true", True), ("TRUE", True), ("t", True), ("T", True), ("yes", True), ("YES", True), ("1", True),
     ("False", False), ("false", False), ("0", False), ("no", False), ("", False), ("enabled", False),
 ])
-@pytest.mark.parametrize("flag", ["KEEP_FIT_FILES", "ALWAYS_PROCESS_FIT_FILES", "REQUEST_INTRADAY_DATA_REFRESH",
-                                  "IGNORE_ERRORS", "GARMINCONNECT_IS_CN"])
+@pytest.mark.parametrize("flag", ["KEEP_FIT_FILES", "REQUEST_INTRADAY_DATA_REFRESH", "IGNORE_ERRORS",
+                                  "GARMINCONNECT_IS_CN"])
 def test_opt_in_flags(load_script, flag, value, expected):
     assert load_script(**{flag: value})[flag] is expected
 
@@ -42,7 +41,7 @@ def test_opt_in_flags(load_script, flag, value, expected):
     ("False", False), ("false", False), ("FALSE", False), ("f", False), ("F", False), ("no", False), ("NO", False), ("0", False),
     ("True", True), ("1", True), ("", True), ("disabled", True),
 ])
-@pytest.mark.parametrize("flag", ["FORCE_REPROCESS_ACTIVITIES"])
+@pytest.mark.parametrize("flag", ["FORCE_REPROCESS_ACTIVITIES", "ALWAYS_PROCESS_FIT_FILES"])
 def test_opt_out_flags(load_script, flag, value, expected):
     assert load_script(**{flag: value})[flag] is expected
 

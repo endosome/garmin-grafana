@@ -79,7 +79,7 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `FETCH_SELECTION` | Comma-separated enabled datasets; see below |
 | `ACTIVITY_TYPE_FILTER` | Comma-separated Garmin activity type keys; empty imports all |
 | `KEEP_FIT_FILES`, `FIT_FILE_STORAGE_LOCATION` | Retain original downloaded recordings; False, ~/fit_filestore |
-| `ALWAYS_PROCESS_FIT_FILES` | Parse indoor activities too, False |
+| `ALWAYS_PROCESS_FIT_FILES` | Parse indoor activities without GPS too, True; set False to parse only activities with GPS |
 | `FORCE_REPROCESS_ACTIVITIES` | Reprocess activity files for corrections, True; disabling may miss edits |
 | `REQUEST_INTRADAY_DATA_REFRESH` | Request older Garmin intraday files, False; Garmin may impose a daily limit |
 | `IGNORE_INTRADAY_DATA_REFRESH_DAYS` | Recent days excluded from that request, 30 |
