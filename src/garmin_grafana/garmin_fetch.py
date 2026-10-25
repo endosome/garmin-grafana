@@ -1490,7 +1490,7 @@ def get_lifestyle_data(date_str):
         logging.info(f"Fetching Lifestyle Journaling data for date {date_str}")
         journal_data = garmin_obj.get_lifestyle_logging_data(date_str)
         
-        daily_logs = journal_data.get('dailyLogsReport', [])
+        daily_logs = (journal_data or {}).get('dailyLogsReport') or []
         
         for log in daily_logs:
             behavior_name = log.get('name') or log.get('behavior')

@@ -247,6 +247,13 @@ def test_lifestyle_journal(gf):
     assert all(p["time"] == MIDNIGHT and p["measurement"] == "LifestyleJournal" for p in points)
 
 
+@pytest.mark.parametrize("response", [None, {}, {"dailyLogsReport": None}])
+def test_lifestyle_journal_without_logs(gf, response):
+    gf.garmin_obj.get_lifestyle_logging_data.return_value = response
+
+    assert gf.get_lifestyle_data(DAY) == []
+
+
 def test_lifestyle_errors_are_swallowed(gf, caplog):
     gf.garmin_obj.get_lifestyle_logging_data.side_effect = RuntimeError("endpoint unavailable")
 

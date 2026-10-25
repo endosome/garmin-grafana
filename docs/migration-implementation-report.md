@@ -212,3 +212,26 @@ New tests cover fresh-schema installation, atomic failed DDL upgrades, activity
 retry/cache recovery, package execution and the documented module commands. See
 the verification report for the detailed scenarios and acceptance boundaries.
 Live Garmin and browser acceptance remain open despite complete measured coverage.
+
+## Follow-up: live validation, 2026-10-25
+
+Executed by the operator and assistant against a private, disposable validation
+database (TimescaleDB 2.26.4 / PG 17, separate from any existing data):
+
+- **A1 (partly done):** interactive login with MFA via `scripts/garmin_login.py`,
+  then `garmin-fetch` with a 4-day manual range using the persisted token (no
+  reauthentication). All 13 default datasets produced 25 records, 20,562 samples
+  and 52 checkpoints. A repeat run left the counts unchanged (idempotent). The
+  repeat run exposed a bug: `get_lifestyle_data` raised `TypeError` when Garmin
+  returned `dailyLogsReport: null`. It is fixed with regression tests; the retried
+  run succeeded without errors. Still open: a longer historical backfill and a
+  long-running (non-manual) incremental loop.
+- **A3 (done for PostgreSQL):** `pg_dump -Fc` restored into a second database with
+  `timescaledb_pre_restore`/`post_restore`; row counts, five migrations, extension
+  version and hypertable matched. Token and Grafana-customization backup are not
+  exercised.
+- **Grafana:** datasource healthy as the SELECT-only `grafana_reader`; all 169
+  queries pass through Grafana against live data. **A2 (browser inspection) is
+  still open.**
+- Full suite after the fix: 440 passed, 100% coverage.
+- A4 and A5 are not performed: no Influx migration was run, no CI run or release.
