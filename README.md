@@ -142,13 +142,11 @@ retention, compression, or automatic deletion policy is installed.
 ## Development and other deployments
 
 Python 3.13 and uv are required for development. See [developer instructions](docs/development.md),
-[architecture](docs/architecture.md), and [Kubernetes / Helm](k8s/README.md).
+and [architecture](docs/architecture.md).
 See the [implementation and outstanding-work report](docs/migration-implementation-report.md)
 for the change inventory and production acceptance checklist.
 See the [executed verification report](docs/verification.md) for test results and
-unverified acceptance boundaries. The standalone [Kubernetes example](kubernetes-spec-example.yaml) is rendered from
-the chart and includes both dashboards. Kubernetes resources have been rendered
-and linted; consult the verification report for deployment test limitations.
+unverified acceptance boundaries.
 
 ## Portable data export
 

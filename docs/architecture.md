@@ -11,7 +11,7 @@ Influx configuration; a heart-rate-based global checkpoint; retries eventually
 advancing despite missing days; destructive strength deletion before persistence;
 mutable exercise labels in identity; swallowed API failures; dashboard builder
 queries accompanied by stale, inactive raw queries; single-account dashboards;
-world-writable installer tokens; Kubernetes ephemeral storage defaults.
+world-writable installer tokens.
 
 Milestones: (1) typed records, versioned schema and persistence; (2) dataset/day
 synchronization and collector isolation; (3) SQL dashboards and deployment;

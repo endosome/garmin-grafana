@@ -22,7 +22,6 @@ data. Existing user services/databases and historical volumes were not modified.
 | `uv build` | Wheel and source distribution built; SQL migrations included |
 | `python -m compileall -q src scripts` | Passed |
 | `bash -n easy-install.sh` | Passed |
-| `helm lint k8s` / `helm template garmin k8s` | Passed; standalone manifest regenerated |
 | `git diff --check` | Passed |
 
 Full suite command (test-only passwords and endpoints):
@@ -68,8 +67,6 @@ Not independently verified:
   availability, or third-party panel visual appearance. Grafana server/API and
   plugin registration checks are not a substitute for those UI checks. Follow
   the developer guide's reproducible manual smoke checklist.
-- Actual Kubernetes scheduling, PVC storage-driver behavior or MFA token transfer.
-  Helm lint/render and Compose execution do not establish cluster readiness.
 - Multi-year production-scale import throughput, storage growth, backups restored
   from a real installation, or upgrades between PostgreSQL major versions.
 - InfluxDB 3 import and non-default retention-policy conversion; see the migration
@@ -172,4 +169,4 @@ open. No real credentials or health data were used.
   confirmed visually against the old Grafana. Full suite: 440 passed, 100% coverage.
 - Operator-confirmed against Garmin Connect: activity calories/BMR and sleep stages.
 - Not covered: long historical backfill, long-running incremental loop,
-  Kubernetes, CI on the remote, release image.
+  CI on the remote, release image.

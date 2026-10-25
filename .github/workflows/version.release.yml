@@ -46,14 +46,3 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-
-      - name: Build Helm Chart
-        run: |
-          cd k8s
-          helm plugin install https://github.com/melmorabity/helm-kubeconform --version 0.6.4.1 --verify=false
-          helm dependency build
-          helm kubeconform --skip CustomResourceDefinition --summary .
-          helm package . -d helm/charts --version ${{ env.IMAGE_TAG }}-helm
-          helm repo index helm/charts --url https://${{ github.repository_owner }}.github.io/garmin-grafana
-          helm push helm/charts/garmin-grafana-${{ env.IMAGE_TAG }}-helm.tgz \
-              oci://ghcr.io/${{ github.repository_owner }}/

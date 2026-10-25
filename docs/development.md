@@ -70,8 +70,6 @@ table: add these when implementing that connector. Keep extraction outside
 persistence, with atomic data/checkpoint writes. Synthetic provider isolation is
 already covered in integration tests.
 
-Run `make -C k8s render lint` (Helm 3 required) after modifying deployment or
-Grafana artifacts. Dashboard copies in the chart must match canonical JSON files.
 `docker compose -f compose-example.yml config --quiet`, `docker build .`, and
 `uv build` validate configuration, runtime image and package distribution.
 

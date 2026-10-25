@@ -16,7 +16,6 @@ migration was performed, and no existing user database or volume was removed.
   connector guidelines.
 - [Verification evidence](verification.md): commands, measured results and limits.
 - [Manual imports](manual-import-instructions.md): account exports and FIT files.
-- [Kubernetes guide](../k8s/README.md): Helm, secrets, persistence and MFA bootstrap.
 
 ## Change inventory
 
@@ -37,14 +36,13 @@ migration was performed, and no existing user database or volume was removed.
 | Query checks | `scripts/validate_dashboard_queries.py`, `scripts/smoke_grafana.py` | Database execution and actual Grafana datasource/provisioning smoke checks |
 | Compose / container | `compose-example.yml`, `Dockerfile`, `.dockerignore`, `.env.example` | Pinned database/Grafana/plugin versions, health dependencies, explicit migration service, persistent storage/tokens, non-root app and private database networking |
 | Installer | `easy-install.sh` | Random initial secrets, interactive authentication/backfill, no world-writable token directory or automatic teardown of an existing stack |
-| Kubernetes / Helm | `k8s/`, `kubernetes-spec-example.yaml` | PostgreSQL deployment/service, persistent claims, migration init container, external Secret, bundled dashboards and datasource; standalone manifest generated from Helm |
 | Packaging | `pyproject.toml`, `uv.lock` | psycopg replaces Influx clients; explicit runtime dependencies; installable entry point and distribution containing SQL migrations |
 | CI / regression tests | `.github/workflows/tests.yml`, `tests/` | Real Timescale test service, unchanged coverage gate, Grafana checks and retained Garmin/FIT regression coverage |
 | Supporting material | `.github/CONTRIBUTING.md`, `Extra/garmin-fetch.ipynb`, `.gitignore`, documentation | Current development instructions; notebook delegates to maintained code; secret/build artifact exclusions |
 
 Removed: the Influx datasource, Influx runtime clients/configuration and demo
 writes, destructive strength purge logic, the old CSV exporter, obsolete
-backend-specific tests, Influx Kubernetes resources and old chart dependencies.
+backend-specific tests, and (2026-10-26) all Kubernetes/Helm artifacts: the fork only supports Compose.
 The new migration utility uses HTTP and needs no Influx Python dependency.
 
 ## Architecture and data guarantees
@@ -130,7 +128,7 @@ Current migration tests use synthetic/mocked sources and real PostgreSQL. See [v
 
 Container and package builds passed. Compose PostgreSQL/migration/Grafana startup,
 reader connectivity, five applied schema versions, UID 1000 and writable named
-token storage were checked. Helm lint/render, compilation, installer shell syntax
+token storage were checked. Compilation, installer shell syntax
 and whitespace checks passed. Disposable validation containers were stopped;
 their volumes were retained. CI definitions were updated, but a remote CI run was
 not triggered or claimed as passed.
@@ -160,7 +158,6 @@ records created only in PostgreSQL are not automatically copied back.
 
 | ID | Applies when | Outstanding work / limitation | Completion or mitigation |
 | --- | --- | --- | --- |
-| B1 | Kubernetes is used | No live cluster deployment was tested | Validate scheduling, storage class/ownership, migrations, token/MFA transfer, restarts and retained PVC recovery using the Kubernetes guide |
 | B2 | Legacy source is InfluxDB 3 | Direct import is unsupported | Implement/test a typed v3 adapter, or follow the documented staging alternative; preserve v3 history until independently validated |
 | B3 | Non-default Influx retention policies contain data | Current importer reads the default retention policy | Inventory policies, stage/import each required policy with deliberate provenance and validate all ranges; do not assume measurement enumeration covers them |
 | B4 | Old strength rows have conflicting label/value variants | Their authoritative edit order cannot be recovered from Influx timestamps | Keep the archive and re-fetch affected periods from Garmin before trusting reconciled strength statistics |
