@@ -9915,7 +9915,7 @@ data:
               },
               "refId": "A",
               "rawQuery": true,
-              "rawSql": "SELECT time, value AS \"Sleep Regularity\" FROM (SELECT date_bin(INTERVAL '1h', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, percentile_cont(0.5) WITHIN GROUP (ORDER BY health_number(fields, 'SleepStageLevel')) AS value FROM all_records WHERE dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time",
+              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Sleep Regularity\" FROM (SELECT date_bin(INTERVAL '1h', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, percentile_cont(0.5) WITHIN GROUP (ORDER BY health_number(fields, 'SleepStageLevel')) AS value FROM all_records WHERE dataset='SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(INTERVAL '1h', $__timeFrom()::timestamptz, TIMESTAMPTZ '2000-01-03 00:00:00+00'), date_bin(INTERVAL '1h', $__timeTo()::timestamptz, TIMESTAMPTZ '2000-01-03 00:00:00+00'), INTERVAL '1h') AS time) SELECT b.time, a.\"Sleep Regularity\" AS \"Sleep Regularity\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
               "format": "time_series",
               "editorMode": "code",
               "hide": false
