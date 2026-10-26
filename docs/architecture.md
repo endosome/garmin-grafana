@@ -81,7 +81,10 @@ staging table to preserve upserts; add it only after ingestion benchmarks justif
 it. JSONB avoids an enormous speculative domain schema but costs query CPU and
 storage: promote heavily queried fields into typed domain tables / indexes when
 measurements demonstrate that need. No GIN index on every health field. Time,
-source, dataset indexes support dashboard scans. At sustained high frequency,
+source, dataset indexes support dashboard scans; a partial ActivitySelector index
+serves per-activity GPS panels and the activity dropdown's loose index scan.
+Intraday line panels bucket by Grafana's `${__interval}` (floored at the source
+cadence) so long ranges return about one point per pixel, not every sample. At sustained high frequency,
 introduce typed stream tables and benchmark chunk size against working-set RAM.
 
 Future connectors produce Records with explicit provider/account, stable source

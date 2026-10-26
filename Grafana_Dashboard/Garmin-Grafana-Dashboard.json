@@ -175,7 +175,7 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": 300000,
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 0.8,
             "pointSize": 1,
@@ -223,6 +223,7 @@
         "y": 1
       },
       "id": 15,
+      "interval": "2m",
       "options": {
         "legend": {
           "calcs": [
@@ -249,7 +250,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "WITH aggregated AS (SELECT time, value AS \"Heart Rate\" FROM (SELECT date_bin(INTERVAL '2m', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'HeartRate')) AS value FROM all_records WHERE dataset='HeartRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '2m', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '2m', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '2m') AS time) SELECT b.time, a.\"Heart Rate\" AS \"Heart Rate\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
+          "rawSql": "WITH aggregated AS (SELECT time, value AS \"Heart Rate\" FROM (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'HeartRate')) AS value FROM all_records WHERE dataset='HeartRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"Heart Rate\" AS \"Heart Rate\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -1321,7 +1322,7 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": 600000,
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1377,6 +1378,7 @@
         "y": 29
       },
       "id": 62,
+      "interval": "2m",
       "options": {
         "legend": {
           "calcs": [
@@ -1403,7 +1405,7 @@
           },
           "refId": "B",
           "rawQuery": true,
-          "rawSql": "WITH aggregated AS (SELECT time, value AS \"BR\" FROM (SELECT date_bin(INTERVAL '2m', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'BreathingRate')) AS value FROM all_records WHERE dataset='BreathingRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '2m', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '2m', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '2m') AS time) SELECT b.time, a.\"BR\" AS \"BR\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
+          "rawSql": "WITH aggregated AS (SELECT time, value AS \"BR\" FROM (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'BreathingRate')) AS value FROM all_records WHERE dataset='BreathingRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"BR\" AS \"BR\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -6845,7 +6847,7 @@
             },
             "filterData": {
               "id": "byRefId",
-              "options": "joinByField-I-J"
+              "options": "I"
             },
             "location": {
               "mode": "auto"
@@ -6880,34 +6882,14 @@
           },
           "refId": "I",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lat\" FROM (SELECT time AS time, health_number(fields, 'Latitude') AS value FROM all_records WHERE (health_number(fields, 'Latitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
-          "format": "time_series",
-          "editorMode": "code",
-          "hide": false
-        },
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "garmin_postgres"
-          },
-          "refId": "J",
-          "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"lon\" FROM (SELECT time AS time, health_number(fields, 'Longitude') AS value FROM all_records WHERE (health_number(fields, 'Longitude')) IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
-          "format": "time_series",
+          "rawSql": "SELECT round(health_number(fields, 'Latitude') * 10000) / 10000 AS lat, round(health_number(fields, 'Longitude') * 10000) / 10000 AS lon FROM all_records WHERE health_number(fields, 'Latitude') IS NOT NULL AND health_number(fields, 'Longitude') IS NOT NULL AND dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1, 2",
+          "format": "table",
           "editorMode": "code",
           "hide": false
         }
       ],
       "title": "Heatmap for GPS Activity (within selected time)",
-      "transformations": [
-        {
-          "id": "joinByField",
-          "options": {
-            "byField": "Time",
-            "mode": "outer"
-          }
-        }
-      ],
+      "transformations": [],
       "type": "geomap"
     },
     {
@@ -10012,12 +9994,12 @@
           "type": "grafana-postgresql-datasource",
           "uid": "garmin_postgres"
         },
-        "definition": "SELECT DISTINCT tags->>'ActivitySelector' FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY 1",
+        "definition": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL ORDER BY 1",
         "description": "List of Activities dropdown",
         "label": "Activity with GPS",
         "name": "ActivityGPS",
         "options": [],
-        "query": "SELECT DISTINCT tags->>'ActivitySelector' FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY 1",
+        "query": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL ORDER BY 1",
         "refresh": 1,
         "regex": "",
         "sort": 4,

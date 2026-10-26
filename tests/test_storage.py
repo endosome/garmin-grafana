@@ -353,3 +353,17 @@ def test_dashboard_missing_buckets_preserve_null_and_zero_semantics(db):
     steps=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:68:A'],sid))
     assert len(heart_rate)>1 and all(row[1] is None for row in heart_rate)
     assert len(steps)>1 and all(row[1]==0 for row in steps)
+
+
+def test_gps_activity_dropdown_and_heatmap_queries(db):
+    spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    statements={label:sql for label,sql,fmt in module.dashboard_queries()}
+    def gps(selector,time,lat):
+        return Record.from_mapping(point('ActivityGPS',time=time,tags={'Device':'watch','ActivitySelector':selector},Latitude=lat,Longitude=-0.1))
+    db.write([gps('b-run','2026-01-02T00:00:00Z',51.50001),gps('b-run','2026-01-02T00:00:01Z',51.50002),
+        gps('a-ride','2026-01-03T00:00:00Z',51.6),gps('c-outside','2026-02-01T00:00:00Z',51.7)])
+    selectors=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:ActivityGPS'],source(db)))
+    assert selectors==[('a-ride',),('b-run',)]
+    cells=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:69:I'],source(db)))
+    assert sorted(cells)==[(51.5,-0.1),(51.6,-0.1)]
