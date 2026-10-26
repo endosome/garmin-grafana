@@ -81,7 +81,7 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `KEEP_FIT_FILES`, `FIT_FILE_STORAGE_LOCATION` | Retain original downloaded recordings; False, ~/fit_filestore |
 | `ALWAYS_PROCESS_FIT_FILES` | Parse indoor activities without GPS too, True; set False to parse only activities with GPS |
 | `FORCE_REPROCESS_ACTIVITIES` | Reprocess activity files for corrections, True; disabling may miss edits |
-| `REQUEST_INTRADAY_DATA_REFRESH` | Request older Garmin intraday files, False; Garmin may impose a daily limit |
+| `REQUEST_INTRADAY_DATA_REFRESH` | Request older Garmin intraday files (older than `IGNORE_INTRADAY_DATA_REFRESH_DAYS`), False. Garmin allows about 31 requests a day per account; a refused request stops a bulk fetch (`MANUAL_START_DATE`) at that date with an incomplete exit, so rerun the same range the next day |
 | `IGNORE_INTRADAY_DATA_REFRESH_DAYS` | Recent days excluded from that request, 30 |
 | `LACTATE_THRESHOLD_SPORTS` | Sport list, RUNNING |
 | `RATE_LIMIT_CALLS_SECONDS`, `FETCH_FAILED_WAIT_SECONDS` | Delay between days and on rate limits; 5, 1800 |

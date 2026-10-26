@@ -2,6 +2,8 @@
 from datetime import datetime, timedelta
 from unittest import mock
 
+from garminconnect import client as garminconnect_client
+
 import pytest
 
 SIMPLE_GETTERS = {
@@ -117,13 +119,13 @@ def refresh(gf, getters, monkeypatch):
     monkeypatch.setattr(gf, "FETCH_SELECTION", "heartrate")
 
     def respond(*statuses):
-        gf.garmin_obj.connectapi.side_effect = [{"status": s} for s in statuses]
+        gf.garmin_obj.client.post.side_effect = [{"status": s} for s in statuses]
 
     return respond
 
 
 def refresh_requests(gf):
-    return [c for c in gf.garmin_obj.connectapi.call_args_list if c.kwargs.get("method") == "POST"]
+    return gf.garmin_obj.client.post.call_args_list
 
 
 @pytest.mark.parametrize("status, expected_sleeps", [
@@ -137,7 +139,8 @@ def test_refresh_then_fetch(gf, getters, refresh, status, expected_sleeps):
     gf.daily_fetch_write(OLD_DAY)
 
     (request,) = refresh_requests(gf)
-    assert request.args == (f"wellness-service/wellness/epoch/request/{OLD_DAY}",)
+    assert request.args == ("connectapi", f"/wellness-service/wellness/epoch/request/{OLD_DAY}")
+    assert request.kwargs == {"api": True}
     assert [c.args[0] for c in gf.time.sleep.call_args_list] == expected_sleeps
     getters["heartrate"].assert_called_once_with(OLD_DAY)
 
@@ -149,18 +152,19 @@ def test_refresh_no_files_skips_the_day(gf, getters, refresh):
     getters["heartrate"].assert_called_once()
 
 
-def test_refresh_denied_waits_a_day_and_retries(gf, getters, refresh):
-    refresh("DENIED", "SUBMITTED")
+def test_refresh_denied_stops_without_waiting(gf, getters, refresh):
+    refresh("DENIED")
 
-    gf.daily_fetch_write(OLD_DAY)
+    with pytest.raises(gf.IntradayRefreshDenied):
+        gf.daily_fetch_write(OLD_DAY)
 
-    assert len(refresh_requests(gf)) == 2
-    assert [c.args[0] for c in gf.time.sleep.call_args_list] == [86500, 10]
-    getters["heartrate"].assert_called_once()
+    assert len(refresh_requests(gf)) == 1
+    assert gf.time.sleep.call_args_list == []
+    getters["heartrate"].assert_not_called()
 
 
 def test_missing_status_is_treated_as_unknown(gf, getters, refresh):
-    gf.garmin_obj.connectapi.side_effect = [{}]
+    gf.garmin_obj.client.post.side_effect = [{}]
 
     gf.daily_fetch_write(OLD_DAY)
 
@@ -199,3 +203,35 @@ def test_failed_activity_clears_parse_cache_and_other_datasets_still_commit(gf, 
     gf.daily_fetch_write(DAY)
     assert getters['gps'].call_count == 2
     assert 'activity' in written_markers(getters)
+
+
+# --- the refresh against the real garminconnect classes ------------------------------------------------------------
+
+class _RecordingClient(garminconnect_client.Client):
+    """garminconnect's own Client (its connectapi and post) with the network replaced by a recorder."""
+
+    def __init__(self, status):  # noqa: D107 - no session, no login
+        self.requests = []
+        self.status = status
+
+    def _run_request(self, method, path, **kwargs):
+        self.requests.append((method, path))
+        return mock.Mock(json=lambda: {"status": self.status})
+
+
+def test_refresh_is_a_post_through_the_real_client(gf, getters, refresh):
+    client = _RecordingClient("COMPLETE")
+    gf.garmin_obj.client = client
+    # Garmin.connectapi delegates to its client the same way.
+    gf.garmin_obj.connectapi.side_effect = lambda path, **kwargs: client.connectapi(path, **kwargs)
+
+    gf.daily_fetch_write(OLD_DAY)
+
+    assert client.requests[0] == ("POST", f"/wellness-service/wellness/epoch/request/{OLD_DAY}")
+    getters["heartrate"].assert_called_once_with(OLD_DAY)
+
+
+def test_connectapi_cannot_send_a_post():
+    """The v0.7.1 call: Client.connectapi always GETs and passes method= on, which collides (TypeError)."""
+    with pytest.raises(TypeError):
+        _RecordingClient("COMPLETE").connectapi("/wellness-service/wellness/epoch/request/2026-01-01", method="POST")

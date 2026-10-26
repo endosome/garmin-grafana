@@ -57,7 +57,7 @@ LACTATE_THRESHOLD_SPORTS = os.getenv("LACTATE_THRESHOLD_SPORTS", "RUNNING").uppe
 KEEP_FIT_FILES = True if os.getenv("KEEP_FIT_FILES") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional
 FIT_FILE_STORAGE_LOCATION = os.getenv("FIT_FILE_STORAGE_LOCATION", os.path.join(os.path.expanduser("~"), "fit_filestore"))
 ALWAYS_PROCESS_FIT_FILES = False if os.getenv("ALWAYS_PROCESS_FIT_FILES") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, will process all FIT files for all activities including indoor ones lacking GPS data
-REQUEST_INTRADAY_DATA_REFRESH = True if os.getenv("REQUEST_INTRADAY_DATA_REFRESH") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional, This requests data refresh for the intraday data (older than 6 months) - see issue #77. Pauses the script for 24 hours when the daily limit is reached.
+REQUEST_INTRADAY_DATA_REFRESH = True if os.getenv("REQUEST_INTRADAY_DATA_REFRESH") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional: request a refresh of intraday data older than IGNORE_INTRADAY_DATA_REFRESH_DAYS before fetching it (Garmin serves intraday data older than about six months only after that); Garmin allows about 31 requests a day per account, and a refused request stops a bulk fetch there (rerun the same range the next day).
 IGNORE_INTRADAY_DATA_REFRESH_DAYS = int(os.getenv("IGNORE_INTRADAY_DATA_REFRESH_DAYS", 30)) # optional, ignores the REQUEST_INTRADAY_DATA_REFRESH for the specified number of days from current date. 
 FORCE_REPROCESS_ACTIVITIES = False if os.getenv("FORCE_REPROCESS_ACTIVITIES") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, will enable re-processing of fit files when set to true, may skip activities if set to false (issue #30)
 USER_TIMEZONE = os.getenv("USER_TIMEZONE", "") # optional, fetches timezone info from last activity automatically if left blank
@@ -1539,11 +1539,22 @@ def get_lifestyle_data(date_str):
 
 
 # %%
+class IntradayRefreshDenied(Exception):
+    """Garmin refused an intraday refresh request: its daily limit (about 31 dates per account) is used up."""
+
+
+def request_intraday_refresh(date_str):
+    """Ask Garmin to make a date's intraday data available again (it serves intraday data older than about six
+    months only after this). A POST through the client: Garmin.connectapi always sends GET."""
+    response = garmin_obj.client.post("connectapi", f"/wellness-service/wellness/epoch/request/{date_str}", api=True)
+    return (response or {}).get("status", "Unknown")
+
+
 def daily_fetch_write(date_str, *, skip_completed=False):
     today = datetime.now(ZoneInfo(USER_TIMEZONE or 'UTC')).date()
     completed = store.completed_datasets(date_str) if skip_completed and datetime.strptime(date_str, '%Y-%m-%d').date() < today - timedelta(days=2) else set()
     if REQUEST_INTRADAY_DATA_REFRESH and (datetime.strptime(date_str, "%Y-%m-%d") <= (datetime.today() - timedelta(days=IGNORE_INTRADAY_DATA_REFRESH_DAYS))):
-        data_refresh_response = garmin_obj.connectapi(f"wellness-service/wellness/epoch/request/{date_str}", method="POST").get("status", "Unknown")
+        data_refresh_response = request_intraday_refresh(date_str)
         logging.info(f"Intraday data refresh request status: {data_refresh_response}")
         if data_refresh_response == "SUBMITTED":
             logging.info(f"Waiting 10 seconds for refresh request to process...")
@@ -1553,12 +1564,9 @@ def daily_fetch_write(date_str, *, skip_completed=False):
         elif data_refresh_response == "NO_FILES_FOUND":
             logging.info(f"No intraday files available for date {date_str}; checking other datasets")
         elif data_refresh_response == "DENIED":
-            logging.info(f"Daily refresh limit reached. Pausing script for 24 hours to ensure Intraday data fetching. Disable REQUEST_INTRADAY_DATA_REFRESH to avoid this!")
-            time.sleep(86500)
-            data_refresh_response = garmin_obj.connectapi(f"wellness-service/wellness/epoch/request/{date_str}", method="POST").get("status", "Unknown")
-            logging.info(f"Intraday data refresh request status: {data_refresh_response}")
-            logging.info(f"Waiting 10 seconds...")
-            time.sleep(10)
+            # Not a 24-hour sleep: a process that holds the Garmin session for a day keeps every other process that
+            # uses the same tokens (the regular fetcher) away. The bulk fetch stops here and reports the rest.
+            raise IntradayRefreshDenied(date_str)
         else:
             logging.info(f"Refresh response is unknown!")
             time.sleep(5)
@@ -1620,7 +1628,11 @@ def fetch_write_bulk(start_date_str, end_date_str, *, skip_completed=False):
     except psycopg.Error:
         logging.error("Device sync metadata write failed; retry required")
         return False
+    refresh_denied = False
     for current_date in iter_days(start_date_str, end_date_str):
+        if refresh_denied:
+            skipped_dates.append(current_date)
+            continue
         repeat_loop = True
         while repeat_loop:
             try:
@@ -1636,6 +1648,12 @@ def fetch_write_bulk(start_date_str, end_date_str, *, skip_completed=False):
                 if RATE_LIMIT_CALLS_SECONDS > 0:
                     logging.info(f"Waiting : for {RATE_LIMIT_CALLS_SECONDS} seconds")
                     time.sleep(RATE_LIMIT_CALLS_SECONDS)
+                repeat_loop = False
+            except IntradayRefreshDenied:
+                logging.warning(f"Intraday refresh limit reached at {current_date} (Garmin allows about 31 dates a day): "
+                                f"this date and the older ones of the range are not fetched; rerun the same range tomorrow")
+                skipped_dates.append(current_date)
+                refresh_denied = True
                 repeat_loop = False
             except GarminConnectTooManyRequestsError as err:
                 logging.error(err)

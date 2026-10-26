@@ -164,3 +164,21 @@ def test_automatic_backfill_passes_completed_dataset_policy(gf, no_device_sync, 
         mock.call('2026-01-02', skip_completed=True),
         mock.call('2026-01-01', skip_completed=True),
     ]
+
+
+def test_refresh_denied_stops_the_range_and_reports_it(gf, no_device_sync, monkeypatch, caplog):
+    fetched = []
+
+    def daily_fetch_write(date):
+        fetched.append(date)
+        if date == "2026-01-02":
+            raise gf.IntradayRefreshDenied(date)
+
+    monkeypatch.setattr(gf, "daily_fetch_write", daily_fetch_write)
+
+    with caplog.at_level(logging.WARNING):
+        assert gf.fetch_write_bulk("2026-01-01", "2026-01-03") is False
+    # The newest date was fetched, the refused one and the older ones were not tried again.
+    assert fetched == ["2026-01-03", "2026-01-02"]
+    assert "rerun the same range tomorrow" in caplog.text
+    assert "skipped dates ['2026-01-02', '2026-01-01']" in caplog.text
