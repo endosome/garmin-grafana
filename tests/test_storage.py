@@ -325,16 +325,32 @@ def test_database_failure_after_insert_rolls_back_entire_dataset(db):
     assert db.completed_datasets('2026-01-01')==set()
 
 
+def test_dashboard_rows_nest_only_when_collapsed():
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        dashboard=json.loads(path.read_text())
+        ids=[panel['id'] for panel in dashboard['panels']]
+        for row in (panel for panel in dashboard['panels'] if panel['type']=='row'):
+            assert bool(row.get('panels'))==row['collapsed'],(path.name,row['title'])
+            ids+=[panel['id'] for panel in row.get('panels',[])]
+            assert all(panel['gridPos']['y']>row['gridPos']['y'] for panel in row.get('panels',[]))
+        assert len(ids)==len(set(ids)),path.name
+
+
 def test_dashboard_table_and_heatmap_field_contracts(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     queries={label:(sql,fmt) for label,sql,fmt in module.dashboard_queries()}
+    def panels(items):
+        for panel in items:
+            yield panel
+            yield from panels(panel.get('panels',[]))
+    visited=set()
     for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
         dashboard=json.loads(path.read_text())
-        for panel in dashboard['panels']:
+        for panel in panels(dashboard['panels']):
             for target in panel.get('targets',[]):
                 label=f'{path.name}:{panel["id"]}:{target["refId"]}'
-                sql,fmt=queries[label]
+                sql,fmt=queries[label];visited.add(label)
                 if fmt=='table' and ('AS "Time"' in sql):
                     with db.connection.transaction(),db.connection.cursor() as cur:
                         cur.execute(module.expand_query(sql,source(db)))
@@ -342,6 +358,7 @@ def test_dashboard_table_and_heatmap_field_contracts(db):
             if panel['type']=='marcusolsson-hourly-heatmap-panel':
                 assert panel['options']['valueFieldName'] in ('Hourly Steps','Sleep Regularity')
                 assert panel['options']['timeFieldName']=='Time'
+    assert visited=={label for label,(sql,fmt) in queries.items() if fmt!='variable'}
 
 
 def test_dashboard_missing_buckets_preserve_null_and_zero_semantics(db):

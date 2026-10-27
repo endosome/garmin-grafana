@@ -1,8 +1,43 @@
 # Grafana dashboard optimization plan
 
-As of 2026-10-26. At the default 30-day range the database is probably not where
-the seconds go, so the next round of work targets Grafana and the browser, after
-measuring them first.
+As of 2026-10-26, updated 2026-10-27. At the default 30-day range the database is
+probably not where the seconds go, so the next round of work targets Grafana and
+the browser, after measuring them first.
+
+## Status (2026-10-27)
+
+Done: auto-refresh 5m → 15m with a 15m–1d picker; "Recent Activities" and "Long
+term visualization" rows collapsed; GPS Track by Velocity / by Heart Rate
+(50, 49) and Month at a Glance (Daily Average) (66) consolidated to one query
+each (17 → 3 queries). Old and new SQL return identical rows on seeded data, and
+Grafana renders the three panels identically.
+
+Measured in headless Chromium against Grafana 13.0.2 with a small seeded
+database, 30-day range, counting `/api/ds/query` POSTs:
+
+| Step | Before | After |
+| --- | --- | --- |
+| First paint | 10 requests, 14 queries | 10 requests, 14 queries |
+| Scroll to bottom | 46 requests, 121 queries | 14 requests, 31 queries |
+| One refresh tick at the bottom | 4 requests, 4 queries | 9 requests, 26 queries |
+| Open both rows, scroll to bottom | – | 36 requests, 85 queries |
+
+Grafana 13 only queries panels that are on screen, both on first paint and on a
+refresh tick, so the refresh interval matters less than assumed below. The
+refresh row is not a regression: after collapsing, the bottom of the page shows
+different (intraday) panels. Collapsing is the lever that matters. Each panel
+is already one HTTP request, so consolidation lowers database scans and
+connections, not the request count. Most "Intraday Health Stats" panels have a
+fixed `timeFrom` of 24h, and 38, 59 and 65 are pinned to 1w / 30d, so their cost
+does not grow with the selected range: consolidating 21 or 59 is cleanup, not a
+speedup.
+
+Not done, and why: the remaining worklist rows below are cleanups with little
+measured payoff; rendering tweaks and dropping moving averages change what
+users see; splitting the dashboard and precomputation are not needed now.
+Reusing a panel's results through the "-- Dashboard --" datasource does not fit
+either: those targets have no `rawSql`, so the query validator would reject
+them.
 
 ## Summary
 
@@ -16,17 +51,18 @@ measuring them first.
   (2.6 s → 0.26 s at 1 year), GPS heatmap merged into one grid query (panel 69),
   adaptive `${__interval}` buckets on Heart Rate and Breathing (panels 15, 62).
 
-The main dashboard today: 59 panels, 142 queries, 3 rows all expanded,
-auto-refresh every 5 minutes, and 44 browser-side transformations
+The main dashboard before this work: 59 panels, 142 queries, 3 rows all
+expanded, auto-refresh every 5 minutes, and 44 browser-side transformations
 (13 `calculateField`, 12 `filterByValue`, 7 `filterFieldsByName`,
-6 `joinByField`, 4 `merge`, 2 `groupBy`).
+6 `joinByField`, 4 `merge`, 2 `groupBy`). Now: 128 queries, 2 of 3 rows
+collapsed, 15-minute refresh, 42 transformations (4 `joinByField`).
 
 ## Optimizations, ranked by expected payoff
 
-1. **Reduce refresh cost.** `refresh: "5m"` re-runs every loaded panel while the
-   tab is open. Data syncs a few times an hour, so 15m or off is enough. Also
-   trim `timepicker.refresh_intervals`. Trivial change, no semantic risk.
-2. **Collapse rows.** Grafana already lazy-loads off-screen panels, so first
+1. **Reduce refresh cost.** *(done: 15m)* The fetcher polls every 5 minutes, but
+   watch uploads arrive a few times an hour, so 15m is enough. "Off" would break
+   wall displays. Refresh ticks only re-query panels on screen (measured).
+2. **Collapse rows.** *(done)* Grafana already lazy-loads off-screen panels, so first
    paint is not all 142 queries. Collapsed rows ("Recent Activities",
    "Long term visualization") stop the query burst when scrolling and keep
    those panels out of every refresh until opened. In JSON this moves child
@@ -55,13 +91,13 @@ change their meaning.
 
 | Panel (id) | Queries now | Browser transformations | Proposed change | Meaning changes |
 | --- | --- | --- | --- | --- |
-| Month at a Glance (Daily Average) (66) | 9 | join | One query over the shared daily gap-fill CTE, one column per metric | No |
-| Week at a Glance (table) | 8 | merge / join | One table query | No |
-| Recent Activity (table) | 6 | merge / filter | One table query; keep `AS "Time"` column | No |
+| Month at a Glance (Daily Average) (66) | ~~9~~ 1 | – | Done: one scan, `avg(...) FILTER (WHERE dataset=...)` per metric | No |
+| Week at a Glance (59, table, pinned 1w) | 8 | join | One table query | No |
+| Recent Activity (38, table, pinned 1w) | 6 | join | One table query; keep `AS "Time"` column | No |
 | Month at a Glance (Intraday) (67) | 5 | – | One query with hourly CTE; `Band Wearing` stays 2m or moves to 1h with new mappings | Only if D moves to 1h |
 | Stress overview, Activity HR Zones (mean) | 5 each | – | One row / one query each | No |
 | Heart Rate Distribution (21) | 4 identical scans | – | One scan, four `CASE` columns | No |
-| GPS Track by Velocity / by Heart Rate (50, 49) | 4 each | join | One `table` query with lat, lon, HR, speed; check geomap `color.field` | No |
+| GPS Track by Velocity / by Heart Rate (50, 49) | ~~4~~ 1 each | – | Done: one `table` query; marker layers' `filterData` now `byRefId: I` | No |
 | Distance vs HR (57), Heart Rate vs Pace (55), GPS Track pace (47) | 4 / 2 / 2 | join | One query each | No |
 | Piecharts (Today Activity, Last Sleep, Average Sleep trends, Avg Activity) | 4 each | – | One row with one column per slice | No |
 | Heart Rate (15), Breathing Rates (62) | 1 | calculateField, filterByValue | Drop moving average; filter in SQL | Slightly smoother line removed |
@@ -80,19 +116,20 @@ Measure before changing anything, then after each phase, at 30 days and 1 year:
 - PostgreSQL: `log_min_duration_statement=200` in the compose `command` to log
   slow queries; check logs for `too many clients` (Grafana's connection pool vs
   `max_connections`).
-- Check `graphTooltip` at the dashboard root: shared crosshair or tooltip (1 or
-  2) redraws every visible panel on hover, a common "feels slow" cause.
+- `graphTooltip` is 0 (no shared crosshair), so hover does not redraw every
+  panel.
 
-Acceptance is relative, since absolute numbers depend on the user's hardware:
-halve `ds/query` requests on first paint and on refresh, and halve
-scripting + rendering time in the Performance recording.
+Acceptance is relative, since absolute numbers depend on the user's hardware.
+First paint was already lazy, so the request target applies to scrolling
+through the dashboard (met: 46 → 14). Scripting + rendering time with real data
+has not been measured yet.
 
 ## Constraints
 
 - `tests/test_storage.py::test_dashboard_table_and_heatmap_field_contracts`
-  iterates top-level `dashboard['panels']` only; collapsing rows would silently
-  drop nested panels from it. Make it recurse like
-  `scripts/validate_dashboard_queries.py` does.
+  recurses into collapsed rows and checks that it visits every query label;
+  `test_dashboard_rows_nest_only_when_collapsed` checks row nesting and unique
+  panel ids.
 - Tests pin panel ids and refIds (`15:A`, `68:A`, `1:A`, `64:*`, `69:I`,
   `ActivityGPS`, strength `1002:A`). Hourly heatmap panels need `valueFieldName`
   in {Hourly Steps, Sleep Regularity} and `timeFieldName == 'Time'`. Table
