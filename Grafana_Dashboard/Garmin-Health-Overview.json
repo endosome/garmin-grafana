@@ -98,7 +98,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Garmin's colours: 90+ excellent, 80-89 good, 60-79 fair, below 60 poor.",
+      "description": "Garmin's colours: 90+ excellent, 80-89 good, 60-79 fair, below 60 poor. Last night's sleep. Empty until Garmin Connect has last night's sleep (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -127,7 +127,8 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
@@ -147,7 +148,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -165,7 +166,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepScore')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep score\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepScore')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep score\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -178,7 +179,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Time asleep. Adults are advised to get 7 hours or more.",
+      "description": "Time asleep. Adults are advised to get 7 hours or more. Empty until Garmin Connect has last night's sleep (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -203,13 +204,14 @@
               }
             ]
           },
-          "unit": "suffix: h"
+          "unit": "suffix: h",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
+        "w": 2,
         "x": 3,
         "y": 0
       },
@@ -223,7 +225,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -241,7 +243,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepTimeSeconds')) / 3600 AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepTimeSeconds')) / 3600 AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -254,7 +256,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Average heart rate variability during sleep. Compare it with your own usual range below, not with other people.",
+      "description": "Average heart rate variability during sleep. Compare it with your own usual range below, not with other people. Empty until Garmin Connect has last night's sleep (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -272,14 +274,15 @@
               }
             ]
           },
-          "unit": "suffix: ms"
+          "unit": "suffix: ms",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 6,
+        "w": 2,
+        "x": 5,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -292,7 +295,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -310,7 +313,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"HRV\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"HRV\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -323,7 +326,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Resting heart rate. A rise of several bpm above your usual range often comes with illness, alcohol, heat or hard training.",
+      "description": "Resting heart rate. A rise of several bpm above your usual range often comes with illness, alcohol, heat or hard training. Empty until Garmin Connect has today's data (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -341,14 +344,15 @@
               }
             ]
           },
-          "unit": "suffix: bpm"
+          "unit": "suffix: bpm",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
         "w": 3,
-        "x": 9,
+        "x": 7,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -361,7 +365,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -379,7 +383,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'restingHeartRate')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Resting HR\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'restingHeartRate')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Resting HR\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -392,7 +396,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "",
+      "description": "Body Battery when you woke up today. Empty until Garmin Connect has today's data (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -410,14 +414,15 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
         "w": 3,
-        "x": 12,
+        "x": 10,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -430,7 +435,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -448,7 +453,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'bodyBatteryAtWakeTime')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Battery at wake\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'bodyBatteryAtWakeTime')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Battery at wake\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -461,7 +466,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Average all-day stress level (0-100), ignoring periods Garmin could not measure.",
+      "description": "Average all-day stress level (0-100), ignoring periods Garmin could not measure. Empty until Garmin Connect has today's data (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -479,14 +484,15 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "none",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
         "w": 3,
-        "x": 15,
+        "x": 13,
         "y": 0
       },
       "hideTimeOverride": true,
@@ -499,7 +505,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -517,7 +523,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset = 'StressIntraday' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Stress today\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset = 'StressIntraday' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Stress today\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -530,7 +536,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "",
+      "description": "Empty until Garmin Connect has today's data (sync your watch).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -548,18 +554,88 @@
               }
             ]
           },
-          "unit": "locale"
+          "unit": "locale",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
         "w": 3,
-        "x": 18,
+        "x": 16,
         "y": 0
       },
       "hideTimeOverride": true,
       "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'totalSteps')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Steps today\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Latest VO2 max estimate: running, or cycling if you have no running estimate in the last year. Garmin updates it only after qualifying outdoor runs, walks or rides, so it can be days or weeks old.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "VO2 max",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "yellow",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 2,
+        "x": 19,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 42,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -586,11 +662,11 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'totalSteps')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Steps today\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'VO2_max_value')) AS running, avg(health_number(fields, 'VO2_max_value_cycling')) AS cycling FROM all_records WHERE dataset = 'VO2_Max' AND source_id IN (${Source:csv}) AND time >= $__timeTo()::timestamptz - interval '366 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), preference AS (SELECT count(running) > 0 AS has_running FROM daily) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, CASE WHEN has_running THEN running ELSE cycling END AS \"VO2 max\" FROM daily CROSS JOIN preference WHERE day <= ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND CASE WHEN has_running THEN running ELSE cycling END IS NOT NULL ORDER BY 1",
           "refId": "A"
         }
       ],
-      "timeFrom": "14d",
+      "timeFrom": "90d",
       "title": "",
       "type": "stat"
     },

@@ -372,6 +372,42 @@ def test_dashboard_missing_buckets_preserve_null_and_zero_semantics(db):
     assert len(steps)>1 and all(row[1]==0 for row in steps)
 
 
+def test_health_today_tiles_stay_empty_until_today_is_synced(db):
+    spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    statements={label:sql for label,sql,fmt in module.dashboard_queries()}
+    health=json.loads((Path(__file__).resolve().parents[1]/'Grafana_Dashboard/Garmin-Health-Overview.json').read_text())
+    tiles={p['fieldConfig']['defaults']['displayName']:p for p in health['panels'] if p['gridPos']['y']==0}
+    sid=source(db)
+    def tile(name):
+        return query(db,module.expand_query(statements[f"Garmin-Health-Overview.json:{tiles[name]['id']}:A"],sid))
+    # The smoke-test range ends on 2026-01-10 (UTC): the watch last synced on the 9th, and Garmin
+    # Connect returns a daily summary without steps for the 10th.
+    db.write([Record.from_mapping(point('DailyStats','2026-01-08T00:00:00Z',totalSteps=9000)),
+        Record.from_mapping(point('DailyStats','2026-01-09T00:00:00Z',totalSteps=4000)),
+        Record.from_mapping(point('DailyStats','2026-01-10T00:00:00Z',totalSteps=None,bmrKilocalories=1700)),
+        Record.from_mapping(point('SleepSummary','2026-01-09T06:00:00Z',sleepScore=81)),
+        Record.from_mapping(point('StressIntraday','2026-01-09T12:00:00Z',stressLevel=30)),
+        Record.from_mapping(point('VO2_Max','2026-01-02T00:00:00Z',VO2_max_value=48.4,VO2_max_value_cycling=None)),
+        Record.from_mapping(point('VO2_Max','2026-01-05T00:00:00Z',VO2_max_value=None,VO2_max_value_cycling=51.0))])
+    for name in ('Sleep score','Sleep','HRV','Resting HR','Battery at wake','Stress today','Steps today'):
+        assert tiles[name]['options']['reduceOptions']['calcs']==['last'],name
+        rows=tile(name)
+        assert rows[-1]==(datetime(2026,1,10,tzinfo=timezone.utc),None),name
+        assert all(value is not None for _,value in rows[:-1]),name
+    assert [value for _,value in tile('Steps today')]==[9000,4000,None]
+    assert [value for _,value in tile('Sleep score')]==[81,None]
+    db.write([Record.from_mapping(point('DailyStats','2026-01-10T00:00:00Z',totalSteps=1200)),
+        Record.from_mapping(point('SleepSummary','2026-01-10T06:00:00Z',sleepScore=74))])
+    assert [value for _,value in tile('Steps today')]==[9000,4000,1200]
+    assert [value for _,value in tile('Sleep score')]==[81,74]
+    # VO2 max is the latest estimate, not a today value: running is preferred over cycling.
+    assert tiles['VO2 max']['options']['reduceOptions']['calcs']==['lastNotNull']
+    assert [value for _,value in tile('VO2 max')]==[48.4]
+    order=[p['fieldConfig']['defaults']['displayName'] for p in sorted(tiles.values(),key=lambda p:p['gridPos']['x'])]
+    assert order[-2:]==['VO2 max','Intensity, 7 days']
+
+
 def test_gps_activity_dropdown_and_heatmap_queries(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
