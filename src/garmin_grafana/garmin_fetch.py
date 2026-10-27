@@ -1552,7 +1552,7 @@ def request_intraday_refresh(date_str):
 
 def daily_fetch_write(date_str, *, skip_completed=False):
     today = datetime.now(ZoneInfo(USER_TIMEZONE or 'UTC')).date()
-    completed = store.completed_datasets(date_str) if skip_completed and datetime.strptime(date_str, '%Y-%m-%d').date() < today - timedelta(days=2) else set()
+    completed = store.completed_datasets(date_str, USER_TIMEZONE or 'UTC') if skip_completed and datetime.strptime(date_str, '%Y-%m-%d').date() < today - timedelta(days=2) else set()
     if REQUEST_INTRADAY_DATA_REFRESH and (datetime.strptime(date_str, "%Y-%m-%d") <= (datetime.today() - timedelta(days=IGNORE_INTRADAY_DATA_REFRESH_DAYS))):
         data_refresh_response = request_intraday_refresh(date_str)
         logging.info(f"Intraday data refresh request status: {data_refresh_response}")
@@ -1736,7 +1736,7 @@ def main():
     while True:
         today = datetime.now(user_zone).date()
         try:
-            start = store.pending_start(selected_datasets(), today)
+            start = store.pending_start(selected_datasets(), today, USER_TIMEZONE or 'UTC')
             fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True)
         except Exception as err:
             logging.error("Synchronization failed (%s); retrying next cycle", type(err).__name__)

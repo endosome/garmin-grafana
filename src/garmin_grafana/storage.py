@@ -96,14 +96,25 @@ class PostgresStore:
                 SET start_day=LEAST(sync_ranges.start_day,excluded.start_day)''',
                 [(source, dataset, start) for dataset in datasets])
 
-    def completed_datasets(self, day):
+    # A completed day s is fetched again when the device uploaded after that fetch, unless the fetch already
+    # followed an upload made after the day ended (with time for Garmin to process it): a watch that was not
+    # synced for days uploads those days later. A watch keeps only a few weeks of data, so older days are
+    # not checked. Parameter: the account's time zone.
+    UP_TO_DATE = '''(s.day<CURRENT_DATE-60
+        OR NOT EXISTS (SELECT 1 FROM records u WHERE u.source_id=s.source_id AND u.dataset='DeviceSync'
+            AND u.time>s.completed_at)
+        OR EXISTS (SELECT 1 FROM records u WHERE u.source_id=s.source_id AND u.dataset='DeviceSync'
+            AND u.time>=(s.day+1)::timestamp AT TIME ZONE %s AND u.time<=s.completed_at-interval '30 minutes'))'''
+
+    def completed_datasets(self, day, timezone='UTC'):
         with self.connection.transaction(), self.connection.cursor() as cur:
             source = self.source_id(cur)
-            cur.execute('SELECT dataset FROM sync_days WHERE source_id=%s AND day=%s', (source, day))
+            cur.execute('SELECT dataset FROM sync_days s WHERE source_id=%s AND day=%s AND ' + self.UP_TO_DATE,
+                        (source, day, timezone))
             return {row[0] for row in cur.fetchall()}
 
-    def pending_start(self, datasets, today):
-        """Find holes for each enabled dataset; always recheck two recent days."""
+    def pending_start(self, datasets, today, timezone='UTC'):
+        """Find holes and days uploaded since they were fetched; always recheck two recent days."""
         starts = [today - timedelta(days=2)]
         with self.connection.transaction(), self.connection.cursor() as cur:
             source = self.source_id(cur)
@@ -112,8 +123,8 @@ class PostgresStore:
                 row = cur.fetchone()
                 first = row[0] if row else today - timedelta(days=7)
                 cur.execute('''SELECT min(d::date) FROM generate_series(%s::date,%s::date,interval '1 day') d
-                    WHERE NOT EXISTS (SELECT 1 FROM sync_days s WHERE s.source_id=%s AND s.dataset=%s AND s.day=d::date)''',
-                    (first, today, source, dataset))
+                    WHERE NOT EXISTS (SELECT 1 FROM sync_days s WHERE s.source_id=%s AND s.dataset=%s AND s.day=d::date
+                    AND ''' + self.UP_TO_DATE + ')', (first, today, source, dataset, timezone))
                 starts.append(cur.fetchone()[0] or today)
         return min(starts)
 

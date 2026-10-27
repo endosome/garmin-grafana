@@ -113,7 +113,8 @@ docker compose -f compose-example.yml run --rm \
 ```
 
 Safe to repeat; records are upserted. Failed dataset/day ranges stay pending.
-The automatic scheduler refreshes two recent days and retries older holes.
+The automatic scheduler refreshes two recent days and retries older holes. When the
+watch uploads after days without a sync, it also fetches those days again (up to 60 days back).
 Garmin does not make every historical dataset available for every account;
 empty successful responses record an availability check. Use manual backfills
 again after requesting historical files. A change to activity filters can require

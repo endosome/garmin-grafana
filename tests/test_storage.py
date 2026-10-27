@@ -220,6 +220,56 @@ def test_connect_configuration_and_lazy_reconnect(monkeypatch):
     PostgresStore().close()
 
 
+def test_days_fetched_before_the_watch_uploaded_them_are_fetched_again(db):
+    # Relative to the database date: only the last 60 days are checked.
+    today=query(db,'SELECT CURRENT_DATE')[0][0]
+    def day(n):
+        return today-timedelta(days=10-n)
+    def at(n,hour,minute=0):
+        return datetime(*day(n).timetuple()[:3],hour,minute,tzinfo=timezone.utc)
+    def fetched(n,when):
+        db.write([],checkpoint=('sleep',day(n)))
+        with db.connection.transaction(),db.connection.cursor() as cur:
+            cur.execute('UPDATE sync_days SET completed_at=%s WHERE source_id=%s AND dataset=%s AND day=%s',
+                        (when,source(db),'sleep',day(n)))
+    def uploaded(when):
+        db.write([Record.from_mapping(point('DeviceSync',when.isoformat(),Device_Name='watch'))])
+    # The watch uploaded on day 4 at 03:00 UTC and then stayed disconnected; the fetcher kept
+    # completing days with whatever Garmin Connect had.
+    uploaded(at(4,3))
+    for n in range(1,4):
+        fetched(n,at(4,4))
+    for n in range(4,10):
+        fetched(n,at(n+2,0))
+    assert db.pending_start(['sleep'],today)==day(8)
+    assert db.completed_datasets(day(5))=={'sleep'}
+    # The phone reconnects: the upload brings day 4 onwards, uploaded before only up to 03:00.
+    uploaded(at(10,9))
+    assert db.pending_start(['sleep'],today)==day(4)
+    assert db.completed_datasets(day(5))==set()
+    assert db.completed_datasets(day(3))=={'sleep'}
+    # In New York day 3 ended at 05:00 UTC, after the earlier upload, so it was incomplete too.
+    assert db.pending_start(['sleep'],today,'America/New_York')==day(3)
+    assert db.completed_datasets(day(3),'America/New_York')==set()
+    # Fetched again shortly after the upload: up to date until the next upload, in case Garmin
+    # was still processing; fetched again after that, up to date for good.
+    for n in range(4,10):
+        fetched(n,at(10,9,10))
+    assert db.pending_start(['sleep'],today)==day(8)
+    uploaded(at(10,10))
+    assert db.pending_start(['sleep'],today)==day(4)
+    for n in range(4,10):
+        fetched(n,at(10,10,40))
+    uploaded(at(10,11))
+    assert db.pending_start(['sleep'],today)==day(8)
+    # A day older than 60 days is no longer on the watch: an upload cannot complete it.
+    fetched(-55,at(-55,12))
+    fetched(-49,at(-49,12))
+    uploaded(at(10,12))
+    assert db.completed_datasets(day(-55))=={'sleep'}
+    assert db.completed_datasets(day(-49))==set()
+
+
 def test_failed_oldest_requested_day_cannot_disappear(db):
     db.request_range(['sleep'], date(2026,1,1))
     for day in range(2,11):

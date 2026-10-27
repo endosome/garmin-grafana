@@ -59,8 +59,10 @@ responses count as completed availability checks, not proof of sensor coverage.
 Manual backfills register their requested range before fetching. Failed oldest
 days cannot disappear from hole detection. Changing FETCH_SELECTION creates independent progress. Account-export checks use
 a separate checkpoint namespace and cannot certify online API completeness.
-Automatic retry skips older completed datasets; explicit manual backfills recheck
-them for source corrections.
+Automatic retry skips older completed datasets unless the device uploaded after they
+were fetched and no upload covering the whole day (30 minutes before the fetch) preceded
+it; days older than 60 days are no longer on the watch and are not checked. Explicit
+manual backfills recheck them for source corrections.
 
 Complete strength scopes replace old sets/zones only after both fetches succeed,
 in the same transaction as replacement inserts. Other documents merge fields on
