@@ -69,6 +69,7 @@ services:
       - '127.0.0.1:${GRAFANA_PORT:-3000}:3000'
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./Grafana_Config/grafana.ini:/etc/grafana/grafana.ini:ro
       - ./Grafana_Datasource:/etc/grafana/provisioning/datasources:ro
       - ./Grafana_Dashboard:/etc/grafana/provisioning/dashboards:ro
     depends_on:
