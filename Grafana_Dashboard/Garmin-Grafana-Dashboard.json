@@ -112,7 +112,20 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Health (overview)",
+      "tooltip": "Recovery against your personal baseline, sleep, activity and fitness",
+      "type": "link",
+      "url": "/d/garmin-health-overview"
+    }
+  ],
   "panels": [
     {
       "collapsed": false,

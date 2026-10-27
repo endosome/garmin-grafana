@@ -1,0 +1,4177 @@
+{
+  "__elements": {},
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "12.0.1"
+    },
+    {
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "stat",
+      "name": "Stat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "state-timeline",
+      "name": "State timeline",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "status-history",
+      "name": "Status history",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "timeseries",
+      "name": "Time series",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "garmin_postgres"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Health-first overview: recovery against your personal baseline, sleep, activity and fitness.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Stats (all details)",
+      "tooltip": "Intraday charts, activities and GPS tracks",
+      "type": "link",
+      "url": "/d/feiibsx498gsgb"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Support on Ko-fi",
+      "tooltip": "",
+      "type": "link",
+      "url": "https://ko-fi.com/endosome"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Garmin's colours: 90+ excellent, 80-89 good, 60-79 fair, below 60 poor.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Sleep score",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "green",
+                "value": 80
+              },
+              {
+                "color": "dark-green",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepScore')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep score\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Time asleep. Adults are advised to get 7 hours or more.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "displayName": "Sleep",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 6
+              },
+              {
+                "color": "green",
+                "value": 7
+              }
+            ]
+          },
+          "unit": "suffix: h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepTimeSeconds')) / 3600 AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Average heart rate variability during sleep. Compare it with your own usual range below, not with other people.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "HRV",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 6,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"HRV\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Resting heart rate. A rise of several bpm above your usual range often comes with illness, alcohol, heat or hard training.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "Resting HR",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: bpm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 9,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'restingHeartRate')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Resting HR\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "Battery at wake",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'bodyBatteryAtWakeTime')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Battery at wake\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Average all-day stress level (0-100), ignoring periods Garmin could not measure.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "Stress today",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 15,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset = 'StressIntraday' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Stress today\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "Steps today",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "locale"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'totalSteps')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Steps today\" FROM daily WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Moderate minutes plus vigorous minutes counted twice, over the last 7 days, as Garmin counts them. Health guidelines recommend at least 150 a week.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Intensity, 7 days",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 150
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "hideTimeOverride": true,
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'moderateIntensityMinutes')) + 2 * avg(health_number(fields, 'vigorousIntensityMinutes')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '8 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 6, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), rolling AS (SELECT day, CASE WHEN count(value) OVER w > 0 THEN sum(value) OVER w END AS value FROM days LEFT JOIN daily USING (day) WINDOW w AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Intensity minutes (7 days)\" FROM rolling WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND value IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Latest value of each recovery signal against your personal usual range: the mean \u00b1 1 standard deviation of the 28 days before it (with a small minimum width, so tiny day-to-day noise is not flagged). Status needs at least 14 days of history. One unusual night is common; several signals moving the wrong way together (higher resting HR, breathing rate and skin temperature, lower HRV) is the pattern worth noticing. This is not medical advice.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "minWidth": 60
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Metric"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Latest"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Recorded"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day avg"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Better than usual": {
+                        "color": "blue",
+                        "index": 1
+                      },
+                      "Higher than usual": {
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "Learning baseline": {
+                        "color": "text",
+                        "index": 2
+                      },
+                      "Lower than usual": {
+                        "color": "orange",
+                        "index": 5
+                      },
+                      "Much higher than usual": {
+                        "color": "red",
+                        "index": 7
+                      },
+                      "Much lower than usual": {
+                        "color": "red",
+                        "index": 8
+                      },
+                      "Much worse than usual": {
+                        "color": "red",
+                        "index": 6
+                      },
+                      "Usual": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "Worse than usual": {
+                        "color": "orange",
+                        "index": 3
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 16,
+        "x": 0,
+        "y": 4
+      },
+      "hideTimeOverride": true,
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) FILTER (WHERE dataset = 'SleepSummary') AS m0, avg(health_number(fields, 'restingHeartRate')) FILTER (WHERE dataset = 'DailyStats') AS m1, avg(health_number(fields, 'sleepTimeSeconds') / 3600) FILTER (WHERE dataset = 'SleepSummary') AS m2, avg(health_number(fields, 'sleepScore')) FILTER (WHERE dataset = 'SleepSummary') AS m3, avg(health_number(fields, 'bodyBatteryAtWakeTime')) FILTER (WHERE dataset = 'DailyStats') AS m4, avg(health_number(fields, 'avgSleepStress')) FILTER (WHERE dataset = 'SleepSummary') AS m5, avg(health_number(fields, 'averageRespirationValue')) FILTER (WHERE dataset = 'SleepSummary') AS m6, avg(health_number(fields, 'averageSpO2Value')) FILTER (WHERE dataset = 'SleepSummary') AS m7, avg(health_number(fields, 'avgSkinTempDeviationC')) FILTER (WHERE dataset = 'SleepSummary') AS m8 FROM all_records WHERE dataset IN ('SleepSummary', 'DailyStats') AND source_id IN (${Source:csv}) AND time >= $__timeTo()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), metrics AS (SELECT d.day, m.ord, m.value FROM daily d CROSS JOIN LATERAL (VALUES (0, d.m0), (1, d.m1), (2, d.m2), (3, d.m3), (4, d.m4), (5, d.m5), (6, d.m6), (7, d.m7), (8, d.m8)) m(ord, value) WHERE m.value IS NOT NULL AND d.day <= ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date), config(ord, metric, direction, unit, decimals, floor_sd) AS (VALUES (0, 'Overnight HRV', 1, 'ms', 0, 2), (1, 'Resting heart rate', -1, 'bpm', 0, 1), (2, 'Sleep duration', 1, 'h', 1, 0.25), (3, 'Sleep score', 1, '', 0, 3), (4, 'Body Battery at wake', 1, '', 0, 5), (5, 'Stress during sleep', -1, '', 0, 2), (6, 'Breathing rate during sleep', 0, 'brpm', 1, 0.3), (7, 'SpO2 during sleep', 1, '%', 1, 0.5), (8, 'Skin temperature change', 0, '\u00b0C', 1, 0.2)), latest AS (SELECT DISTINCT ON (ord) ord, day, value FROM metrics ORDER BY ord, day DESC), summary AS (SELECT l.ord, l.day, l.value, avg(m.value) FILTER (WHERE m.day > l.day - 7) AS avg7, avg(m.value) FILTER (WHERE m.day < l.day AND m.day >= l.day - 28) AS base, stddev_samp(m.value) FILTER (WHERE m.day < l.day AND m.day >= l.day - 28) AS sd, count(m.value) FILTER (WHERE m.day < l.day AND m.day >= l.day - 28) AS n FROM latest l JOIN metrics m ON m.ord = l.ord AND m.day <= l.day GROUP BY l.ord, l.day, l.value), scored AS (SELECT s.*, c.metric, c.direction, c.unit, c.decimals, greatest(coalesce(s.sd, 0), c.floor_sd) AS spread, (s.value - s.base) / greatest(coalesce(s.sd, 0), c.floor_sd) AS z FROM summary s JOIN config c USING (ord)) SELECT metric AS \"Metric\", CASE WHEN (value) IS NULL THEN NULL WHEN unit = 'h' THEN (round((value) * 60)::int / 60)::text || 'h ' || lpad((round((value) * 60)::int % 60)::text, 2, '0') || 'm' ELSE CASE WHEN unit = '\u00b0C' AND (value) > 0 THEN '+' ELSE '' END || round((value)::numeric, decimals)::text || CASE WHEN unit = '' THEN '' WHEN unit = '%' THEN '%' ELSE ' ' || unit END END AS \"Latest\", CASE ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - day WHEN 0 THEN 'today' WHEN 1 THEN 'yesterday' ELSE (($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - day) || ' days ago' END AS \"Recorded\", CASE WHEN (avg7) IS NULL THEN NULL WHEN unit = 'h' THEN (round((avg7) * 60)::int / 60)::text || 'h ' || lpad((round((avg7) * 60)::int % 60)::text, 2, '0') || 'm' ELSE CASE WHEN unit = '\u00b0C' AND (avg7) > 0 THEN '+' ELSE '' END || round((avg7)::numeric, decimals)::text || CASE WHEN unit = '' THEN '' WHEN unit = '%' THEN '%' ELSE ' ' || unit END END AS \"7-day avg\", CASE WHEN n >= 14 THEN CASE WHEN (base - spread) IS NULL THEN NULL WHEN unit = 'h' THEN (round((base - spread) * 60)::int / 60)::text || 'h ' || lpad((round((base - spread) * 60)::int % 60)::text, 2, '0') || 'm' ELSE CASE WHEN unit = '\u00b0C' AND (base - spread) > 0 THEN '+' ELSE '' END || round((base - spread)::numeric, decimals)::text END || ' \u2013 ' || CASE WHEN (base + spread) IS NULL THEN NULL WHEN unit = 'h' THEN (round((base + spread) * 60)::int / 60)::text || 'h ' || lpad((round((base + spread) * 60)::int % 60)::text, 2, '0') || 'm' ELSE CASE WHEN unit = '\u00b0C' AND (base + spread) > 0 THEN '+' ELSE '' END || round((base + spread)::numeric, decimals)::text || CASE WHEN unit = '' THEN '' WHEN unit = '%' THEN '%' ELSE ' ' || unit END END END AS \"Usual range\", CASE WHEN n < 14 THEN 'Learning baseline' WHEN abs(z) < 1 THEN 'Usual' WHEN direction = 0 THEN CASE WHEN z >= 2 THEN 'Much higher than usual' WHEN z > 0 THEN 'Higher than usual' WHEN z <= -2 THEN 'Much lower than usual' ELSE 'Lower than usual' END WHEN z * direction >= 1 THEN 'Better than usual' WHEN z * direction <= -2 THEN 'Much worse than usual' ELSE 'Worse than usual' END AS \"Status\" FROM scored ORDER BY ord",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "14d",
+      "title": "Recovery compared with your usual",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hypnogram of the most recent sleep.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 85,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 3600000,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "Awake": {
+                  "color": "light-red",
+                  "index": 3
+                },
+                "Deep": {
+                  "color": "dark-blue",
+                  "index": 0
+                },
+                "Light": {
+                  "color": "light-blue",
+                  "index": 1
+                },
+                "REM": {
+                  "color": "#a352cc",
+                  "index": 2
+                }
+              },
+              "type": "value"
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 4
+      },
+      "hideTimeOverride": true,
+      "id": 10,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.85,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, CASE health_number(fields, 'SleepStageLevel') WHEN 0 THEN 'Deep' WHEN 1 THEN 'Light' WHEN 2 THEN 'REM' WHEN 3 THEN 'Awake' END AS \"Stage\" FROM all_records WHERE dataset = 'SleepIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND health_number(fields, 'SleepStageLevel') IS NOT NULL ORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "24h",
+      "title": "Sleep stages (last 24 hours)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Time in each stage of the most recent sleep (within the last 2 days).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "decimals": 1,
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Deep"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Light"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REM"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#a352cc",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Awake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "hideTimeOverride": true,
+      "id": 11,
+      "options": {
+        "displayMode": "basic",
+        "legend": {
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT health_number(fields, 'deepSleepSeconds') AS \"Deep\", health_number(fields, 'lightSleepSeconds') AS \"Light\", health_number(fields, 'remSleepSeconds') AS \"REM\", health_number(fields, 'awakeSleepSeconds') AS \"Awake\" FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time <= $__timeTo()::timestamptz AND time > $__timeTo()::timestamptz - interval '2 days' ORDER BY time DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "24h",
+      "title": "Last sleep by stage",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Recovery: how your body is coping",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Higher than your usual is generally better. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "suffix: ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 2) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Overnight HRV\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Overnight HRV",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Lower than your usual is generally better. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "suffix: bpm"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'restingHeartRate')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 1) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Resting HR\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Resting heart rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Shaded: each day's lowest to highest Body Battery. Line: level when you woke up.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 100,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "max": 100,
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Highest"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Lowest"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 20
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Lowest"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "At wake"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "always"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'bodyBatteryHighestValue')) AS c0, avg(health_number(fields, 'bodyBatteryLowestValue')) AS c1, avg(health_number(fields, 'bodyBatteryAtWakeTime')) AS c2 FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Highest\", daily.c1 AS \"Lowest\", daily.c2 AS \"At wake\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Body Battery",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Daily average of all-day stress (0-100), ignoring unmeasured periods. Lower is generally better. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 50,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset = 'StressIntraday' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 2) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Average stress\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Average stress",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Sleep",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hours per stage, stacked. Dashed line: 7 hours.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 90,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 7
+              }
+            ]
+          },
+          "unit": "suffix: h"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Deep"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Light"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REM"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#a352cc",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Awake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'deepSleepSeconds')) / 3600 AS c0, avg(health_number(fields, 'lightSleepSeconds')) / 3600 AS c1, avg(health_number(fields, 'remSleepSeconds')) / 3600 AS c2, avg(health_number(fields, 'awakeSleepSeconds')) / 3600 AS c3 FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Deep\", daily.c1 AS \"Light\", daily.c2 AS \"REM\", daily.c3 AS \"Awake\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Sleep per night",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Background bands are Garmin's: 90+ excellent, 80-89 good, 60-79 fair, below 60 poor. Line: 7-day average.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 40,
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "green",
+                "value": 80
+              },
+              {
+                "color": "dark-green",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.spanNulls",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepScore')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '8 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 6, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w >= 3 THEN avg(value) OVER w END AS avg7 FROM days LEFT JOIN daily USING (day) WINDOW w AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep score\", avg7 AS \"7-day average\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Sleep score",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Breathing, oxygen and temperature during sleep",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Breaths per minute. A rise above your usual range is an early sign of illness for many people. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "light-green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "unit": "suffix: brpm"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 42
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'averageRespirationValue')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 0.3) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Breathing rate\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Breathing rate during sleep",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Needs Pulse Ox during sleep enabled on the watch. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 42
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'averageSpO2Value')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 0.5) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Average SpO2\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "SpO2 during sleep",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Overnight wrist temperature compared with Garmin's own baseline for you (\u00b0C). Watches without the sensor show no data.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 42
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgSkinTempDeviationC')) AS c0 FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Skin temperature change\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Skin temperature change",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Activity and fitness",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Daily steps and their 7-day average.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.spanNulls",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'totalSteps')) AS value FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '8 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 6, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w >= 3 THEN avg(value) OVER w END AS avg7 FROM days LEFT JOIN daily USING (day) WINDOW w AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Steps\", avg7 AS \"7-day average\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Steps",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Weeks start on Monday. Dashed line: the 150 minutes a week recommended by health guidelines. The current week is still in progress.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 150
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Moderate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vigorous (counted twice)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('week', (COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date))::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, sum(health_number(fields, 'moderateIntensityMinutes')) AS \"Moderate\", 2 * sum(health_number(fields, 'vigorousIntensityMinutes')) AS \"Vigorous (counted twice)\" FROM all_records WHERE dataset = 'DailyStats' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '9 days' AND time <= $__timeTo()::timestamptz + interval '2 days' AND COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) >= date_trunc('week', ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date::timestamp)::date AND COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) <= ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Intensity minutes per week",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hours of recorded activities per week (Monday start), stacked by activity type.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "min": 0,
+          "unit": "suffix: h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "id": 27,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('week', (COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date))::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, initcap(replace(COALESCE(fields->>'activityType', 'other'), '_', ' ')) AS metric, sum(health_number(fields, 'elapsedDuration')) / 3600 AS value FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityName' IS DISTINCT FROM 'END' GROUP BY 1, 2 ORDER BY 1, 2",
+          "refId": "A"
+        }
+      ],
+      "title": "Training time per week by sport",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Totals per activity type over the dashboard time range. Open \"Garmin Stats\" for single activities and GPS tracks.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "minWidth": 60
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hours"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Distance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: km"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg HR"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: bpm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Training load"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "id": 28,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT initcap(replace(COALESCE(fields->>'activityType', 'other'), '_', ' ')) AS \"Activity\", count(*) AS \"Sessions\", sum(health_number(fields, 'elapsedDuration')) / 3600 AS \"Hours\", sum(health_number(fields, 'distance')) / 1000 AS \"Distance\", avg(health_number(fields, 'averageHR')) AS \"Avg HR\", sum(health_number(fields, 'activityTrainingLoad')) AS \"Training load\" FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityName' IS DISTINCT FROM 'END' GROUP BY 1 ORDER BY 3 DESC NULLS LAST",
+          "refId": "A"
+        }
+      ],
+      "title": "Activities in the selected period",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Garmin's estimate of your aerobic fitness (ml/kg/min).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cycling"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 67
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'VO2_max_value')) AS c0, avg(health_number(fields, 'VO2_max_value_cycling')) AS c1 FROM all_records WHERE dataset = 'VO2_Max' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Running\", daily.c1 AS \"Cycling\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "VO2 max",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Garmin fitness age against your actual age. Lower than actual is better.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "unit": "suffix: y"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Actual age"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    6,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Achievable"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 67
+      },
+      "id": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'fitnessAge')) AS c0, avg(health_number(fields, 'chronologicalAge')) AS c1, avg(health_number(fields, 'achievableFitnessAge')) AS c2 FROM all_records WHERE dataset = 'FitnessAge' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Fitness age\", daily.c1 AS \"Actual age\", daily.c2 AS \"Achievable\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Fitness age",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Weigh-ins and their 7-day average (needs 2 weigh-ins in the window). Day-to-day changes are mostly water.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "unit": "masskg"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 67
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'weight')) / 1000 AS value FROM all_records WHERE dataset = 'BodyComposition' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '8 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 6, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w >= 2 THEN avg(value) OVER w END AS avg7 FROM days LEFT JOIN daily USING (day) WINDOW w AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Weight\", avg7 AS \"7-day average\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Weight",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 75
+      },
+      "id": 32,
+      "panels": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Acute (7-day) against chronic (4-week) training load. Shaded: Garmin's minimum to maximum chronic-load range. Acute load well above chronic load means a fast ramp-up.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "orange",
+                "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Chronic load"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Range high"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "displayName",
+                    "value": "Garmin range"
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Range low"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 15
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Range low"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 76
+          },
+          "id": 33,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'dailyTrainingLoadAcute')) AS c0, avg(health_number(fields, 'dailyTrainingLoadChronic')) AS c1, avg(health_number(fields, 'maxTrainingLoadChronic')) AS c2, avg(health_number(fields, 'minTrainingLoadChronic')) AS c3 FROM all_records WHERE dataset = 'TrainingStatus' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Acute load\", daily.c1 AS \"Chronic load\", daily.c2 AS \"Range high\", daily.c3 AS \"Range low\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+              "refId": "A"
+            }
+          ],
+          "title": "Training load: acute vs chronic",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Garmin's bands: 95+ prime, 75-94 high, 50-74 moderate, 25-49 low, below 25 poor.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "text",
+                "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "area"
+                }
+              },
+              "max": 100,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 25
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 50
+                  },
+                  {
+                    "color": "green",
+                    "value": 75
+                  },
+                  {
+                    "color": "dark-green",
+                    "value": 95
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 76
+          },
+          "id": 34,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, (array_agg(health_number(fields, 'score') ORDER BY time) FILTER (WHERE health_number(fields, 'score') IS NOT NULL))[1] AS c0 FROM all_records WHERE dataset = 'TrainingReadiness' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Morning readiness\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+              "refId": "A"
+            }
+          ],
+          "title": "Training readiness (first reading of the day)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Training load and readiness (needs training_status / training_readiness in FETCH_SELECTION)",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 76
+      },
+      "id": 35,
+      "panels": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "What you logged in the Garmin Connect lifestyle journal, per day. Blank: not logged.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "rgba(128, 128, 128, 0.35)",
+                      "index": 0,
+                      "text": "No"
+                    },
+                    "1": {
+                      "color": "purple",
+                      "index": 1,
+                      "text": "Yes"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 77
+          },
+          "id": 36,
+          "options": {
+            "colWidth": 0.9,
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
+            },
+            "rowHeight": 0.9,
+            "showValue": "never",
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date)::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, initcap(replace(tags->>'behavior', '_', ' ')) AS metric, max(health_number(fields, 'status')) AS value FROM all_records WHERE dataset = 'LifestyleJournal' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' AND COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date GROUP BY 1, 2 ORDER BY 1, 2",
+              "refId": "A"
+            }
+          ],
+          "title": "Lifestyle journal",
+          "type": "status-history"
+        }
+      ],
+      "title": "Lifestyle journal",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "id": 37,
+      "panels": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Averaged per time bucket (at least 2 minutes).",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "red",
+                "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": 600000,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "suffix: bpm"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 78
+          },
+          "id": 38,
+          "interval": "2m",
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH aggregated AS (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'HeartRate')) AS \"Heart rate\" FROM all_records WHERE dataset = 'HeartRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"Heart rate\" FROM buckets b LEFT JOIN aggregated a USING (time) ORDER BY b.time",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": "24h",
+          "title": "Heart rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Both on the same 0-100 scale. Stress gaps are periods Garmin could not measure (activity or movement).",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": 900000,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "max": 100,
+              "min": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Stress"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "orange",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.drawStyle",
+                    "value": "bars"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 60
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Body Battery"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 2
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 10
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 85
+          },
+          "id": 39,
+          "interval": "3m",
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH aggregated AS (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS \"Stress\", avg(health_number(fields, 'BodyBatteryLevel')) AS \"Body Battery\" FROM all_records WHERE dataset IN ('StressIntraday', 'BodyBatteryIntraday') AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"Stress\", a.\"Body Battery\" FROM buckets b LEFT JOIN aggregated a USING (time) ORDER BY b.time",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": "24h",
+          "title": "Stress and Body Battery",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Last 24 hours",
+      "type": "row"
+    }
+  ],
+  "refresh": "15m",
+  "schemaVersion": 41,
+  "tags": [
+    "garmin",
+    "health"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "garmin_postgres"
+        },
+        "label": "Account",
+        "name": "Source",
+        "options": [],
+        "query": "SELECT provider || ':' || account AS __text, id AS __value FROM sources ORDER BY 1",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "Europe/Budapest",
+          "value": "Europe/Budapest"
+        },
+        "description": "Your local time zone for grouping stats",
+        "label": "Local Time Zone",
+        "name": "TimeZone",
+        "options": [
+          {
+            "selected": false,
+            "text": "Europe/London",
+            "value": "Europe/London"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Paris",
+            "value": "Europe/Paris"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Berlin",
+            "value": "Europe/Berlin"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Madrid",
+            "value": "Europe/Madrid"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Rome",
+            "value": "Europe/Rome"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Amsterdam",
+            "value": "Europe/Amsterdam"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Brussels",
+            "value": "Europe/Brussels"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Zurich",
+            "value": "Europe/Zurich"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Stockholm",
+            "value": "Europe/Stockholm"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Warsaw",
+            "value": "Europe/Warsaw"
+          },
+          {
+            "selected": true,
+            "text": "Europe/Budapest",
+            "value": "Europe/Budapest"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Istanbul",
+            "value": "Europe/Istanbul"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Athens",
+            "value": "Europe/Athens"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Moscow",
+            "value": "Europe/Moscow"
+          },
+          {
+            "selected": false,
+            "text": "America/New_York",
+            "value": "America/New_York"
+          },
+          {
+            "selected": false,
+            "text": "America/Chicago",
+            "value": "America/Chicago"
+          },
+          {
+            "selected": false,
+            "text": "America/Denver",
+            "value": "America/Denver"
+          },
+          {
+            "selected": false,
+            "text": "America/Los_Angeles",
+            "value": "America/Los_Angeles"
+          },
+          {
+            "selected": false,
+            "text": "America/Toronto",
+            "value": "America/Toronto"
+          },
+          {
+            "selected": false,
+            "text": "America/Vancouver",
+            "value": "America/Vancouver"
+          },
+          {
+            "selected": false,
+            "text": "America/Mexico_City",
+            "value": "America/Mexico_City"
+          },
+          {
+            "selected": false,
+            "text": "America/Sao_Paulo",
+            "value": "America/Sao_Paulo"
+          },
+          {
+            "selected": false,
+            "text": "America/Buenos_Aires",
+            "value": "America/Buenos_Aires"
+          },
+          {
+            "selected": false,
+            "text": "America/Lima",
+            "value": "America/Lima"
+          },
+          {
+            "selected": false,
+            "text": "America/Bogota",
+            "value": "America/Bogota"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Johannesburg",
+            "value": "Africa/Johannesburg"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Cairo",
+            "value": "Africa/Cairo"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Nairobi",
+            "value": "Africa/Nairobi"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Lagos",
+            "value": "Africa/Lagos"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Tokyo",
+            "value": "Asia/Tokyo"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Seoul",
+            "value": "Asia/Seoul"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Shanghai",
+            "value": "Asia/Shanghai"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Singapore",
+            "value": "Asia/Singapore"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Kolkata",
+            "value": "Asia/Kolkata"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Bangkok",
+            "value": "Asia/Bangkok"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Dubai",
+            "value": "Asia/Dubai"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Hong_Kong",
+            "value": "Asia/Hong_Kong"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Kuala_Lumpur",
+            "value": "Asia/Kuala_Lumpur"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Jakarta",
+            "value": "Asia/Jakarta"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Manila",
+            "value": "Asia/Manila"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Taipei",
+            "value": "Asia/Taipei"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Karachi",
+            "value": "Asia/Karachi"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Colombo",
+            "value": "Asia/Colombo"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Ho_Chi_Minh",
+            "value": "Asia/Ho_Chi_Minh"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Sydney",
+            "value": "Australia/Sydney"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Melbourne",
+            "value": "Australia/Melbourne"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Brisbane",
+            "value": "Australia/Brisbane"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Perth",
+            "value": "Australia/Perth"
+          },
+          {
+            "selected": false,
+            "text": "Pacific/Auckland",
+            "value": "Pacific/Auckland"
+          },
+          {
+            "selected": false,
+            "text": "Pacific/Honolulu",
+            "value": "Pacific/Honolulu"
+          }
+        ],
+        "query": "Europe/London, Europe/Paris, Europe/Berlin, Europe/Madrid, Europe/Rome, Europe/Amsterdam, Europe/Brussels, Europe/Zurich, Europe/Stockholm, Europe/Warsaw, Europe/Budapest, Europe/Istanbul, Europe/Athens, Europe/Moscow, America/New_York, America/Chicago, America/Denver, America/Los_Angeles, America/Toronto, America/Vancouver, America/Mexico_City, America/Sao_Paulo, America/Buenos_Aires, America/Lima, America/Bogota, Africa/Johannesburg, Africa/Cairo, Africa/Nairobi, Africa/Lagos, Asia/Tokyo, Asia/Seoul, Asia/Shanghai, Asia/Singapore, Asia/Kolkata, Asia/Bangkok, Asia/Dubai, Asia/Hong_Kong, Asia/Kuala_Lumpur, Asia/Jakarta, Asia/Manila, Asia/Taipei, Asia/Karachi, Asia/Colombo, Asia/Ho_Chi_Minh, Australia/Sydney, Australia/Melbourne, Australia/Brisbane, Australia/Perth, Pacific/Auckland, Pacific/Honolulu",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Garmin Health",
+  "uid": "garmin-health-overview",
+  "version": 1,
+  "weekStart": "monday"
+}

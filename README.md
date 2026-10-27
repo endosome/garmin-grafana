@@ -43,8 +43,12 @@ builds, initializes, and starts the same stack. It leaves an existing `.env`
 untouched. Python 3 is required by this convenience script.
 
 Open [Grafana](http://localhost:3000), username `admin`, password from `.env`.
-Both dashboards and the `Garmin PostgreSQL` data source are provisioned. Select
-your **Account** on each dashboard. Set **TimeZone** to the local IANA timezone
+The dashboards and the `Garmin PostgreSQL` data source are provisioned. Start
+with **Garmin Health**: each recovery signal (HRV, resting heart rate, sleep,
+Body Battery, breathing rate, SpO2, skin temperature) against your own usual
+range, then sleep, activity and fitness trends. **Garmin Stats** has every
+intraday chart, activity and GPS track; **Garmin Strength Training** covers
+sets and HR zones. Select your **Account** on each dashboard. Set **TimeZone** to the local IANA timezone
 for daily aggregation. Grafana binds to loopback by default; use an SSH tunnel
 or configure an authenticated TLS reverse proxy for remote access.
 
