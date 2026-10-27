@@ -1497,23 +1497,19 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue"
-              },
-              {
-                "color": "semi-dark-red",
-                "value": 7200
-              },
-              {
-                "color": "semi-dark-orange",
-                "value": 10800
+                "color": "semi-dark-green"
               },
               {
                 "color": "semi-dark-yellow",
-                "value": 18000
+                "value": 3600
               },
               {
-                "color": "semi-dark-green",
-                "value": 25200
+                "color": "semi-dark-orange",
+                "value": 7200
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 14400
               }
             ]
           },
@@ -6263,7 +6259,7 @@
               },
               "refId": "A",
               "rawQuery": true,
-              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Avg Stress\" FROM (SELECT COALESCE(local_date::timestamp AT TIME ZONE ${TimeZone:sqlstring}, (date_trunc('day', time AT TIME ZONE ${TimeZone:sqlstring}) AT TIME ZONE ${TimeZone:sqlstring})) AS time, avg(health_number(fields, 'stressLevel')) AS value FROM all_records WHERE dataset='StressIntraday' AND source_id IN (${Source:csv}) AND (time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' AND COALESCE(local_date::timestamp AT TIME ZONE ${TimeZone:sqlstring}, time) BETWEEN $__timeFrom()::timestamptz AND $__timeTo()::timestamptz) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT d AT TIME ZONE ${TimeZone:sqlstring} AS time FROM generate_series(date_trunc('day', $__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}), date_trunc('day', $__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}), interval '1 day') d) SELECT b.time, a.\"Avg Stress\" AS \"Avg Stress\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
+              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Avg Stress\" FROM (SELECT COALESCE(local_date::timestamp AT TIME ZONE ${TimeZone:sqlstring}, (date_trunc('day', time AT TIME ZONE ${TimeZone:sqlstring}) AT TIME ZONE ${TimeZone:sqlstring})) AS time, avg(health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset='StressIntraday' AND source_id IN (${Source:csv}) AND (time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' AND COALESCE(local_date::timestamp AT TIME ZONE ${TimeZone:sqlstring}, time) BETWEEN $__timeFrom()::timestamptz AND $__timeTo()::timestamptz) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT d AT TIME ZONE ${TimeZone:sqlstring} AS time FROM generate_series(date_trunc('day', $__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}), date_trunc('day', $__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}), interval '1 day') d) SELECT b.time, a.\"Avg Stress\" AS \"Avg Stress\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
               "format": "time_series",
               "editorMode": "code",
               "hide": false
@@ -9353,7 +9349,7 @@
               },
               "refId": "B",
               "rawQuery": true,
-              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Stress Level\" FROM (SELECT date_bin(INTERVAL '1h', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, percentile_cont(0.5) WITHIN GROUP (ORDER BY health_number(fields, 'stressLevel')) AS value FROM all_records WHERE dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '1h', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '1h', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '1h') AS time) SELECT b.time, a.\"Stress Level\" AS \"Stress Level\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
+              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Stress Level\" FROM (SELECT date_bin(INTERVAL '1h', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, percentile_cont(0.5) WITHIN GROUP (ORDER BY health_number(fields, 'stressLevel')) FILTER (WHERE health_number(fields, 'stressLevel') >= 0) AS value FROM all_records WHERE dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '1h', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '1h', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '1h') AS time) SELECT b.time, a.\"Stress Level\" AS \"Stress Level\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
               "format": "time_series",
               "editorMode": "code",
               "hide": false
