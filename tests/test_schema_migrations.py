@@ -83,3 +83,20 @@ def test_module_command_initializes_a_fresh_database(fresh_database, monkeypatch
         assert cur.fetchone()[0] == len(list(Path(migrate.__file__).with_name('migrations').glob('*.sql')))
         cur.execute("SELECT hypertable_name FROM timescaledb_information.hypertables")
         assert cur.fetchall() == [('samples',)]
+
+
+def test_record_version_stores_installed_package_version(fresh_database):
+    connection = fresh_database
+    migrate.migrate(connection)
+    with mock.patch.object(migrate.metadata, 'version', return_value='1.2.3'):
+        migrate.record_version(connection)
+    with mock.patch.object(migrate.metadata, 'version', return_value='1.2.4'):
+        migrate.record_version(connection)
+    with connection.transaction(), connection.cursor() as cur:
+        cur.execute("SELECT key, value FROM app_info")
+        assert cur.fetchall() == [('version', '1.2.4')]
+    with mock.patch.object(migrate.metadata, 'version', side_effect=migrate.metadata.PackageNotFoundError):
+        migrate.record_version(connection)
+    with connection.transaction(), connection.cursor() as cur:
+        cur.execute("SELECT value FROM app_info WHERE key = 'version'")
+        assert cur.fetchone() == ('unknown',)

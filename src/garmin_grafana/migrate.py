@@ -1,6 +1,7 @@
 """Apply ordered SQL migrations explicitly; safe for concurrent deployment startups."""
 import hashlib
 import os
+from importlib import metadata
 from psycopg import sql
 from pathlib import Path
 from .storage import connect
@@ -21,6 +22,16 @@ def migrate(connection):
                 continue
             cur.execute(sql)
             cur.execute('INSERT INTO schema_migrations(name,checksum) VALUES (%s,%s)', (path.name, digest))
+
+
+def record_version(connection):
+    """Store the installed package version so the Grafana dashboard can show what is running."""
+    try:
+        version = metadata.version('garmin-grafana')
+    except metadata.PackageNotFoundError:
+        version = 'unknown'
+    with connection.transaction(), connection.cursor() as cur:
+        cur.execute("INSERT INTO app_info(key,value) VALUES ('version',%s) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()", (version,))
 
 
 def configure_reader(connection):
@@ -44,6 +55,7 @@ def configure_reader(connection):
 def main():
     with connect() as connection:
         migrate(connection)
+        record_version(connection)
         configure_reader(connection)
 
 
