@@ -111,6 +111,11 @@ def test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person(load):
         assert not month[day].get('Steps'), day  # the sync gap stays empty, never a copy of a neighbour
     assert run(dash, "Today's Steps", NOW - timedelta(days=1))[-1]['totalSteps'] == want['steps'][TODAY]
     assert run(dash, 'Today RHR', NOW - timedelta(days=1))[-1]['restingHeartRate'] == want['rhr'][TODAY]
+    # Stress leaves out Garmin's -1/-2 codes in SQL, so smoothing never averages them and Body Battery keeps every sample.
+    day = (NOW - timedelta(days=1), NOW)
+    stress = run(dash, 'Stress', *day)
+    assert stress and min(r['Stress Level'] for r in stress) >= 0
+    assert len(run(dash, 'Stress', *day, ref='B')) == sum(1 for r in persona.records if r.dataset == 'BodyBatteryIntraday' and day[0] <= r.time <= day[1])
     track = run(dash, 'GPS Track Heart Rate', NOW - timedelta(days=7), activity=want['gps_selector'])
     assert len(track) == want['gps_points']
 

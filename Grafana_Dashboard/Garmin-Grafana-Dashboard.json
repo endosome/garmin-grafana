@@ -668,7 +668,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT time, value AS \"Stress\" FROM (SELECT time AS time, health_number(fields, 'stressLevel') AS value FROM all_records WHERE (health_number(fields, 'stressLevel')) IS NOT NULL AND dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) ORDER BY time) q ORDER BY time",
+          "rawSql": "SELECT time, avg(value) OVER (ORDER BY time RANGE BETWEEN ($__timeTo()::timestamptz - $__timeFrom()::timestamptz) * 0.0025 PRECEDING AND ($__timeTo()::timestamptz - $__timeFrom()::timestamptz) * 0.0025 FOLLOWING) AS \"Stress Level\" FROM (SELECT time, health_number(fields, 'stressLevel') AS value FROM all_records WHERE health_number(fields, 'stressLevel') >= 0 AND dataset='StressIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time)) q ORDER BY time",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -689,42 +689,6 @@
       "timeFrom": "24h",
       "title": "Stress",
       "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "alias": "Stress Level",
-            "mode": "windowFunctions",
-            "reduce": {
-              "reducer": "sum"
-            },
-            "replaceFields": false,
-            "window": {
-              "field": "Stress",
-              "reducer": "mean",
-              "windowAlignment": "centered",
-              "windowSize": 0.005,
-              "windowSizeMode": "percentage"
-            }
-          }
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "greater",
-                  "options": {
-                    "value": 0
-                  }
-                },
-                "fieldName": "Stress"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        },
         {
           "id": "filterFieldsByName",
           "options": {
