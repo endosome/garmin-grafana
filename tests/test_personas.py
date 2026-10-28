@@ -187,6 +187,13 @@ def test_strength_dashboard_matches_the_gym_goer(load):
     squat = run(dash, 'Estimated 1RM Progression (Epley) by Exercise', start, category='SQUAT')
     assert {r['metric'] for r in squat} == {'SQUAT/BARBELL_BACK_SQUAT'}
     assert {local_day(r['time']): r['e1rm'] for r in squat} == pytest.approx(want['squat_e1rm'])
+    # The filters narrow the overview too: SQUAT is only the legs workouts' squat sets.
+    squats = [r.values for r in persona.records if r.dataset == 'StrengthExerciseSet' and r.tags['ExerciseCategory'] == 'SQUAT']
+    assert one('Total Volume', category='SQUAT') == pytest.approx(sum(v['Reps'] * v['Weight_kg'] for v in squats))
+    assert one('Weighted Sets', category='SQUAT') == len(squats)
+    assert one('Number of Workouts', category='SQUAT') == len({v['Activity_ID'] for v in squats})
+    assert sum(r['Workouts'] for r in run(dash, 'Workouts per Week', start, category='SQUAT')) == len({v['Activity_ID'] for v in squats})
+    assert one('Sets Needing Classification (UNKNOWN)', category='SQUAT') == want['unknown']  # always every set
     zones = run(dash, 'HR Zone Time Distribution (Strength Sessions)', start)
     assert zones == [{'Zone 1': want['zones'][0]}]
     assert [one('HR Zone Time Distribution (Strength Sessions)', ref=r) for r in 'BCDE'] == list(want['zones'][1:])
