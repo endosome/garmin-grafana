@@ -924,11 +924,11 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Latest VO2 max estimate: running, or cycling if you have no running estimate in the last year. Garmin updates it only after qualifying outdoor runs, walks or rides, so it can be days or weeks old.",
+      "description": "Latest VO2 max estimate: running, or cycling if you have no running estimate in the last year. Garmin updates it only after qualifying outdoor runs, walks or rides, so it can be days or weeks old. Shown without a rating colour: whether a value is good depends on your age and sex.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "yellow",
+            "fixedColor": "text",
             "mode": "fixed"
           },
           "decimals": 0,
@@ -937,7 +937,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "yellow",
+                "color": "text",
                 "value": null
               }
             ]

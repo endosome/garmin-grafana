@@ -453,6 +453,8 @@ def test_health_today_tiles_stay_empty_until_today_is_synced(db):
     assert [value for _,value in tile('Sleep score')]==[81,74]
     # VO2 max is the latest estimate, not a today value: running is preferred over cycling.
     assert tiles['VO2 max']['options']['reduceOptions']['calcs']==['lastNotNull']
+    # Whether a VO2 max is good depends on age and sex, so the tile carries no rating colour.
+    assert tiles['VO2 max']['fieldConfig']['defaults']['color']=={'fixedColor':'text','mode':'fixed'}
     assert [value for _,value in tile('VO2 max')]==[48.4]
     order=[p['fieldConfig']['defaults']['displayName'] for p in sorted(tiles.values(),key=lambda p:p['gridPos']['x'])]
     assert order[-2:]==['VO2 max','Intensity, 7 days']
