@@ -79,14 +79,18 @@ class PostgresStore:
             if not rows:
                 continue
             conflict = 'source_id,dataset,record_key' + (',time,nanoseconds' if table == 'samples' else '')
-            cur.executemany(f'''INSERT INTO {table}
+            cur.executemany(f'''INSERT INTO {table} AS t
                 (source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 ON CONFLICT ({conflict}) DO UPDATE SET
                 time=excluded.time,nanoseconds=excluded.nanoseconds,original_time=excluded.original_time,
-                local_date=COALESCE(excluded.local_date,{table}.local_date),
-                timezone=COALESCE(excluded.timezone,{table}.timezone),
-                tags=excluded.tags,fields={table}.fields || excluded.fields''', rows)
+                local_date=COALESCE(excluded.local_date,t.local_date),
+                timezone=COALESCE(excluded.timezone,t.timezone),
+                tags=excluded.tags,fields=t.fields || excluded.fields
+                WHERE (t.time,t.nanoseconds,t.original_time,t.local_date,t.timezone,t.tags,t.fields) IS DISTINCT FROM
+                    (excluded.time,excluded.nanoseconds,excluded.original_time,
+                     COALESCE(excluded.local_date,t.local_date),COALESCE(excluded.timezone,t.timezone),
+                     excluded.tags,t.fields || excluded.fields)''', rows)
 
     def request_range(self, datasets, start):
         with self.connection.transaction(), self.connection.cursor() as cur:

@@ -107,6 +107,28 @@ def test_bulk_upsert_and_types(db):
     assert query(db, 'SELECT count(*) FROM records WHERE source_id=%s', (sid,)) == [(1,)]
 
 
+def test_unchanged_rows_are_not_rewritten(db):
+    sample = Record.from_mapping(point(HeartRate=70))
+    summary = Record.from_mapping(point('Sleep', time='2026-01-01T00:00:00Z', score=80))
+    db.write([sample, summary])
+    sid = source(db)
+
+    def versions():
+        return {t: query(db, f'SELECT xmin::text FROM {t} WHERE source_id=%s', (sid,)) for t in ('samples', 'records')}
+
+    before = versions()
+    db.write([sample, summary])
+    assert versions() == before
+    db.write([replace(sample, values={'HeartRate': 70}), replace(summary, values={'score': 80})])
+    assert versions() == before
+    db.write([replace(sample, values={'HeartRate': 71}), replace(summary, values={'score': 81})])
+    after = versions()
+    assert after['samples'] != before['samples'] and after['records'] != before['records']
+    assert query(db, 'SELECT fields FROM samples WHERE source_id=%s', (sid,)) == [({'HeartRate': 71},)]
+    db.write([replace(sample, values={'Extra': 1})])
+    assert query(db, 'SELECT fields FROM samples WHERE source_id=%s', (sid,)) == [({'HeartRate': 71, 'Extra': 1},)]
+
+
 def test_precision_coincidences_and_accounts(db):
     first = Record.from_mapping(point())
     second = Record.from_mapping(point(time='2026-01-01T00:00:00.123456788Z'))
