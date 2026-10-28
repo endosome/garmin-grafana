@@ -8,12 +8,12 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
-from personas import healthy_lifestyle, ski_tourer  # noqa: E402
+from personas import PERSONAS  # noqa: E402
 from garmin_grafana.storage import PostgresStore  # noqa: E402
 
 
 def main():
-    for persona in (ski_tourer(), healthy_lifestyle()):
+    for persona in (factory() for factory in PERSONAS):
         store = PostgresStore(account=persona.account)
         try:
             print(f'{persona.account}: {store.write(persona.records)} records')

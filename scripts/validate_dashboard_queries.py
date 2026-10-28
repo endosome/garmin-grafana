@@ -9,13 +9,12 @@ import re
 from garmin_grafana.storage import connect
 
 
-def expand_query(query, source=1, *, start='2026-01-01T00:00:00Z', end='2026-01-10T00:00:00Z', timezone='UTC', activity='__all'):
+def expand_query(query, source=1, *, start='2026-01-01T00:00:00Z', end='2026-01-10T00:00:00Z', timezone='UTC', activity='__all', category='__all', interval='5 minutes'):
     query = query.replace('${Source:csv}', str(source))
     query = query.replace('${TimeZone:sqlstring}', f"'{timezone}'")
-    query = query.replace('${__interval}', '5 minutes')
+    query = query.replace('${__interval}', interval)
     query = query.replace('${ActivityGPS:sqlstring}', f"'{activity}'")
-    for variable in ('ExerciseCategory', 'ExerciseLabel'):
-        query = query.replace('${' + variable + ':sqlstring}', "'__all'")
+    query = query.replace('${ExerciseCategory:sqlstring}', f"'{category}'").replace('${ExerciseLabel:sqlstring}', "'__all'")
     query = query.replace('${SeasonStart:sqlstring}', "'12-01'").replace('${VerticalGoal:sqlstring}', "'2000'")
     query = re.sub(r'\$__timeFilter\(([^)]+)\)', rf"\1 BETWEEN '{start}'::timestamptz AND '{end}'::timestamptz", query)
     query = query.replace('$__timeFrom()', f"'{start}'").replace('$__timeTo()', f"'{end}'")

@@ -6,6 +6,8 @@ in plain Python rather than SQL. Both live in Europe/Budapest and "today" is
 2026-10-28, so the data crosses the October DST change. scripts/load_personas.py
 loads them into a development database to browse in Grafana.
 """
+import functools
+import math
 import random
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -23,13 +25,16 @@ NOW = datetime(2026, 10, 28, 12, 0, tzinfo=TZ)
 @dataclass
 class Persona:
     account: str
+    timezone: str = TZ_NAME
+    legacy: bool = False  # migrated from InfluxDB: no local date or time zone on any record
     records: list = field(default_factory=list)
     expected: dict = field(default_factory=dict)
 
     def add(self, dataset, when, fields, day, tags=None):
         tags = {'Device': 'EPIX PRO - 47 mm', 'Database_Name': 'garmin', **(tags or {})}
         self.records.append(Record.from_mapping({'measurement': dataset, 'time': when.astimezone(timezone.utc).isoformat(),
-                                                 'tags': tags, 'fields': fields}, local_date=day, timezone=TZ_NAME))
+                                                 'tags': tags, 'fields': fields},
+                                                local_date=None if self.legacy else day, timezone=None if self.legacy else self.timezone))
 
 
 def at(day, hour, minute=0):
@@ -65,6 +70,7 @@ def activity(persona, ids, day, hour, kind, hours, *, gain=None, loss=None, km=N
                 start=start, selector=selector)
 
 
+@functools.cache
 def ski_tourer():
     """Sixteen weeks of pre-season training, last winter on snow, and the first tour of the season."""
     p = Persona('persona-ski-tourer')
@@ -162,13 +168,14 @@ def ski_tourer():
     return p
 
 
+@functools.cache
 def healthy_lifestyle():
     """An active office worker: runs, bike commutes, yoga, daily health data, a sync gap and a partly synced today."""
     p = Persona('persona-healthy-lifestyle')
     rng = random.Random(11)
     ids = iter(range(700000, 800000))
     gap = {date(2026, 10, 14), date(2026, 10, 15), date(2026, 10, 16)}  # the watch was not synced
-    intraday_from = date(2026, 10, 26)
+    intraday_from = date(2026, 10, 25)  # includes the 25-hour DST day
     expected = {'steps': {}, 'rhr': {}, 'sleep_seconds': {}, 'sleep_score': {}, 'weight': {}, 'sessions': defaultdict(int),
                 'distance_km': defaultdict(float), 'journal_yes': defaultdict(int), 'gap': sorted(gap), 'gps_points': 0}
     run_zones, ride_zones = (.05, .30, .45, .18, .02), (.30, .50, .18, .02, 0)
@@ -285,7 +292,6 @@ def intraday(p, rng, day, bed, wake, rhr, hrv, acts, end):
 
 def gps(p, summary):
     """A track around Margaret Island, one point every 5 seconds, as the FIT parser writes ActivityGPS."""
-    import math
     secs, km = summary.values['elapsedDuration'], summary.values['distance'] / 1000
     start = summary.time
     count = 0
@@ -297,3 +303,112 @@ def gps(p, summary):
               summary.local_date, {'ActivityID': summary.tags['ActivityID'], 'ActivitySelector': summary.tags['ActivitySelector']})
         count += 1
     return count
+
+
+@functools.cache
+def gym_goer():
+    """Twelve weeks of progressive strength training, with every set the Strength dashboard special-cases."""
+    p = Persona('persona-gym-goer')
+    ids = iter(range(900000, 1000000))
+    sets = []
+    first = date(2026, 8, 3)
+
+    def workout(day, hour, plan, minute=0):
+        a = activity(p, ids, day, hour, 'strength_training', 1, hr=110, load=50, minute=minute, name='Strength')
+        for order, (category, label, reps, kg, seconds) in enumerate(plan, 1):
+            p.add('StrengthExerciseSet', a['start'] + timedelta(minutes=3 * order),
+                  {'Activity_ID': a['id'], 'SetOrder': order, 'Reps': reps, 'Weight_kg': kg, 'Duration_s': seconds}, day,
+                  {'ActivityID': str(a['id']), 'ExerciseCategory': category, 'ExerciseLabel': label})
+            sets.append(dict(day=day, activity=a['id'], category=category, label=label, reps=reps, kg=kg, seconds=seconds))
+        for zone, seconds in enumerate((600, 1500, 900, 300, 60), 1):
+            p.add('StrengthHRZones', a['start'], {'Activity_ID': a['id'], 'ZoneNumber': zone, 'SecsInZone': seconds}, day,
+                  {'ActivityID': str(a['id'])})
+
+    for w in range(12):
+        for d, kind in ((0, 'legs'), (2, 'push'), (4, 'pull')):
+            day = first + timedelta(weeks=w, days=d)
+            plan = [('ROW', 'ROW/INDOOR_ROW', 1, 30, 300), ('RUN', 'RUN/TREADMILL', 1, 10, 600)]  # warm-ups the dashboard leaves out
+            if kind == 'legs':
+                plan += [('SQUAT', 'SQUAT/BARBELL_BACK_SQUAT', 5, 60 + 2.5 * w, 45)] * 4 + [('DEADLIFT', 'DEADLIFT/ROMANIAN_DEADLIFT', 8, 70 + 2.5 * w, 50)] * 3
+            elif kind == 'push':
+                plan += [('BENCH_PRESS', 'BENCH_PRESS/BARBELL_BENCH_PRESS', 6, 45 + 1.25 * w, 35)] * 4 + [('PUSH_UP', 'PUSH_UP/PUSH_UP', 15, 0, 30)] * 2
+            else:
+                plan += [('PULL_UP', 'PULL_UP/PULL_UP', 8, 0, 30)] * 3 + [('ROW', 'ROW/BARBELL_ROW', 10, 40 + w, 40)] * 3
+            plan += [('UNKNOWN', 'UNKNOWN', 12, 20, 40)]  # Garmin could not classify it
+            workout(day, 18, plan)
+    workout(date(2026, 10, 21), 7, [('CORE', 'CORE/DEAD_BUG', 10, 5, 45)] * 3)  # a morning workout on a day with an evening one
+    weighted = [s for s in sets if s['kg'] > 0 and s['label'] != 'ROW/INDOOR_ROW' and s['category'] != 'RUN']
+    volume = defaultdict(float)
+    for s in weighted:
+        volume[s['activity']] += s['reps'] * s['kg']
+    per_day, per_week, records = defaultdict(lambda: [0, 0, 0.0, 0]), defaultdict(set), {}
+    for s in weighted:
+        row = per_day[s['day']]
+        row[0] += 1; row[1] += s['reps']; row[2] += s['reps'] * s['kg']; row[3] += s['seconds']
+        per_week[week(s['day'])].add(s['activity'])
+        best = records.get(s['label'], (0, 0))
+        records[s['label']] = (max(best[0], s['kg']), max(best[1], s['kg'] * (1 + s['reps'] / 30)))
+    by_category = defaultdict(int)
+    for s in weighted:
+        by_category[s['category']] += 1
+    squat = defaultdict(float)
+    for s in weighted:
+        if s['category'] == 'SQUAT':
+            squat[s['day']] = max(squat[s['day']], s['kg'] * (1 + s['reps'] / 30))
+    p.expected = {'first': first, 'total_volume': sum(volume.values()), 'weighted_sets': len(weighted),
+                  'reps': sum(s['reps'] for s in weighted), 'workouts': len(volume), 'avg_volume': sum(volume.values()) / len(volume),
+                  'records': records, 'sets_by_category': dict(by_category), 'unknown': sum(1 for s in sets if s['category'] == 'UNKNOWN'),
+                  'per_day': {d: tuple(v) for d, v in per_day.items()}, 'per_week': {w: len(a) for w, a in per_week.items()},
+                  'squat_e1rm': dict(squat), 'zones': (600 * len(volume), 1500 * len(volume), 900 * len(volume), 300 * len(volume), 60 * len(volume))}
+    return p
+
+
+@functools.cache
+def legacy_cyclist():
+    """Imported from the old InfluxDB setup: no local dates, and lives in Los Angeles (UTC-7), so evenings are the next UTC day."""
+    la = ZoneInfo('America/Los_Angeles')
+    p = Persona('persona-legacy-cyclist', timezone='America/Los_Angeles', legacy=True)
+    rng = random.Random(5)
+    ids = iter(range(1100000, 1200000))
+    steps, rhr = {}, {}
+    day = date(2026, 10, 8)
+    while day <= date(2026, 10, 27):
+        midnight = datetime.combine(day, time(0), la)
+        steps[day], rhr[day] = rng.randint(4000, 14000), 58 + rng.randint(-3, 3)
+        p.add('DailyStats', midnight, {'totalSteps': steps[day], 'restingHeartRate': rhr[day]}, day)
+        p.add('SleepSummary', midnight + timedelta(hours=7), {'sleepTimeSeconds': 26000, 'sleepScore': 75, 'restingHeartRate': rhr[day]}, day)
+        day += timedelta(1)
+    p.add('VO2_Max', datetime(2026, 10, 18, tzinfo=timezone.utc), {'VO2_max_value': None, 'VO2_max_value_cycling': 55.0}, date(2026, 10, 18))
+    rides = []
+    for day, hour, hours in ((date(2026, 10, 25), 22.5, 1.0),    # Sunday 22:30 local is Monday 05:30 UTC
+                             (date(2026, 10, 22), 23.5, 1.25)):  # crosses local midnight
+        start = datetime.combine(day, time(0), la) + timedelta(hours=hour)
+        aid = next(ids)
+        tags = {'ActivityID': aid, 'ActivitySelector': start.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SUTC-') + 'road_biking'}
+        p.add('ActivitySummary', start, {'Activity_ID': aid, 'activityName': 'Night ride', 'activityType': 'road_biking',
+              'elapsedDuration': hours * 3600, 'distance': 30000.0, 'averageHR': 130, 'activityTrainingLoad': 90}, day, tags)
+        p.add('ActivitySummary', start + timedelta(hours=hours), {'Activity_ID': aid, 'activityName': 'END', 'activityType': 'No Activity'}, day, tags)
+        rides.append((day, hours))
+    battery = []
+    for n in range(12):  # Home Assistant watch battery readings, imported under the unit name "%"
+        when = datetime(2026, 10, 27, 12, tzinfo=timezone.utc) + timedelta(minutes=10 * n)
+        battery.append(80 - n)
+        p.records.append(Record.from_mapping({'measurement': '%', 'time': when.isoformat(),
+                         'tags': {'domain': 'sensor', 'source': 'hass', 'entity_id': 'garmin_device_battery_level'}, 'fields': {'value': 80.0 - n}}))
+    p.expected = {'steps': steps, 'rhr': rhr, 'rides': rides, 'vo2': 55.0, 'battery': battery}
+    return p
+
+
+@functools.cache
+def newcomer():
+    """Five days with a new watch: not enough history for usual ranges, averages or training load."""
+    p = Persona('persona-newcomer')
+    for n in range(5):
+        day = TODAY - timedelta(days=4 - n)
+        p.add('DailyStats', at(day, 0), {'totalSteps': 8000 + 500 * n, 'restingHeartRate': 60, 'bodyBatteryAtWakeTime': 70}, day)
+        p.add('SleepSummary', at(day, 7), {'sleepTimeSeconds': 27000, 'sleepScore': 78, 'avgOvernightHrv': 40.0 + n, 'restingHeartRate': 60}, day)
+    p.expected = {'days': [TODAY - timedelta(days=4 - n) for n in range(5)], 'hrv': [40.0 + n for n in range(5)]}
+    return p
+
+
+PERSONAS = (ski_tourer, healthy_lifestyle, gym_goer, legacy_cyclist, newcomer)
