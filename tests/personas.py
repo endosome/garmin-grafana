@@ -6,12 +6,15 @@ in plain Python rather than SQL. Both live in Europe/Budapest and "today" is
 2026-10-28, so the data crosses the October DST change. scripts/load_personas.py
 loads them into a development database to browse in Grafana.
 """
+import csv
 import functools
+import gzip
 import math
 import random
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from garmin_grafana.domain import Record
@@ -411,4 +414,66 @@ def newcomer():
     return p
 
 
-PERSONAS = (ski_tourer, healthy_lifestyle, gym_goer, legacy_cyclist, newcomer)
+@functools.cache
+def public_fitbit_user():
+    """A real person: participant 6962181067 of the public Fitbit export (Zenodo 53894, CC BY 4.0).
+
+    tests/data/extract_fitbit_persona.py made the excerpt. Dates move forward a whole
+    number of weeks so the month ends on Thursday 2026-10-22 with real weekdays. Fitbit
+    has no resting HR, stress, HRV or Body Battery: those fields never arrive.
+    """
+    p = Persona('persona-public-fitbit')
+    shift = date(2026, 10, 22) - date(2016, 5, 12)  # 3815 days, 545 weeks
+
+    def local(value):
+        return datetime.fromisoformat(value).replace(tzinfo=TZ) + shift
+
+    with gzip.open(Path(__file__).with_name('data') / 'fitbit_6962181067.csv.gz', 'rt', newline='') as fh:
+        rows = list(csv.reader(fh))
+    steps, intensity, heart, weight = {}, {}, defaultdict(dict), defaultdict(list)
+    for kind, when, *values in rows:
+        if kind == 'day':
+            day = date.fromisoformat(when) + shift
+            total, km, very, fairly, sedentary, calories = int(values[0]), float(values[1]), int(values[2]), int(values[3]), int(values[4]), int(values[5])
+            steps[day], intensity[day] = total, fairly + 2 * very
+            p.add('DailyStats', at(day, 0), {'totalSteps': total, 'totalDistanceMeters': round(km * 1000), 'moderateIntensityMinutes': fairly,
+                  'vigorousIntensityMinutes': very, 'sedentarySeconds': sedentary * 60, 'activeKilocalories': float(calories)}, day)
+        elif kind == 'steps15':
+            t = local(when)
+            p.add('StepsIntraday', t, {'StepsCount': int(values[0])}, t.date())
+        elif kind == 'hr2':
+            t = local(when)
+            heart[t.date()][t] = int(values[0])
+            p.add('HeartRateIntraday', t, {'HeartRate': int(values[0])}, t.date())
+        elif kind == 'weight':
+            t = local(when)
+            weight[t.date()].append(float(values[0]))
+            p.add('BodyComposition', t, {'weight': float(values[0]) * 1000, 'bmi': None}, t.date(), {'Frequency': 'Intraday', 'SourceType': 'MANUAL'})
+    # Sleep: Fitbit levels 1 asleep, 2 restless, 3 awake. A night is a run of segments with gaps under an hour,
+    # summarised on the day it ends, as Garmin does; restless minutes count as light sleep.
+    nights, night = [], []
+    for kind, when, *values in rows:
+        if kind != 'sleep':
+            continue
+        t, level, minutes = local(when), int(values[0]), int(values[1])
+        if night and (t - night[-1][0] - timedelta(minutes=night[-1][2])) > timedelta(hours=1):
+            nights.append(night); night = []
+        night.append((t, level, minutes))
+    nights.append(night)
+    asleep, awake, wake = defaultdict(int), defaultdict(int), {}
+    for night in nights:  # a nap ending the same day joins that day's summary
+        end = night[-1][0] + timedelta(minutes=night[-1][2])
+        for t, level, minutes in night:
+            p.add('SleepIntraday', t, {'SleepStageLevel': 3 if level == 3 else 1, 'SleepStageSeconds': minutes * 60}, end.date())
+        asleep[end.date()] += sum(m for _, level, m in night if level != 3) * 60
+        awake[end.date()] += sum(m for _, level, m in night if level == 3) * 60
+        wake[end.date()] = end
+    for day, end in wake.items():
+        p.add('SleepSummary', end, {'sleepTimeSeconds': asleep[day], 'lightSleepSeconds': asleep[day], 'deepSleepSeconds': 0,
+              'remSleepSeconds': 0, 'awakeSleepSeconds': awake[day]}, day)
+    p.expected = {'steps': steps, 'intensity': intensity, 'heart': dict(heart), 'asleep_hours': {d: s / 3600 for d, s in asleep.items()},
+                  'weight': {d: sum(v) / len(v) for d, v in weight.items()}, 'last_day': max(steps)}
+    return p
+
+
+PERSONAS = (ski_tourer, healthy_lifestyle, gym_goer, legacy_cyclist, newcomer, public_fitbit_user)

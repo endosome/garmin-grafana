@@ -78,8 +78,9 @@ the collectors write: a ski tourer (pre-season build-up, last winter on snow), a
 healthy-lifestyle runner (a year of daily data, intraday series, a GPS run, a sync
 gap, the DST day and a partly synced today), a gym-goer (progressive overload and
 every set the Strength dashboard special-cases), a cyclist imported from InfluxDB
-(no local dates, Los Angeles time, Home Assistant battery data) and a newcomer with
-five days of data. `tests/test_personas.py` checks dashboard panels against values
+(no local dates, Los Angeles time, Home Assistant battery data), a newcomer with
+five days of data, and a real month from one participant of a public Fitbit dataset
+(CC BY 4.0, see `tests/data/README.md`). `tests/test_personas.py` checks dashboard panels against values
 the personas compute in plain Python, and that accounts never see each other's
 data. To browse them in Grafana, load them into a disposable database with
 `uv run --locked python scripts/load_personas.py`; each persona is its own Account

@@ -7,7 +7,7 @@ import uuid
 from zoneinfo import ZoneInfo
 import pytest
 from garmin_grafana.storage import PostgresStore
-from personas import NOW, PERSONAS, TODAY, TZ, gym_goer, healthy_lifestyle, legacy_cyclist, newcomer, ski_tourer
+from personas import NOW, PERSONAS, TODAY, TZ, gym_goer, healthy_lifestyle, legacy_cyclist, newcomer, public_fitbit_user, ski_tourer
 from test_storage import db  # noqa: F401  (a fixture)
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -217,3 +217,27 @@ def test_new_users_get_no_usual_range_or_load_yet(load):
     assert run(ski, 'Vertical, 7 days', NOW - timedelta(days=7)) == [{'value': 0}]
     assert run(ski, 'Longest uphill, 4 weeks', NOW - timedelta(days=7)) == [{'value': None}]
     assert run('Garmin-Health-Overview.json', 'VO2 max', NOW - timedelta(days=7)) == []
+
+
+def test_dashboards_show_a_real_fitbit_month(load):
+    """Public data (Zenodo 53894, CC BY 4.0): non-wear days, gaps in heart rate, naps and missing fields."""
+    persona = public_fitbit_user()
+    run, want = load(persona), persona.expected
+    end = datetime.combine(want['last_day'], datetime.min.time(), TZ) + timedelta(hours=23)
+    month = end - timedelta(days=31)
+    stats = {local_day(r['time']): r['Steps'] for r in run('Garmin-Grafana-Dashboard.json', 'Daily Steps', month, end)}
+    assert {d: stats[d] for d in want['steps']} == want['steps']
+    health = {local_day(r['time']): r['Steps'] for r in run('Garmin-Health-Overview.json', 'Steps', month, end)}
+    assert {d: health[d] for d in want['steps']} == want['steps']
+    sleep = {local_day(r['time']): r['Light'] for r in run('Garmin-Health-Overview.json', 'Sleep per night', month, end) if r['Light'] is not None}
+    assert sleep == pytest.approx(want['asleep_hours'])
+    day = want['last_day'] - timedelta(days=3)
+    start = datetime.combine(day, datetime.min.time(), TZ)
+    heart = run('Garmin-Grafana-Dashboard.json', 'Heart Rate', start, start + timedelta(days=1, minutes=-1), interval='2 minutes')
+    assert {r['time']: r['Heart Rate'] for r in heart if r['Heart Rate'] is not None} == pytest.approx(want['heart'][day])
+    intensity = run('Garmin-Health-Overview.json', 'Intensity, 7 days', end - timedelta(days=14), end)
+    assert intensity[-1]['Intensity minutes (7 days)'] == sum(want['intensity'][want['last_day'] - timedelta(days=n)] for n in range(7))
+    weight = {local_day(r['time']): r['Weight'] for r in run('Garmin-Health-Overview.json', 'Weight', month, end) if r['Weight'] is not None}
+    assert weight == pytest.approx(want['weight'])
+    for tile in ('Resting HR', 'HRV', 'Battery at wake'):  # Fitbit never sends these: empty, not zero
+        assert all(list(r.values())[-1] is None for r in run('Garmin-Health-Overview.json', tile, end - timedelta(days=14), end)), tile
