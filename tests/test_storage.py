@@ -4,6 +4,7 @@ from dataclasses import replace
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 from unittest import mock
 import uuid
@@ -190,7 +191,10 @@ def test_dashboard_queries_empty_and_populated(db):
                 cur.execute(module.expand_query(sql,sid))
                 results[label]=(cur.fetchall(), [c.name for c in cur.description])
         return results
-    execute_all()
+    empty=execute_all()
+    # Grafana's SQL datasource fails every panel when a variable query returns no rows.
+    for name in ('ExerciseCategory','ExerciseLabel'):
+        assert empty['Garmin-Strength-Training-Dashboard.json:'+name][0]==[('None recorded','__all')]
     db.write([Record.from_mapping(point()), Record.from_mapping(point('DailyStats',totalSteps=5000)),
         Record.from_mapping(point('SleepSummary',sleepTimeSeconds=28800)),
         Record.from_mapping(point('ActivityGPS',tags={'ActivitySelector':'__all'},Latitude=51.5,Longitude=-0.1,Speed=3,HeartRate=140)),
@@ -402,6 +406,28 @@ def test_stat_field_regex_matches_the_display_name():
                 assert re.search(fields.strip('/'),name),(path.name,panel['id'])
 
 
+def test_dashboard_all_values_are_sql_literals():
+    # Grafana inserts a custom "All" value unformatted, even for ${Name:sqlstring}.
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        for variable in json.loads(path.read_text())['templating']['list']:
+            if variable.get('allValue'):
+                assert re.fullmatch(r"'[^']*'",variable['allValue']),(path.name,variable['name'])
+
+
+def test_weekly_bars_cover_their_week():
+    # Weekly rows are stamped with the Monday the week starts, so the bar must be drawn after it.
+    def panels(items):
+        for panel in items:
+            yield panel
+            yield from panels(panel.get('panels',[]))
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        for panel in panels(json.loads(path.read_text())['panels']):
+            custom=panel.get('fieldConfig',{}).get('defaults',{}).get('custom',{})
+            sql=' '.join(target.get('rawSql','') for target in panel.get('targets',[]))
+            if custom.get('drawStyle')=='bars' and "date_trunc('week'" in sql:
+                assert custom.get('barAlignment')==1,(path.name,panel['id'])
+
+
 def test_dashboard_colours_are_grafana_colours():
     # An unknown name such as 'grey' makes Grafana fail to draw the panel.
     import re
@@ -514,7 +540,7 @@ def test_ski_season_groups_sports_and_counts_vertical_on_foot(db):
     assert run(tiles['Strength, 14 days'])==[(1,)]
     assert [value for _,value in run(titled['Climbing rate on uphill sessions'])]==[400.0,360.0]
     season={row[0]:row[1:] for row in run(titled['Season on snow'])}
-    assert season=={'Ski touring':(1,1,4.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,5.0,50.0,4000.0,None,72.0)}
+    assert season=={'Ski touring':(1,1,4.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,5.0,None,4000.0,None,72.0)}
     assert len(run(titled['Snow sessions']))==2
     goal=run(titled['Vertical on foot per week'],'B')
     assert goal and all(value==2000 for _,value in goal)
@@ -524,6 +550,8 @@ def test_gps_activity_dropdown_and_heatmap_queries(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     statements={label:sql for label,sql,fmt in module.dashboard_queries()}
+    # An empty list would make every Garmin Stats panel fail.
+    assert query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:ActivityGPS'],source(db)))==[('No GPS activity in this period',)]
     def gps(selector,time,lat):
         return Record.from_mapping(point('ActivityGPS',time=time,tags={'Device':'watch','ActivitySelector':selector},Latitude=lat,Longitude=-0.1))
     db.write([gps('b-run','2026-01-02T00:00:00Z',51.50001),gps('b-run','2026-01-02T00:00:01Z',51.50002),

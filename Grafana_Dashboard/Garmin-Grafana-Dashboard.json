@@ -9472,7 +9472,7 @@
               },
               "refId": "A",
               "rawQuery": true,
-              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Heart Rate\" FROM (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'HeartRate')) AS value FROM all_records WHERE dataset='HeartRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"Heart Rate\" AS \"Heart Rate\" FROM buckets b LEFT JOIN aggregated a USING(time) ORDER BY b.time",
+              "rawSql": "WITH aggregated AS (SELECT time, value AS \"Heart Rate\" FROM (SELECT date_bin(INTERVAL '${__interval}', time, TIMESTAMPTZ '2000-01-03 00:00:00+00') AS time, avg(health_number(fields, 'HeartRate')) AS value FROM all_records WHERE dataset='HeartRateIntraday' AND source_id IN (${Source:csv}) AND $__timeFilter(time) GROUP BY 1 ORDER BY time) q ORDER BY time), buckets AS (SELECT generate_series(date_bin(interval '${__interval}', $__timeFrom()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), date_bin(interval '${__interval}', $__timeTo()::timestamptz, timestamptz '2000-01-03 00:00:00+00'), interval '${__interval}') AS time) SELECT b.time, a.\"Heart Rate\" AS \"Heart Rate\" FROM buckets b LEFT JOIN aggregated a USING(time) WHERE a.\"Heart Rate\" IS NOT NULL ORDER BY b.time",
               "format": "time_series",
               "editorMode": "code",
               "hide": false
@@ -9836,12 +9836,12 @@
           "type": "grafana-postgresql-datasource",
           "uid": "garmin_postgres"
         },
-        "definition": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL ORDER BY 1",
+        "definition": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL UNION ALL SELECT 'No GPS activity in this period' WHERE NOT EXISTS (SELECT 1 FROM selectors WHERE value IS NOT NULL) ORDER BY 1",
         "description": "List of Activities dropdown",
         "label": "Activity with GPS",
         "name": "ActivityGPS",
         "options": [],
-        "query": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL ORDER BY 1",
+        "query": "WITH RECURSIVE selectors(value) AS (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) UNION ALL SELECT (SELECT min(tags->>'ActivitySelector') FROM all_records WHERE dataset='ActivityGPS' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND tags->>'ActivitySelector' > selectors.value) FROM selectors WHERE selectors.value IS NOT NULL) SELECT value FROM selectors WHERE value IS NOT NULL UNION ALL SELECT 'No GPS activity in this period' WHERE NOT EXISTS (SELECT 1 FROM selectors WHERE value IS NOT NULL) ORDER BY 1",
         "refresh": 1,
         "regex": "",
         "sort": 4,

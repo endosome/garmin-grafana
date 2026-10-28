@@ -1790,18 +1790,18 @@
           "type": "grafana-postgresql-datasource",
           "uid": "garmin_postgres"
         },
-        "definition": "SELECT DISTINCT tags->>'ExerciseCategory' FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) ORDER BY 1",
+        "definition": "WITH v AS (SELECT DISTINCT tags->>'ExerciseCategory' AS value FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv})) SELECT value AS __text, value AS __value FROM v UNION ALL SELECT 'None recorded', '__all' WHERE NOT EXISTS (SELECT 1 FROM v) ORDER BY 1",
         "includeAll": true,
         "multi": true,
         "name": "ExerciseCategory",
         "label": "Exercise Category",
         "options": [],
-        "query": "SELECT DISTINCT tags->>'ExerciseCategory' FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) ORDER BY 1",
+        "query": "WITH v AS (SELECT DISTINCT tags->>'ExerciseCategory' AS value FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv})) SELECT value AS __text, value AS __value FROM v UNION ALL SELECT 'None recorded', '__all' WHERE NOT EXISTS (SELECT 1 FROM v) ORDER BY 1",
         "refresh": 1,
         "regex": "",
         "sort": 1,
         "type": "query",
-        "allValue": "__all"
+        "allValue": "'__all'"
       },
       {
         "allowCustomValue": false,
@@ -1810,18 +1810,18 @@
           "type": "grafana-postgresql-datasource",
           "uid": "garmin_postgres"
         },
-        "definition": "SELECT DISTINCT tags->>'ExerciseLabel' FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) AND ('__all' IN (${ExerciseCategory:sqlstring}) OR tags->>'ExerciseCategory' IN (${ExerciseCategory:sqlstring})) ORDER BY 1",
+        "definition": "WITH v AS (SELECT DISTINCT tags->>'ExerciseLabel' AS value FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) AND ('__all' IN (${ExerciseCategory:sqlstring}) OR tags->>'ExerciseCategory' IN (${ExerciseCategory:sqlstring}))) SELECT value AS __text, value AS __value FROM v UNION ALL SELECT 'None recorded', '__all' WHERE NOT EXISTS (SELECT 1 FROM v) ORDER BY 1",
         "includeAll": true,
         "multi": true,
         "name": "ExerciseLabel",
         "label": "Exercise",
         "options": [],
-        "query": "SELECT DISTINCT tags->>'ExerciseLabel' FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) AND ('__all' IN (${ExerciseCategory:sqlstring}) OR tags->>'ExerciseCategory' IN (${ExerciseCategory:sqlstring})) ORDER BY 1",
+        "query": "WITH v AS (SELECT DISTINCT tags->>'ExerciseLabel' AS value FROM all_records WHERE dataset='StrengthExerciseSet' AND source_id IN (${Source:csv}) AND ('__all' IN (${ExerciseCategory:sqlstring}) OR tags->>'ExerciseCategory' IN (${ExerciseCategory:sqlstring}))) SELECT value AS __text, value AS __value FROM v UNION ALL SELECT 'None recorded', '__all' WHERE NOT EXISTS (SELECT 1 FROM v) ORDER BY 1",
         "refresh": 1,
         "regex": "",
         "sort": 1,
         "type": "query",
-        "allValue": "__all"
+        "allValue": "'__all'"
       },
       {
         "name": "TimeZone",
