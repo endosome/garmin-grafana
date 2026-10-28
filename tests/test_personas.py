@@ -116,6 +116,8 @@ def test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person(load):
     stress = run(dash, 'Stress', *day)
     assert stress and min(r['Stress Level'] for r in stress) >= 0
     assert len(run(dash, 'Stress', *day, ref='B')) == sum(1 for r in persona.records if r.dataset == 'BodyBatteryIntraday' and day[0] <= r.time <= day[1])
+    last_upload = max(r.time for r in persona.records if r.dataset == 'DeviceSync')
+    assert run(dash, 'Last Sync ', NOW - timedelta(days=1)) == [{'time': last_upload}]  # the watch's upload, not the fetcher's run
     track = run(dash, 'GPS Track Heart Rate', NOW - timedelta(days=7), activity=want['gps_selector'])
     assert len(track) == want['gps_points']
 

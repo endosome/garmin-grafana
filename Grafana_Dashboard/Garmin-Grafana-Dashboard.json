@@ -332,30 +332,21 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed",
+            "fixedColor": "text"
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "light-blue",
-                "value": 1800000000000
-              },
-              {
-                "color": "#EAB839",
-                "value": 3600000000000
-              },
-              {
-                "color": "red",
-                "value": 5400000000000
+                "color": "text",
+                "value": null
               }
             ]
           },
-          "unit": "dateTimeFromNow"
+          "unit": "dateTimeFromNow",
+          "noValue": "Never"
         },
         "overrides": []
       },
@@ -393,7 +384,7 @@
           },
           "refId": "A",
           "rawQuery": true,
-          "rawSql": "SELECT max(completed_at) AS time, extract(epoch from max(completed_at)) AS \"Last Sync\" FROM sync_days WHERE source_id IN (${Source:csv})",
+          "rawSql": "SELECT max(time) AS time FROM all_records WHERE dataset='DeviceSync' AND source_id IN (${Source:csv})",
           "format": "time_series",
           "editorMode": "code",
           "hide": false
@@ -402,7 +393,8 @@
       "timeFrom": "24h",
       "title": "Last Sync ",
       "transparent": true,
-      "type": "stat"
+      "type": "stat",
+      "description": "When the watch last uploaded to Garmin Connect. Data recorded after that is not available yet: sync the watch."
     },
     {
       "datasource": {
