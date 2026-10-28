@@ -110,7 +110,10 @@ def test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person(load):
     for day in want['gap']:
         assert not month[day].get('Steps'), day  # the sync gap stays empty, never a copy of a neighbour
     assert run(dash, "Today's Steps", NOW - timedelta(days=1))[-1]['totalSteps'] == want['steps'][TODAY]
-    assert run(dash, 'Today RHR', NOW - timedelta(days=1))[-1]['restingHeartRate'] == want['rhr'][TODAY]
+    assert run(dash, 'Today RHR', NOW - timedelta(days=1)) == [{'time': datetime.combine(TODAY, datetime.min.time(), TZ), 'restingHeartRate': want['rhr'][TODAY]}]
+    gap_noon = datetime.combine(want['gap'][1], datetime.min.time(), TZ) + timedelta(hours=12)
+    for gauge in ('Today RHR', "Today's Steps", 'Today SpO2', 'High Stress Duration'):
+        assert run(dash, gauge, gap_noon - timedelta(days=1), gap_noon) == [], gauge  # no rows, not a null the gauge draws at NaN
     # Stress leaves out Garmin's -1/-2 codes in SQL, so smoothing never averages them and Body Battery keeps every sample.
     day = (NOW - timedelta(days=1), NOW)
     stress = run(dash, 'Stress', *day)
