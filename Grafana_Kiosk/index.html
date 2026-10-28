@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Garmin Kiosk</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111217; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; }
+  #back {
+    position: fixed; right: 200px; bottom: 12px; display: none; align-items: center; gap: 8px;
+    min-height: 56px; padding: 0 22px; border: 0; border-radius: 28px; background: #3d71d9; color: #fff;
+    font: 600 18px/1 Inter, system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0, 0, 0, .45); touch-action: manipulation;
+  }
+  #back.shown { display: flex; }
+</style>
+</head>
+<body>
+<!-- The dashboard runs in a locked-down Grafana (anonymous viewer, one dashboard, kiosk mode).
+     This page adds what kiosk mode lacks on a touchscreen: a way back from a full-screen panel,
+     a return to the dashboard when nobody touches it, and a fence against leaving it. -->
+<iframe id="grafana" sandbox="allow-scripts allow-same-origin allow-forms" title="Garmin dashboard"></iframe>
+<button id="back" type="button" aria-label="Back to the dashboard">&#8592; Back</button>
+<script>
+  // Options come from this page's address and pass through to Grafana, e.g.
+  // /?var-Source=1&var-TimeZone=Europe/Budapest&_dash.hideVariables&idle=180
+  const params = new URLSearchParams(location.search);
+  const idleSeconds = Number(params.get('idle') || 180);
+  params.delete('idle');
+  const home = '/grafana/?kiosk&_dash.hideLinks' + (params.toString() ? '&' + params.toString() : '');
+  const frame = document.getElementById('grafana');
+  const back = document.getElementById('back');
+  let lastTouch = Date.now();
+  let touchedSinceHome = false;  // only reset a dashboard someone has used
+
+  function goHome() {
+    try { frame.contentWindow.location.replace(home); } catch (e) { frame.src = home; }
+    lastTouch = Date.now();
+    touchedSinceHome = false;
+  }
+  function touched() { lastTouch = Date.now(); touchedSinceHome = true; }
+  function noMenu(event) { event.preventDefault(); }  // long-press menus offer Back, Reload and new tabs
+
+  frame.addEventListener('load', () => {
+    try {
+      const doc = frame.contentDocument;
+      ['pointerdown', 'touchstart', 'keydown', 'wheel'].forEach(name => doc.addEventListener(name, touched, { passive: true }));
+      doc.addEventListener('contextmenu', noMenu);
+    } catch (e) { goHome(); }
+  });
+  document.addEventListener('contextmenu', noMenu);
+  back.addEventListener('click', () => {
+    try {
+      const url = new URL(frame.contentWindow.location.href);
+      url.searchParams.delete('viewPanel');
+      frame.contentWindow.location.replace(url.toString());
+    } catch (e) { goHome(); }
+    touched();
+  });
+
+  setInterval(() => {
+    let url;
+    try {
+      url = new URL(frame.contentWindow.location.href);
+    } catch (e) {
+      goHome();  // the frame left this site: bring the dashboard back
+      return;
+    }
+    if (url.href === 'about:blank') return;  // still loading
+    if (!url.pathname.startsWith('/grafana/') || !url.searchParams.has('kiosk')) { goHome(); return; }
+    back.classList.toggle('shown', url.searchParams.has('viewPanel') || url.searchParams.has('inspect'));
+    if (touchedSinceHome && Date.now() - lastTouch > idleSeconds * 1000) goHome();
+  }, 500);
+
+  frame.src = home;
+</script>
+</body>
+</html>

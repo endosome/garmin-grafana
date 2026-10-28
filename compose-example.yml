@@ -76,7 +76,59 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+  # Touchscreen kiosk (docker compose --profile kiosk up -d): one dashboard, anonymous viewers, no settings.
+  grafana-kiosk:
+    image: grafana/grafana:13.0.2
+    restart: unless-stopped
+    profiles: [kiosk]
+    environment:
+      <<: *database-env
+      PGUSER: grafana_reader
+      PGPASSWORD: ${GRAFANA_DB_PASSWORD:?Set GRAFANA_DB_PASSWORD in .env}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD in .env}
+      GF_SERVER_ROOT_URL: '%(protocol)s://%(domain)s/grafana/'
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_ANONYMOUS_HIDE_VERSION: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_EXPLORE_ENABLED: "false"
+      GF_HELP_ENABLED: "false"
+      GF_PROFILE_ENABLED: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_SNAPSHOTS_ENABLED: "false"
+      GF_PUBLIC_DASHBOARDS_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_LIVE_MAX_CONNECTIONS: "0"  # no streaming: a kiosk only refreshes
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana-kiosk/dashboards/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}
+      GF_PLUGINS_PREINSTALL: marcusolsson-hourly-heatmap-panel@2.0.1
+    volumes:
+      - grafana_kiosk_data:/var/lib/grafana
+      - ./Grafana_Config/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./Grafana_Datasource:/etc/grafana/provisioning/datasources:ro
+      - ./Grafana_Kiosk/dashboards.yaml:/etc/grafana/provisioning/dashboards/kiosk.yaml:ro
+      # Under its own name: Grafana skips a changed file whose name it has already imported.
+      - ./Grafana_Dashboard/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:/var/lib/grafana-kiosk/dashboards/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  kiosk:
+    image: nginx:1.27.5-alpine
+    restart: unless-stopped
+    profiles: [kiosk]
+    ports:
+      - '${KIOSK_BIND:-127.0.0.1}:${KIOSK_PORT:-3001}:80'
+    volumes:
+      - ./Grafana_Kiosk/index.html:/usr/share/nginx/html/index.html:ro
+      - ./Grafana_Kiosk/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - grafana-kiosk
 volumes:
   postgres_data:
   garmin_tokens:
   grafana_data:
+  grafana_kiosk_data:

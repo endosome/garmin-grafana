@@ -38,13 +38,15 @@ jobs:
           GRAFANA_PASSWORD: test-admin-password
           GRAFANA_DB_PASSWORD: test-reader-password
         run: |
-          docker compose -f compose-example.yml config --quiet
+          docker compose -f compose-example.yml --profile kiosk config --quiet
           docker build -t garmin-grafana:timescale .
       - name: Verify Grafana provisioning and queries
         env:
           GRAFANA_PASSWORD: test-admin-password
           GRAFANA_DB_PASSWORD: test-reader-password
         run: |
-          docker compose -f compose-example.yml up -d --no-build postgres migrate grafana
+          docker compose -f compose-example.yml --profile kiosk up -d --no-build postgres migrate grafana grafana-kiosk kiosk
           timeout 60 sh -c 'until curl -fsS http://localhost:3000/api/health >/dev/null; do sleep 2; done'
           uv run --locked python scripts/smoke_grafana.py
+          timeout 60 sh -c 'until curl -fsS http://localhost:3001/grafana/api/health >/dev/null; do sleep 2; done'
+          uv run --locked python scripts/smoke_kiosk.py

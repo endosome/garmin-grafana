@@ -77,6 +77,8 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `GRAFANA_DB_PASSWORD` | Compose password for the grafana_reader role |
 | `GRAFANA_PASSWORD`, `GRAFANA_USER`, `GRAFANA_PORT` | Compose Grafana administrator password, username (admin), local port (3000) |
 | `GRAFANA_HOME_DASHBOARD` | Compose: provisioned dashboard file opened after login; `Garmin-Health-Overview.json` (default), `Garmin-Grafana-Dashboard.json` (Garmin Stats), `Garmin-Strength-Training-Dashboard.json` or `Garmin-Ski-Season.json`. A home dashboard chosen in Grafana's user, team or organization preferences takes precedence |
+| `KIOSK_DASHBOARD` | Compose profile `kiosk`: the one dashboard file the touchscreen shows, `Garmin-Health-Overview.json`; any of the four files above |
+| `KIOSK_BIND`, `KIOSK_PORT` | Address and port of the touchscreen page, 127.0.0.1 and 3001; see Touchscreen kiosk |
 | `ACCOUNT_ID`, `PERSON_ID` | Stable account identity (default email or default); person defaults to account |
 | `USER_TIMEZONE` | IANA zone, e.g. Europe/Budapest; explicit UTC fallback, DST-aware scheduler |
 | `GARMINCONNECT_EMAIL`, `GARMINCONNECT_BASE64_PASSWORD` | Optional login credentials; otherwise interactive on first login |
@@ -109,6 +111,33 @@ SETTING=value ...` or add them to the service environment.
 Use the explicit manual date range and stable `ACCOUNT_ID`. Multiple accounts
 use separate ingestion processes and token volumes. Do not change an established
 ACCOUNT_ID casually: it creates a different provenance source, not a rename.
+
+## Touchscreen kiosk
+
+A wall or kitchen touchscreen can show one dashboard to anyone, without a login
+and without access to any Grafana setting. Start the extra services with
+`docker compose --profile kiosk up -d`: a second, locked-down Grafana with only
+the `KIOSK_DASHBOARD` file, and a small page that wraps it for touch. Point the
+display's browser at it, for example
+`chromium --kiosk --noerrdialogs --disable-infobars --touch-events=enabled --incognito "http://<server>:3001/?var-Source=1&var-TimeZone=Europe/Budapest"`.
+
+On the screen people can scroll, expand and collapse rows, tap a panel's menu
+and View to open it full screen (a Back button returns), read panel
+descriptions, and change the time range and the Account and time zone choices.
+They cannot sign in, edit or save anything, reach other dashboards, Explore or
+alerting, or leave the page: links that would leave it are blocked and long-press
+menus are off. After `idle` seconds without a touch (180 by default) the
+dashboard returns to its starting view. Panel Inspect still shows a panel's
+data and SQL, read-only.
+
+The page address passes Grafana options through: `var-Source` and
+`var-TimeZone` choose the Account and time zone, `_dash.hideVariables` hides those
+choices so the screen stays on one person, and `idle=60` changes the timeout.
+Anyone who can reach `KIOSK_BIND:KIOSK_PORT` sees that health data without a
+password. It binds to this machine only by default; to use a separate tablet, set
+`KIOSK_BIND` to the address of the network interface the tablet uses, on a network
+you trust, never to a public address. `scripts/smoke_kiosk.py` checks a running
+kiosk.
 
 ## Backfills and manual imports
 

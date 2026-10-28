@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  # The kiosk shows a single dashboard and cannot change it; one whose file is gone is removed.
+  - name: 'Garmin-Kiosk'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana-kiosk/dashboards
