@@ -114,7 +114,9 @@ def test_unchanged_rows_are_not_rewritten(db):
     sid = source(db)
 
     def versions():
-        return {t: query(db, f'SELECT xmin::text FROM {t} WHERE source_id=%s', (sid,)) for t in ('samples', 'records')}
+        # xmax also changes when ON CONFLICT only locks the row, which is written to WAL too.
+        return {t: query(db, f'SELECT xmin::text,xmax::text FROM {t} WHERE source_id=%s', (sid,))
+                for t in ('samples', 'records')}
 
     before = versions()
     db.write([sample, summary])

@@ -79,18 +79,23 @@ class PostgresStore:
             if not rows:
                 continue
             conflict = 'source_id,dataset,record_key' + (',time,nanoseconds' if table == 'samples' else '')
-            cur.executemany(f'''INSERT INTO {table} AS t
-                (source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            columns = 'source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields'
+            same_key = ' AND '.join(f'e.{c}=v.{c}' for c in conflict.split(','))
+            # Rows the update would leave unchanged are dropped before ON CONFLICT: it locks the existing row
+            # even when nothing changes, and that lock is written to WAL. The advisory lock in write() keeps
+            # the check and the insert consistent.
+            cur.executemany(f'''INSERT INTO {table} AS t ({columns})
+                SELECT * FROM (VALUES (%s::bigint,%s::text,%s::text,%s::timestamptz,%s::smallint,%s::text,%s::text,
+                    %s::date,%s::text,%s::jsonb,%s::jsonb)) v({columns})
+                WHERE NOT EXISTS (SELECT 1 FROM {table} e WHERE {same_key}
+                    AND (e.time,e.nanoseconds,e.original_time,e.local_date,e.timezone,e.tags,e.fields) IS NOT DISTINCT FROM
+                        (v.time,v.nanoseconds,v.original_time,COALESCE(v.local_date,e.local_date),
+                         COALESCE(v.timezone,e.timezone),v.tags,e.fields || v.fields))
                 ON CONFLICT ({conflict}) DO UPDATE SET
                 time=excluded.time,nanoseconds=excluded.nanoseconds,original_time=excluded.original_time,
                 local_date=COALESCE(excluded.local_date,t.local_date),
                 timezone=COALESCE(excluded.timezone,t.timezone),
-                tags=excluded.tags,fields=t.fields || excluded.fields
-                WHERE (t.time,t.nanoseconds,t.original_time,t.local_date,t.timezone,t.tags,t.fields) IS DISTINCT FROM
-                    (excluded.time,excluded.nanoseconds,excluded.original_time,
-                     COALESCE(excluded.local_date,t.local_date),COALESCE(excluded.timezone,t.timezone),
-                     excluded.tags,t.fields || excluded.fields)''', rows)
+                tags=excluded.tags,fields=t.fields || excluded.fields''', rows)
 
     def request_range(self, datasets, start):
         with self.connection.transaction(), self.connection.cursor() as cur:
