@@ -776,7 +776,8 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
@@ -863,7 +864,8 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
@@ -1104,7 +1106,8 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
@@ -1274,7 +1277,8 @@
               }
             ]
           },
-          "unit": "dthms"
+          "unit": "dthms",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
@@ -1525,7 +1529,8 @@
               }
             ]
           },
-          "unit": "dthms"
+          "unit": "dthms",
+          "noValue": "\u2013"
         },
         "overrides": []
       },
