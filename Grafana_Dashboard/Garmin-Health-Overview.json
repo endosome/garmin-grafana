@@ -4005,7 +4005,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^version$/",
+          "fields": "/.*/",
           "values": false
         },
         "showPercentChange": false,

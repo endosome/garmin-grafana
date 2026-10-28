@@ -386,6 +386,22 @@ def test_dashboard_rows_nest_only_when_collapsed():
         assert len(ids)==len(set(ids)),path.name
 
 
+def test_stat_field_regex_matches_the_display_name():
+    # Grafana matches reduceOptions.fields against the display name, so a renamed field
+    # selected by its column name shows "No data".
+    import re
+    def panels(items):
+        for panel in items:
+            yield panel
+            yield from panels(panel.get('panels',[]))
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        for panel in panels(json.loads(path.read_text())['panels']):
+            fields=panel.get('options',{}).get('reduceOptions',{}).get('fields','')
+            name=panel.get('fieldConfig',{}).get('defaults',{}).get('displayName')
+            if panel['type']=='stat' and fields.startswith('/') and name:
+                assert re.search(fields.strip('/'),name),(path.name,panel['id'])
+
+
 def test_dashboard_table_and_heatmap_field_contracts(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
