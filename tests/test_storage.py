@@ -402,6 +402,16 @@ def test_stat_field_regex_matches_the_display_name():
                 assert re.search(fields.strip('/'),name),(path.name,panel['id'])
 
 
+def test_dashboard_colours_are_grafana_colours():
+    # An unknown name such as 'grey' makes Grafana fail to draw the panel.
+    import re
+    hues='red|orange|yellow|green|blue|purple'
+    valid=re.compile(rf'^((super-light-|light-|semi-dark-|dark-)?({hues})|text|transparent|#[0-9a-fA-F]{{3,8}}|rgba?\(.*\))$')
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        for colour in re.findall(r'"(?:fixedColor|color)": "([^"]*)"',path.read_text()):
+            assert valid.match(colour),(path.name,colour)
+
+
 def test_dashboard_table_and_heatmap_field_contracts(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)

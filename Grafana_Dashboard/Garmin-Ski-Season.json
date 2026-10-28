@@ -1377,7 +1377,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "grey",
+                  "fixedColor": "#8e8e8e",
                   "mode": "fixed"
                 }
               }
