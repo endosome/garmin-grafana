@@ -81,6 +81,18 @@
     },
     {
       "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Ski Season",
+      "tooltip": "Ski and ski touring training: vertical, uphill endurance, leg strength, time on snow",
+      "type": "link",
+      "url": "/d/garmin-ski-season"
+    },
+    {
+      "asDropdown": false,
       "icon": "external link",
       "includeVars": false,
       "keepTime": false,

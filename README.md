@@ -48,7 +48,11 @@ with **Garmin Health**: each recovery signal (HRV, resting heart rate, sleep,
 Body Battery, breathing rate, SpO2, skin temperature) against your own usual
 range, then sleep, activity and fitness trends. **Garmin Stats** has every
 intraday chart, activity and GPS track; **Garmin Strength Training** covers
-sets and HR zones. Select your **Account** on each dashboard. Set **TimeZone** to the local IANA timezone
+sets and HR zones. **Garmin Ski Season** tracks preparation for skiing and ski
+touring: weekly vertical on foot against a goal, uphill time, climbing rate,
+heart-rate zones, strength sets by body area, load ramp and days and vertical on
+snow; set the season's opening day and your weekly vertical goal at the top.
+Select your **Account** on each dashboard. Set **TimeZone** to the local IANA timezone
 for daily aggregation. Grafana binds to loopback by default; use an SSH tunnel
 or configure an authenticated TLS reverse proxy for remote access.
 
@@ -72,7 +76,7 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `PGREADER_USER`, `PGREADER_PASSWORD` | Optional migration bootstrap for a SELECT-only Grafana login; default name grafana_reader |
 | `GRAFANA_DB_PASSWORD` | Compose password for the grafana_reader role |
 | `GRAFANA_PASSWORD`, `GRAFANA_USER`, `GRAFANA_PORT` | Compose Grafana administrator password, username (admin), local port (3000) |
-| `GRAFANA_HOME_DASHBOARD` | Compose: provisioned dashboard file opened after login; `Garmin-Health-Overview.json` (default), `Garmin-Grafana-Dashboard.json` (Garmin Stats) or `Garmin-Strength-Training-Dashboard.json`. A home dashboard chosen in Grafana's user, team or organization preferences takes precedence |
+| `GRAFANA_HOME_DASHBOARD` | Compose: provisioned dashboard file opened after login; `Garmin-Health-Overview.json` (default), `Garmin-Grafana-Dashboard.json` (Garmin Stats), `Garmin-Strength-Training-Dashboard.json` or `Garmin-Ski-Season.json`. A home dashboard chosen in Grafana's user, team or organization preferences takes precedence |
 | `ACCOUNT_ID`, `PERSON_ID` | Stable account identity (default email or default); person defaults to account |
 | `USER_TIMEZONE` | IANA zone, e.g. Europe/Budapest; explicit UTC fallback, DST-aware scheduler |
 | `GARMINCONNECT_EMAIL`, `GARMINCONNECT_BASE64_PASSWORD` | Optional login credentials; otherwise interactive on first login |

@@ -458,6 +458,40 @@ def test_health_today_tiles_stay_empty_until_today_is_synced(db):
     assert order[-2:]==['VO2 max','Intensity, 7 days']
 
 
+def test_ski_season_groups_sports_and_counts_vertical_on_foot(db):
+    spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    statements={label:sql for label,sql,fmt in module.dashboard_queries()}
+    ski=json.loads((Path(__file__).resolve().parents[1]/'Grafana_Dashboard/Garmin-Ski-Season.json').read_text())
+    tiles={p['fieldConfig']['defaults']['displayName']:p for p in ski['panels'] if p['gridPos']['y']==0}
+    titled={p['title']:p for p in ski['panels']}
+    sid=source(db)
+    def run(panel,ref='A'):
+        return query(db,module.expand_query(statements[f"Garmin-Ski-Season.json:{panel['id']}:{ref}"],sid))
+    def activity(n,day,kind,**values):
+        start={'Activity_ID':n,'activityName':f'Session {n}','activityType':kind,**values}
+        end={'Activity_ID':n,'activityName':'END','activityType':'No Activity'}
+        return [Record.from_mapping(point('ActivitySummary',f'2026-01-{day:02d}T09:00:00Z',tags={'ActivityID':str(n)},**start)),
+                Record.from_mapping(point('ActivitySummary',f'2026-01-{day:02d}T12:00:00Z',tags={'ActivityID':str(n)},**end))]
+    # The smoke-test range ends on 2026-01-10 (UTC).
+    db.write(activity(1,8,'backcountry_skiing_snowboarding_ws',elevationGain=1200,elevationLoss=1150,elapsedDuration=14400,movingDuration=12000,activityTrainingLoad=200)
+             +activity(2,9,'resort_skiing_snowboarding_ws',elevationGain=50,elevationLoss=4000,elapsedDuration=18000,maxSpeed=20,activityTrainingLoad=100)
+             +activity(3,9,'cycling',elevationGain=900,elapsedDuration=7200)
+             +activity(4,7,'trail_running',elevationGain=400,elapsedDuration=3600,movingDuration=3600)
+             +activity(5,6,'strength_training',elapsedDuration=3000))
+    assert run(tiles['Ski season'])==[('Day 41',)]
+    assert run(tiles['Vertical, 7 days'])==[(1600.0,)]
+    assert run(tiles['Uphill time, 7 days'])==[(5.0,)]
+    assert run(tiles['Longest uphill, 4 weeks'])==[(4.0,)]
+    assert run(tiles['Strength, 14 days'])==[(1,)]
+    assert [value for _,value in run(titled['Climbing rate on uphill sessions'])]==[400.0,360.0]
+    season={row[0]:row[1:] for row in run(titled['Season on snow'])}
+    assert season=={'Ski touring':(1,1,4.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,5.0,50.0,4000.0,None,72.0)}
+    assert len(run(titled['Snow sessions']))==2
+    goal=run(titled['Vertical on foot per week'],'B')
+    assert goal and all(value==2000 for _,value in goal)
+
+
 def test_gps_activity_dropdown_and_heatmap_queries(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)

@@ -15,6 +15,7 @@ def expand_query(query, source=1):
     query = query.replace('${__interval}', '5 minutes')
     for variable in ('ActivityGPS', 'ExerciseCategory', 'ExerciseLabel'):
         query = query.replace('${' + variable + ':sqlstring}', "'__all'")
+    query = query.replace('${SeasonStart:sqlstring}', "'12-01'").replace('${VerticalGoal:sqlstring}', "'2000'")
     query = re.sub(r'\$__timeFilter\(([^)]+)\)', r"\1 BETWEEN '2026-01-01T00:00:00Z'::timestamptz AND '2026-01-10T00:00:00Z'::timestamptz", query)
     query = query.replace('$__timeFrom()', "'2026-01-01T00:00:00Z'").replace('$__timeTo()', "'2026-01-10T00:00:00Z'")
     return query

@@ -1,0 +1,2643 @@
+{
+  "__elements": {},
+  "__inputs": [],
+  "__requires": [
+    {
+      "id": "grafana",
+      "name": "Grafana",
+      "type": "grafana",
+      "version": "12.0.1"
+    },
+    {
+      "id": "stat",
+      "name": "Stat",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "type": "panel",
+      "version": ""
+    },
+    {
+      "id": "timeseries",
+      "name": "Time series",
+      "type": "panel",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "garmin_postgres"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Pre-season and in-season training for skiing and ski touring: vertical, uphill endurance, aerobic base, leg strength, load and time on snow.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Health (overview)",
+      "tooltip": "Recovery against your personal baseline, sleep, activity and fitness",
+      "type": "link",
+      "url": "/d/garmin-health-overview"
+    },
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Stats (all details)",
+      "tooltip": "Intraday charts, activities and GPS tracks",
+      "type": "link",
+      "url": "/d/feiibsx498gsgb"
+    },
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Strength Training",
+      "tooltip": "Sets, volume and exercises of strength workouts",
+      "type": "link",
+      "url": "/d/garmin-strength-training"
+    }
+  ],
+  "refresh": "15m",
+  "schemaVersion": 41,
+  "tags": [
+    "garmin",
+    "ski",
+    "training"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "garmin_postgres"
+        },
+        "label": "Account",
+        "name": "Source",
+        "options": [],
+        "query": "SELECT provider || ':' || account AS __text, id AS __value FROM sources ORDER BY 1",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "Europe/Budapest",
+          "value": "Europe/Budapest"
+        },
+        "description": "Your local time zone for grouping stats",
+        "label": "Local Time Zone",
+        "name": "TimeZone",
+        "options": [
+          {
+            "selected": false,
+            "text": "Europe/London",
+            "value": "Europe/London"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Paris",
+            "value": "Europe/Paris"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Berlin",
+            "value": "Europe/Berlin"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Madrid",
+            "value": "Europe/Madrid"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Rome",
+            "value": "Europe/Rome"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Amsterdam",
+            "value": "Europe/Amsterdam"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Brussels",
+            "value": "Europe/Brussels"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Zurich",
+            "value": "Europe/Zurich"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Stockholm",
+            "value": "Europe/Stockholm"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Warsaw",
+            "value": "Europe/Warsaw"
+          },
+          {
+            "selected": true,
+            "text": "Europe/Budapest",
+            "value": "Europe/Budapest"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Istanbul",
+            "value": "Europe/Istanbul"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Athens",
+            "value": "Europe/Athens"
+          },
+          {
+            "selected": false,
+            "text": "Europe/Moscow",
+            "value": "Europe/Moscow"
+          },
+          {
+            "selected": false,
+            "text": "America/New_York",
+            "value": "America/New_York"
+          },
+          {
+            "selected": false,
+            "text": "America/Chicago",
+            "value": "America/Chicago"
+          },
+          {
+            "selected": false,
+            "text": "America/Denver",
+            "value": "America/Denver"
+          },
+          {
+            "selected": false,
+            "text": "America/Los_Angeles",
+            "value": "America/Los_Angeles"
+          },
+          {
+            "selected": false,
+            "text": "America/Toronto",
+            "value": "America/Toronto"
+          },
+          {
+            "selected": false,
+            "text": "America/Vancouver",
+            "value": "America/Vancouver"
+          },
+          {
+            "selected": false,
+            "text": "America/Mexico_City",
+            "value": "America/Mexico_City"
+          },
+          {
+            "selected": false,
+            "text": "America/Sao_Paulo",
+            "value": "America/Sao_Paulo"
+          },
+          {
+            "selected": false,
+            "text": "America/Buenos_Aires",
+            "value": "America/Buenos_Aires"
+          },
+          {
+            "selected": false,
+            "text": "America/Lima",
+            "value": "America/Lima"
+          },
+          {
+            "selected": false,
+            "text": "America/Bogota",
+            "value": "America/Bogota"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Johannesburg",
+            "value": "Africa/Johannesburg"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Cairo",
+            "value": "Africa/Cairo"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Nairobi",
+            "value": "Africa/Nairobi"
+          },
+          {
+            "selected": false,
+            "text": "Africa/Lagos",
+            "value": "Africa/Lagos"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Tokyo",
+            "value": "Asia/Tokyo"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Seoul",
+            "value": "Asia/Seoul"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Shanghai",
+            "value": "Asia/Shanghai"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Singapore",
+            "value": "Asia/Singapore"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Kolkata",
+            "value": "Asia/Kolkata"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Bangkok",
+            "value": "Asia/Bangkok"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Dubai",
+            "value": "Asia/Dubai"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Hong_Kong",
+            "value": "Asia/Hong_Kong"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Kuala_Lumpur",
+            "value": "Asia/Kuala_Lumpur"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Jakarta",
+            "value": "Asia/Jakarta"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Manila",
+            "value": "Asia/Manila"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Taipei",
+            "value": "Asia/Taipei"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Karachi",
+            "value": "Asia/Karachi"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Colombo",
+            "value": "Asia/Colombo"
+          },
+          {
+            "selected": false,
+            "text": "Asia/Ho_Chi_Minh",
+            "value": "Asia/Ho_Chi_Minh"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Sydney",
+            "value": "Australia/Sydney"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Melbourne",
+            "value": "Australia/Melbourne"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Brisbane",
+            "value": "Australia/Brisbane"
+          },
+          {
+            "selected": false,
+            "text": "Australia/Perth",
+            "value": "Australia/Perth"
+          },
+          {
+            "selected": false,
+            "text": "Pacific/Auckland",
+            "value": "Pacific/Auckland"
+          },
+          {
+            "selected": false,
+            "text": "Pacific/Honolulu",
+            "value": "Pacific/Honolulu"
+          }
+        ],
+        "query": "Europe/London, Europe/Paris, Europe/Berlin, Europe/Madrid, Europe/Rome, Europe/Amsterdam, Europe/Brussels, Europe/Zurich, Europe/Stockholm, Europe/Warsaw, Europe/Budapest, Europe/Istanbul, Europe/Athens, Europe/Moscow, America/New_York, America/Chicago, America/Denver, America/Los_Angeles, America/Toronto, America/Vancouver, America/Mexico_City, America/Sao_Paulo, America/Buenos_Aires, America/Lima, America/Bogota, Africa/Johannesburg, Africa/Cairo, Africa/Nairobi, Africa/Lagos, Asia/Tokyo, Asia/Seoul, Asia/Shanghai, Asia/Singapore, Asia/Kolkata, Asia/Bangkok, Asia/Dubai, Asia/Hong_Kong, Asia/Kuala_Lumpur, Asia/Jakarta, Asia/Manila, Asia/Taipei, Asia/Karachi, Asia/Colombo, Asia/Ho_Chi_Minh, Australia/Sydney, Australia/Melbourne, Australia/Brisbane, Australia/Perth, Pacific/Auckland, Pacific/Honolulu",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "12-01",
+          "value": "12-01"
+        },
+        "description": "Opening day of your ski season as month-day, e.g. 12-01 or 11-15",
+        "hide": 0,
+        "label": "Season opens (MM-DD)",
+        "name": "SeasonStart",
+        "options": [
+          {
+            "selected": true,
+            "text": "12-01",
+            "value": "12-01"
+          }
+        ],
+        "query": "12-01",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "2000",
+          "value": "2000"
+        },
+        "description": "Weekly elevation gain to aim for on foot, in metres. Leave empty to hide the goal line.",
+        "hide": 0,
+        "label": "Weekly vertical goal (m)",
+        "name": "VerticalGoal",
+        "options": [
+          {
+            "selected": true,
+            "text": "2000",
+            "value": "2000"
+          }
+        ],
+        "query": "2000",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-120d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Garmin Ski Season",
+  "uid": "garmin-ski-season",
+  "version": 1,
+  "weekStart": "monday",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Days until the season opens, or the day of the season once it has started (counted for 150 days). Set the opening date with the \"Season opens\" variable (MM-DD).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Ski season",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Ski season$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH today AS (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS d), opening AS (SELECT d, to_date(extract(year FROM d)::int || '-' || ${SeasonStart:sqlstring}, 'YYYY-MM-DD') AS this_year FROM today), season AS (SELECT d, CASE WHEN this_year > d THEN this_year ELSE (this_year + interval '1 year')::date END AS next_start FROM opening) SELECT CASE WHEN d - (next_start - interval '1 year')::date < 150 THEN 'Day ' || (d - (next_start - interval '1 year')::date + 1) ELSE (next_start - d) || ' days to go' END AS \"Ski season\" FROM season",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 1,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Elevation gained on foot and on skins in the last 7 days: ski touring, snowshoeing, hiking, trail and road running, walking, stairs. Cycling and lift-served skiing are excluded.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Vertical, 7 days",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "lengthm",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day') SELECT COALESCE(sum(gain) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 7), 0) AS value FROM acts WHERE sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking')",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 2,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Average weekly vertical on foot over the last 4 weeks. Compare it with the \"Weekly vertical goal\" variable and the goal line below.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Vertical / week, 4 weeks",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "lengthm",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day') SELECT COALESCE(sum(gain) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 28), 0) / 4 AS value FROM acts WHERE sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking')",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Hours of uphill sessions in the last 7 days: ski touring, snowshoeing, hiking, stairs, and any other activity on foot with at least 300 m of climbing.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "displayName": "Uphill time, 7 days",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: h",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day') SELECT COALESCE(sum(secs) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 7), 0) / 3600 AS value FROM acts WHERE (sport IN ('Ski touring', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline') OR (sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') AND gain >= 300))",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 4,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 9,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Longest uphill session in the last 4 weeks. Build it towards the length of your longest planned tour day.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "displayName": "Longest uphill, 4 weeks",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix: h",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day') SELECT max(secs) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 28) / 3600 AS value FROM acts WHERE (sport IN ('Ski touring', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline') OR (sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') AND gain >= 300))",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 5,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Strength sessions in the last 14 days. Two a week (green) protects knees and keeps legs strong through the season.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "displayName": "Strength, 14 days",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 2
+              },
+              {
+                "color": "green",
+                "value": 4
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day') SELECT count(*) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 14) AS value FROM acts WHERE sport = 'Strength'",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 6,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 15,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "",
+      "description": "Activity training load of the last 7 days divided by the weekly average of the last 4 weeks. 0.8-1.3 (green) is a steady build; above 1.5 (red) the load rises faster than your body is used to. Below 0.8 (blue) is a recovery or taper week.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "displayName": "Load ramp",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              },
+              {
+                "color": "orange",
+                "value": 1.3
+              },
+              {
+                "color": "red",
+                "value": 1.5
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeTo()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day'), sums AS (SELECT sum(load) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 7) AS acute, sum(load) FILTER (WHERE day > ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 28) / 4 AS chronic FROM acts) SELECT acute / NULLIF(chronic, 0) AS value FROM sums",
+          "refId": "A"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 7,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 0
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Latest VO2 max estimate: running, or cycling if you have no running estimate in the last year. Garmin updates it only after qualifying outdoor runs, walks or rides, so it can be days or weeks old.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "displayName": "VO2 max",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "yellow",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "hideTimeOverride": true,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'VO2_max_value')) AS running, avg(health_number(fields, 'VO2_max_value_cycling')) AS cycling FROM all_records WHERE dataset = 'VO2_Max' AND source_id IN (${Source:csv}) AND time >= $__timeTo()::timestamptz - interval '366 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), preference AS (SELECT count(running) > 0 AS has_running FROM daily) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, CASE WHEN has_running THEN running ELSE cycling END AS \"VO2 max\" FROM daily CROSS JOIN preference WHERE day <= ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND CASE WHEN has_running THEN running ELSE cycling END IS NOT NULL ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "90d",
+      "title": "",
+      "type": "stat",
+      "id": 8,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      }
+    },
+    {
+      "type": "row",
+      "title": "Uphill engine: vertical, time and aerobic base",
+      "collapsed": false,
+      "panels": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 9,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Elevation gained per week (Monday start) on foot and on skins, by sport. The dashed line is the \"Weekly vertical goal\" variable; clear it to hide the line.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
+          "unit": "lengthm"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Weekly goal"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT date_trunc('week', day::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, sport AS metric, sum(gain) AS value FROM acts WHERE sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') GROUP BY 1, 2 ORDER BY 1, 2",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT w AT TIME ZONE ${TimeZone:sqlstring} AS time, NULLIF(${VerticalGoal:sqlstring}, '')::numeric AS \"Weekly goal\" FROM generate_series(date_trunc('week', $__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}), $__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}, interval '1 week') AS w ORDER BY 1",
+          "refId": "B"
+        }
+      ],
+      "title": "Vertical on foot per week",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hours per week by discipline. Garmin activity types are grouped: ski touring (backcountry), resort, nordic, hiking & trail, stairs & incline, running, cycling, strength, mobility.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "min": 0,
+          "unit": "suffix: h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT date_trunc('week', day::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, sport AS metric, sum(secs) / 3600 AS value FROM acts GROUP BY 1, 2 ORDER BY 1, 2",
+          "refId": "A"
+        }
+      ],
+      "title": "Training time per week by discipline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Metres climbed per moving hour, one point per uphill session with at least 200 m of gain. Garmin only reports the whole session, so time going down is included: compare similar routes. A rising trend means a stronger engine on the skin track.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 9,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "suffix: m/h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT time, gain / (COALESCE(NULLIF(moving, 0), secs) / 3600) AS \"Vertical per moving hour\" FROM acts WHERE (sport IN ('Ski touring', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline') OR (sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') AND gain >= 300)) AND gain >= 200 AND COALESCE(NULLIF(moving, 0), secs) > 0 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Climbing rate on uphill sessions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hours per week in each heart-rate zone across all activities. A strong base for long tour days is built mostly in zones 1-2, with a little zone 4-5 work.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "min": 0,
+          "unit": "suffix: h"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 1 (warm up)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "grey",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 2 (easy)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 3 (aerobic)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 4 (threshold)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 5 (maximum)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT date_trunc('week', day::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, sum(health_number(fields, 'hrTimeInZone_1')) / 3600 AS \"Zone 1 (warm up)\", sum(health_number(fields, 'hrTimeInZone_2')) / 3600 AS \"Zone 2 (easy)\", sum(health_number(fields, 'hrTimeInZone_3')) / 3600 AS \"Zone 3 (aerobic)\", sum(health_number(fields, 'hrTimeInZone_4')) / 3600 AS \"Zone 4 (threshold)\", sum(health_number(fields, 'hrTimeInZone_5')) / 3600 AS \"Zone 5 (maximum)\" FROM acts GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Time in heart-rate zones per week",
+      "type": "timeseries"
+    },
+    {
+      "type": "row",
+      "title": "Strength, load and recovery",
+      "collapsed": false,
+      "panels": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 14,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Sets per week from Garmin strength workouts, grouped by exercise category. Legs & hips (squats, lunges, deadlifts, step-ups, jumps) carry you through moguls, breakable crust and long descents.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 22
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH sets AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN tags->>'ExerciseCategory' ~ '^(SQUAT|LUNGE|DEADLIFT|CALF_RAISE|LEG_CURL|HIP_RAISE|HIP_STABILITY|HIP_SWING|PLYO|OLYMPIC_LIFT)$' THEN 'Legs & hips' WHEN tags->>'ExerciseCategory' ~ '^(CORE|CRUNCH|PLANK|SIT_UP|LEG_RAISE|CHOP|HYPEREXTENSION)$' THEN 'Core & back' WHEN tags->>'ExerciseCategory' ~ '^(BENCH_PRESS|CURL|FLYE|LATERAL_RAISE|PULL_UP|PUSH_UP|ROW|SHOULDER_PRESS|SHOULDER_STABILITY|SHRUG|TRICEPS_EXTENSION)$' THEN 'Upper body' ELSE 'Other' END AS area FROM all_records WHERE dataset = 'StrengthExerciseSet' AND source_id IN (${Source:csv}) AND $__timeFilter(time)) SELECT date_trunc('week', day::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, area AS metric, count(*) AS value FROM sets GROUP BY 1, 2 ORDER BY 1, 2",
+          "refId": "A"
+        }
+      ],
+      "title": "Strength sets per week by body area",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Sum of Garmin activity training load per week, with the 4-week average. Raise it gradually; a week well above the average is when overuse injuries start.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4-week average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Weekly load"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 22
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND time >= $__timeFrom()::timestamptz - interval '29 days' AND time <= $__timeTo()::timestamptz + interval '1 day'), weeks AS (SELECT generate_series(date_trunc('week', $__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}) - interval '3 weeks', $__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring}, interval '1 week')::date AS week), weekly AS (SELECT date_trunc('week', day::timestamp)::date AS week, sum(load) AS load FROM acts GROUP BY 1), series AS (SELECT week, COALESCE(load, 0) AS load, avg(COALESCE(load, 0)) OVER (ORDER BY week ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) AS average FROM weeks LEFT JOIN weekly USING (week)) SELECT week::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, load AS \"Weekly load\", average AS \"4-week average\" FROM series WHERE week >= date_trunc('week', $__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Training load per week",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Higher than your usual is generally better. Dots: daily value. Line: 7-day average (shown once 3 of the 7 days have data). Shaded: your usual range, the mean \u00b1 1 standard deviation of the 28 days before each day (shown once 14 of those days have data). A value outside your own range says more than one compared with population norms.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "unit": "suffix: ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-day average"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual range"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 18
+              },
+              {
+                "id": "custom.fillBelowTo",
+                "value": "Usual low"
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usual low"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.lineInterpolation",
+                "value": "smooth"
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'avgOvernightHrv')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '37 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 35, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day), series AS (SELECT day, value, CASE WHEN count(value) OVER w7 >= 3 THEN avg(value) OVER w7 END AS avg7, avg(value) OVER w28 AS base, greatest(coalesce(stddev_samp(value) OVER w28, 0), 2) AS spread, count(value) OVER w28 AS n FROM days LEFT JOIN daily USING (day) WINDOW w7 AS (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), w28 AS (ORDER BY day ROWS BETWEEN 28 PRECEDING AND 1 PRECEDING)) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Overnight HRV\", avg7 AS \"7-day average\", CASE WHEN n >= 14 THEN base + spread END AS \"Usual range\", CASE WHEN n >= 14 THEN base - spread END AS \"Usual low\" FROM series WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Overnight HRV",
+      "type": "timeseries",
+      "id": 17,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 22
+      }
+    },
+    {
+      "type": "row",
+      "title": "On snow",
+      "collapsed": false,
+      "panels": [],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 18,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Totals per snow sport in the selected time range: days on snow, sessions, hours, vertical and top speed. Fills once you record ski touring, resort, nordic or snowshoe activities; widen the time range to cover the whole season.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "minWidth": 60
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hours"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vertical up"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vertical down"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Distance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthkm"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max speed"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocitykmh"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg HR"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: bpm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Training load"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 0,
+        "y": 31
+      },
+      "id": 19,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT sport AS \"Sport\", count(DISTINCT day) AS \"Days\", count(*) AS \"Sessions\", sum(secs) / 3600 AS \"Hours\", sum(gain) AS \"Vertical up\", sum(loss) AS \"Vertical down\", sum(dist) / 1000 AS \"Distance\", max(max_speed) * 3.6 AS \"Max speed\" FROM acts WHERE sport IN ('Ski touring', 'Resort skiing', 'Nordic skiing', 'Snowshoeing') GROUP BY 1 ORDER BY 4 DESC NULLS LAST",
+          "refId": "A"
+        }
+      ],
+      "title": "Season on snow",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Every snow session in the selected time range, newest first. Open Garmin Stats for the GPS track and heart rate of a single session.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "minWidth": 60
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hours"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vertical up"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vertical down"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Distance"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthkm"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max speed"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocitykmh"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg HR"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: bpm"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Training load"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT time AS \"Time\", fields->>'activityName' AS \"Name\", sport AS \"Sport\", fields->>'locationName' AS \"Location\", secs / 3600 AS \"Hours\", gain AS \"Vertical up\", loss AS \"Vertical down\", dist / 1000 AS \"Distance\", max_speed * 3.6 AS \"Max speed\", avg_hr AS \"Avg HR\", load AS \"Training load\" FROM acts WHERE sport IN ('Ski touring', 'Resort skiing', 'Nordic skiing', 'Snowshoeing') ORDER BY time DESC LIMIT 200",
+          "refId": "A"
+        }
+      ],
+      "title": "Snow sessions",
+      "type": "table",
+      "id": 20,
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 10,
+        "y": 31
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Vertical per week on snow: climbed on skins and snowshoes, descended at the resort and on tours.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": -1,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
+          "unit": "lengthm"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Climbed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Descended"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT date_trunc('week', day::timestamp)::date::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, sum(gain) FILTER (WHERE sport IN ('Ski touring', 'Snowshoeing', 'Nordic skiing')) AS \"Climbed\", sum(loss) AS \"Descended\" FROM acts WHERE sport IN ('Ski touring', 'Resort skiing', 'Nordic skiing', 'Snowshoeing') GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Vertical on snow per week",
+      "type": "timeseries"
+    },
+    {
+      "type": "row",
+      "title": "Training status and readiness (needs training_status / training_readiness in FETCH_SELECTION)",
+      "collapsed": true,
+      "panels": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Acute (7-day) against chronic (4-week) training load. Shaded: Garmin's minimum to maximum chronic-load range. Acute load well above chronic load means a fast ramp-up.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "orange",
+                "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Chronic load"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Range high"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "displayName",
+                    "value": "Garmin range"
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Range low"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 15
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Range low"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": true,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 48
+          },
+          "id": 23,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'dailyTrainingLoadAcute')) AS c0, avg(health_number(fields, 'dailyTrainingLoadChronic')) AS c1, avg(health_number(fields, 'maxTrainingLoadChronic')) AS c2, avg(health_number(fields, 'minTrainingLoadChronic')) AS c3 FROM all_records WHERE dataset = 'TrainingStatus' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Acute load\", daily.c1 AS \"Chronic load\", daily.c2 AS \"Range high\", daily.c3 AS \"Range low\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+              "refId": "A"
+            }
+          ],
+          "title": "Training load: acute vs chronic",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "description": "Garmin's bands: 95+ prime, 75-94 high, 50-74 moderate, 25-49 low, below 25 poor.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "text",
+                "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.7,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "area"
+                }
+              },
+              "max": 100,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 25
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 50
+                  },
+                  {
+                    "color": "green",
+                    "value": 75
+                  },
+                  {
+                    "color": "dark-green",
+                    "value": 95
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-postgresql-datasource",
+                "uid": "garmin_postgres"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "rawQuery": true,
+              "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, (array_agg(health_number(fields, 'score') ORDER BY time) FILTER (WHERE health_number(fields, 'score') IS NOT NULL))[1] AS c0 FROM all_records WHERE dataset = 'TrainingReadiness' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date - 0, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Morning readiness\" FROM days LEFT JOIN daily USING (day) WHERE day >= ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date ORDER BY 1",
+              "refId": "A"
+            }
+          ],
+          "title": "Training readiness (first reading of the day)",
+          "type": "timeseries"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "id": 22,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      }
+    }
+  ]
+}

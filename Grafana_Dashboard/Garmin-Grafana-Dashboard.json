@@ -124,6 +124,18 @@
       "tooltip": "Recovery against your personal baseline, sleep, activity and fitness",
       "type": "link",
       "url": "/d/garmin-health-overview"
+    },
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Garmin Ski Season",
+      "tooltip": "Ski and ski touring training: vertical, uphill endurance, leg strength, time on snow",
+      "type": "link",
+      "url": "/d/garmin-ski-season"
     }
   ],
   "panels": [
