@@ -73,6 +73,15 @@ already covered in integration tests.
 `docker compose -f compose-example.yml config --quiet`, `docker build .`, and
 `uv build` validate configuration, runtime image and package distribution.
 
+`tests/personas.py` builds two deterministic synthetic athletes in the record shapes
+the collectors write: a ski tourer (pre-season build-up, last winter on snow,
+strength sets) and a healthy-lifestyle runner (a year of daily data, intraday
+series, a GPS run, a sync gap and a partly synced today). `tests/test_personas.py`
+checks dashboard panels against values the personas compute in plain Python. To
+browse them in Grafana, load them into a disposable database with
+`uv run --locked python scripts/load_personas.py`; each persona is its own Account
+and "today" is 2026-10-28.
+
 For Grafana smoke testing, start the fresh Compose stack, select an Account, and
 inspect both dashboards over recent and multi-year windows. Verify GPS activity
 selection, local-day boundaries, heart-rate distribution, strength category/label
