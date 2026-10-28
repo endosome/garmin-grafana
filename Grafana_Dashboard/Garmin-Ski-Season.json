@@ -517,7 +517,7 @@
               }
             ]
           },
-          "unit": "lengthm",
+          "unit": "suffix: m",
           "noValue": "\u2013"
         },
         "overrides": []
@@ -584,7 +584,7 @@
               }
             ]
           },
-          "unit": "lengthm",
+          "unit": "suffix: m",
           "noValue": "\u2013"
         },
         "overrides": []
@@ -1051,9 +1051,189 @@
           },
           "decimals": 0,
           "min": 0,
-          "unit": "lengthm"
+          "unit": "suffix: m"
         },
         "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ski touring"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Resort skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nordic skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Snowshoeing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hiking & trail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Walking"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stairs & incline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cycling"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Strength"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mobility"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Other"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
           {
             "matcher": {
               "id": "byName",
@@ -1195,7 +1375,188 @@
           "min": 0,
           "unit": "suffix: h"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ski touring"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Resort skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nordic skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Snowshoeing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hiking & trail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Walking"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stairs & incline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cycling"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Strength"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mobility"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Other"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1238,12 +1599,11 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Metres climbed per moving hour, one point per uphill session with at least 200 m of gain. Garmin only reports the whole session, so time going down is included: compare similar routes. A rising trend means a stronger engine on the skin track.",
+      "description": "Metres climbed per moving hour, one point per uphill session, coloured by sport with at least 200 m of gain. Garmin only reports the whole session, so time going down is included: compare similar routes. A rising trend means a stronger engine on the skin track.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed",
-            "fixedColor": "blue"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1281,7 +1641,188 @@
           "decimals": 0,
           "unit": "suffix: m/h"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ski touring"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Resort skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Nordic skiing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Snowshoeing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hiking & trail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Walking"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Stairs & incline"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cycling"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Strength"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mobility"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Other"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -1295,7 +1836,7 @@
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1312,7 +1853,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT time, gain / (COALESCE(NULLIF(moving, 0), secs) / 3600) AS \"Vertical per moving hour\" FROM acts WHERE (sport IN ('Ski touring', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline') OR (sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') AND gain >= 300)) AND gain >= 200 AND COALESCE(NULLIF(moving, 0), secs) > 0 ORDER BY 1",
+          "rawSql": "WITH acts AS (SELECT time, COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, CASE WHEN fields->>'activityType' ~* 'backcountry|ski_?tour|splitboard' THEN 'Ski touring' WHEN fields->>'activityType' ~* 'cross_country_ski|skate_ski|classic_ski|nordic' THEN 'Nordic skiing' WHEN fields->>'activityType' ~* 'ski|snowboard' THEN 'Resort skiing' WHEN fields->>'activityType' ~* 'snowshoe' THEN 'Snowshoeing' WHEN fields->>'activityType' ~* 'hik|mountaineer|trail_run' THEN 'Hiking & trail' WHEN fields->>'activityType' ~* 'stair|floor_climb|incline' THEN 'Stairs & incline' WHEN fields->>'activityType' ~* 'run' THEN 'Running' WHEN fields->>'activityType' ~* 'cycl|bik|ride|spin' THEN 'Cycling' WHEN fields->>'activityType' ~* 'walk' THEN 'Walking' WHEN fields->>'activityType' ~* 'strength|hiit' THEN 'Strength' WHEN fields->>'activityType' ~* 'yoga|pilates|stretch|mobility|breath' THEN 'Mobility' ELSE 'Other' END AS sport, health_number(fields, 'elevationGain') AS gain, health_number(fields, 'elevationLoss') AS loss, health_number(fields, 'elapsedDuration') AS secs, health_number(fields, 'movingDuration') AS moving, health_number(fields, 'distance') AS dist, health_number(fields, 'maxSpeed') AS max_speed, health_number(fields, 'averageHR') AS avg_hr, health_number(fields, 'activityTrainingLoad') AS load, fields FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND fields->>'activityName' IS DISTINCT FROM 'END' AND $__timeFilter(time)) SELECT time, sport AS metric, gain / (COALESCE(NULLIF(moving, 0), secs) / 3600) AS value FROM acts WHERE (sport IN ('Ski touring', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline') OR (sport IN ('Ski touring', 'Nordic skiing', 'Snowshoeing', 'Hiking & trail', 'Stairs & incline', 'Running', 'Walking') AND gain >= 300)) AND gain >= 200 AND COALESCE(NULLIF(moving, 0), secs) > 0 ORDER BY 1",
           "refId": "A"
         }
       ],
@@ -1942,7 +2483,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "lengthm"
+                "value": "suffix: m"
               },
               {
                 "id": "decimals",
@@ -1958,7 +2499,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "lengthm"
+                "value": "suffix: m"
               },
               {
                 "id": "decimals",
@@ -2034,7 +2575,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 10,
+        "w": 24,
         "x": 0,
         "y": 31
       },
@@ -2109,7 +2650,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "lengthm"
+                "value": "suffix: m"
               },
               {
                 "id": "decimals",
@@ -2125,7 +2666,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "lengthm"
+                "value": "suffix: m"
               },
               {
                 "id": "decimals",
@@ -2196,6 +2737,34 @@
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm"
+              },
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 240
+              }
+            ]
           }
         ]
       },
@@ -2228,10 +2797,10 @@
       "type": "table",
       "id": 20,
       "gridPos": {
-        "h": 8,
-        "w": 14,
-        "x": 10,
-        "y": 31
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 39
       }
     },
     {
@@ -2239,7 +2808,7 @@
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
       },
-      "description": "Vertical per week on snow: climbed on skins and snowshoes, descended at the resort and on tours.",
+      "description": "Vertical per week on snow: climbed on skins, snowshoes and nordic skis above the line, descended (resort and tours) below it.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2279,8 +2848,7 @@
             }
           },
           "decimals": 0,
-          "min": 0,
-          "unit": "lengthm"
+          "unit": "suffix: m"
         },
         "overrides": [
           {
@@ -2310,6 +2878,10 @@
                   "fixedColor": "blue",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
               }
             ]
           }
@@ -2319,7 +2891,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 48
       },
       "id": 21,
       "options": {
@@ -2483,7 +3055,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 48
+            "y": 57
           },
           "id": 23,
           "options": {
@@ -2594,7 +3166,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 48
+            "y": 57
           },
           "id": 24,
           "options": {
@@ -2636,7 +3208,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 56
       }
     }
   ]

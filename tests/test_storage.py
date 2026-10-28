@@ -474,6 +474,18 @@ def test_dashboard_missing_buckets_preserve_null_and_zero_semantics(db):
     assert len(steps)>1 and all(row[1]==0 for row in steps)
 
 
+def test_daily_panels_include_the_first_day_of_a_range_starting_mid_day(db):
+    # "Last 7 days" starts mid-day: the first day's bucket must still get that day's record.
+    spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    statements={label:sql for label,sql,fmt in module.dashboard_queries()}
+    sid=source(db)
+    db.write([Record.from_mapping(point('DailyStats','2026-01-01T00:00:00Z',totalSteps=5000),local_date=date(2026,1,1),timezone='UTC'),
+              Record.from_mapping(point('DailyStats','2026-01-02T00:00:00Z',totalSteps=7000),local_date=date(2026,1,2),timezone='UTC')])
+    sql=module.expand_query(statements['Garmin-Grafana-Dashboard.json:1:A'],sid).replace('2026-01-01T00:00:00Z','2026-01-01T12:00:00Z')
+    assert query(db,sql)[:2]==[(datetime(2026,1,1,tzinfo=timezone.utc),5000.0),(datetime(2026,1,2,tzinfo=timezone.utc),7000.0)]
+
+
 def test_health_today_tiles_stay_empty_until_today_is_synced(db):
     spec=importlib.util.spec_from_file_location('queries',Path(__file__).resolve().parents[1]/'scripts/validate_dashboard_queries.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
@@ -538,7 +550,7 @@ def test_ski_season_groups_sports_and_counts_vertical_on_foot(db):
     assert run(tiles['Uphill time, 7 days'])==[(5.0,)]
     assert run(tiles['Longest uphill, 4 weeks'])==[(4.0,)]
     assert run(tiles['Strength, 14 days'])==[(1,)]
-    assert [value for _,value in run(titled['Climbing rate on uphill sessions'])]==[400.0,360.0]
+    assert [(sport,value) for _,sport,value in run(titled['Climbing rate on uphill sessions'])]==[('Hiking & trail',400.0),('Ski touring',360.0)]
     season={row[0]:row[1:] for row in run(titled['Season on snow'])}
     assert season=={'Ski touring':(1,1,4.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,5.0,None,4000.0,None,72.0)}
     assert len(run(titled['Snow sessions']))==2
