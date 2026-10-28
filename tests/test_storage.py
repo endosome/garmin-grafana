@@ -406,6 +406,28 @@ def test_stat_field_regex_matches_the_display_name():
                 assert re.search(fields.strip('/'),name),(path.name,panel['id'])
 
 
+def test_dashboard_style_overrides_match_a_field():
+    # An override for a field no query or transformation produces does nothing; they piled up in Garmin Stats.
+    def panels(items):
+        for panel in items:
+            yield panel
+            yield from panels(panel.get('panels',[]))
+    for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
+        for panel in panels(json.loads(path.read_text())['panels']):
+            sql=' '.join(target.get('rawSql','') for target in panel.get('targets',[]))
+            if re.search(r'AS\s+metric\b',sql):
+                continue  # series named by the data, e.g. one per sport
+            names={'Time'}|set(re.findall(r'AS\s+"([^"]+)"',sql))|set(re.findall(r'AS\s+(\w+)',sql))
+            for transformation in panel.get('transformations',[]):
+                options=transformation.get('options',{})
+                names|={options.get('alias')}|set((options.get('renameByName') or {}).values())
+            overrides=panel.get('fieldConfig',{}).get('overrides',[])
+            names|={p['value'] for o in overrides for p in o['properties'] if p['id']=='displayName'}
+            for override in overrides:
+                if override['matcher']['id']=='byName':
+                    assert override['matcher']['options'] in names,(path.name,panel['id'],override['matcher']['options'])
+
+
 def test_dashboard_all_values_are_sql_literals():
     # Grafana inserts a custom "All" value unformatted, even for ${Name:sqlstring}.
     for path in (Path(__file__).resolve().parents[1]/'Grafana_Dashboard').glob('*.json'):
