@@ -111,6 +111,20 @@ def test_bulk_upsert_and_types(db):
     assert query(db, 'SELECT count(*) FROM records WHERE source_id=%s', (sid,)) == [(1,)]
 
 
+def test_rows_with_one_key_in_a_batch_merge_like_consecutive_upserts(db):
+    # A sleep stage and a movement reading in the same minute share a key; so can a corrected document.
+    stage = Record.from_mapping(point('SleepIntraday', SleepStageLevel=1), local_date=date(2026, 1, 1), timezone='UTC')
+    movement = Record.from_mapping(point('SleepIntraday', SleepMovementActivityLevel=0.5))
+    first = Record.from_mapping(point('Sleep', time='2026-01-01T00:00:00Z', score=80), local_date=date(2026, 1, 1))
+    corrected = Record.from_mapping(point('Sleep', time='2026-01-01T00:00:00Z', score=81, awake=60))
+    assert stage.key == movement.key and first.key == corrected.key
+    db.write([stage, first, movement, corrected])
+    sid = source(db)
+    assert query(db, 'SELECT fields, local_date, timezone FROM samples WHERE source_id=%s', (sid,)) == [
+        ({'SleepStageLevel': 1, 'SleepMovementActivityLevel': 0.5}, date(2026, 1, 1), 'UTC')]
+    assert query(db, 'SELECT fields, local_date FROM records WHERE source_id=%s', (sid,)) == [({'score': 81, 'awake': 60}, date(2026, 1, 1))]
+
+
 def test_unchanged_rows_are_not_rewritten(db):
     sample = Record.from_mapping(point(HeartRate=70))
     summary = Record.from_mapping(point('Sleep', time='2026-01-01T00:00:00Z', score=80))

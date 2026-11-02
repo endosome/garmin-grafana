@@ -3,7 +3,7 @@
 Run with PG* settings for a disposable database, never your real health database.
 `seed` writes the healthy-lifestyle persona with a full year of intraday series at
 Garmin's cadence and a 5-second GPS track for every run (a few minutes, about
-3.5 million rows). `run` executes each query with the panel's pinned range, or the
+1.3 million rows). `run` executes each query with the panel's pinned range, or the
 selected range, ending at the persona's "now", and prints database time per panel:
 
     uv run --locked python scripts/bench_dashboards.py seed
@@ -45,32 +45,13 @@ def seed():
         day += timedelta(1)
     for summary in summaries:
         personas.gps(p, summary)
-    # Documents go through the application's write path; samples are copied, since the upsert
-    # path checks every row against the table and would take about an hour.
     store = PostgresStore(account=ACCOUNT)
     try:
-        store.write([r for r in p.records if not r.is_sample])
-        source = store.source_id(store.connection.cursor())
-        store.connection.commit()
+        for offset in range(0, len(p.records), 100000):
+            store.write(p.records[offset:offset + 100000])
+            print(f'{min(offset + 100000, len(p.records))}/{len(p.records)} records', flush=True)
     finally:
         store.close()
-    # Records with the same key are merged on upsert, e.g. a sleep stage and a movement reading in one minute.
-    merged = {}
-    for r in (r for r in p.records if r.is_sample):
-        key = (r.dataset, r.key, r.time, r.nanoseconds)
-        if key in merged:
-            merged[key].values.update(r.values)
-        else:
-            merged[key] = r
-    samples = list(merged.values())
-    with connect() as connection, connection.cursor() as cur:
-        cur.execute('INSERT INTO devices SELECT DISTINCT %s, unnest(%s::text[]) ON CONFLICT DO NOTHING',
-                    (source, sorted({r.device for r in samples})))
-        with cur.copy('COPY samples (source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields) FROM STDIN') as copy:
-            for r in samples:
-                copy.write_row((source, r.dataset, r.key, r.time, r.nanoseconds, r.original_time, r.device, r.local_date,
-                                r.timezone, json.dumps(r.tags), json.dumps(r.values)))
-        print(f'{len(samples)} samples', flush=True)
     with connect() as connection:
         connection.autocommit = True
         connection.execute('VACUUM ANALYZE')

@@ -1,4 +1,5 @@
 """PostgreSQL persistence; no Garmin API dependencies or implicit schema changes."""
+from dataclasses import replace
 from datetime import timedelta
 import os
 import psycopg
@@ -73,21 +74,35 @@ class PostgresStore:
         cur.executemany('INSERT INTO devices VALUES (%s,%s) ON CONFLICT DO NOTHING',
                         [(source, device) for device in sorted({r.device for r in batch})])
         for table in ('records', 'samples'):
-            rows = [(source, r.dataset, r.key, r.time, r.nanoseconds, r.original_time,
-                     r.device, r.local_date, r.timezone, Jsonb(r.tags), Jsonb(r.values))
-                    for r in batch if r.is_sample == (table == 'samples')]
-            if not rows:
+            # One statement per batch. ON CONFLICT cannot update a row twice in one statement, so records with the
+            # same key are merged here first, the way consecutive upserts would merge them.
+            merged = {}
+            for r in batch:
+                if r.is_sample != (table == 'samples'):
+                    continue
+                key = (r.dataset, r.key) + ((r.time, r.nanoseconds) if table == 'samples' else ())
+                if key in merged:
+                    previous = merged[key]
+                    r = replace(r, values={**previous.values, **r.values},
+                                local_date=previous.local_date if r.local_date is None else r.local_date,
+                                timezone=previous.timezone if r.timezone is None else r.timezone)
+                merged[key] = r
+            if not merged:
                 continue
+            rows = merged.values()
             conflict = 'source_id,dataset,record_key' + (',time,nanoseconds' if table == 'samples' else '')
             columns = 'source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields'
             same_key = ' AND '.join(f'e.{c}=v.{c}' for c in conflict.split(','))
+            # Without the batch's time range the check below probes every chunk of the hypertable for every row.
+            in_range = ' AND e.time BETWEEN %s AND %s' if table == 'samples' else ''
+            bounds = (min(r.time for r in rows), max(r.time for r in rows)) if table == 'samples' else ()
             # Rows the update would leave unchanged are dropped before ON CONFLICT: it locks the existing row
             # even when nothing changes, and that lock is written to WAL. The advisory lock in write() keeps
             # the check and the insert consistent.
-            cur.executemany(f'''INSERT INTO {table} AS t ({columns})
-                SELECT * FROM (VALUES (%s::bigint,%s::text,%s::text,%s::timestamptz,%s::smallint,%s::text,%s::text,
-                    %s::date,%s::text,%s::jsonb,%s::jsonb)) v({columns})
-                WHERE NOT EXISTS (SELECT 1 FROM {table} e WHERE {same_key}
+            cur.execute(f'''INSERT INTO {table} AS t ({columns})
+                SELECT * FROM unnest(%s::bigint[],%s::text[],%s::text[],%s::timestamptz[],%s::smallint[],%s::text[],%s::text[],
+                    %s::date[],%s::text[],%s::jsonb[],%s::jsonb[]) v({columns})
+                WHERE NOT EXISTS (SELECT 1 FROM {table} e WHERE {same_key}{in_range}
                     AND (e.time,e.nanoseconds,e.original_time,e.local_date,e.timezone,e.tags,e.fields) IS NOT DISTINCT FROM
                         (v.time,v.nanoseconds,v.original_time,COALESCE(v.local_date,e.local_date),
                          COALESCE(v.timezone,e.timezone),v.tags,e.fields || v.fields))
@@ -95,7 +110,11 @@ class PostgresStore:
                 time=excluded.time,nanoseconds=excluded.nanoseconds,original_time=excluded.original_time,
                 local_date=COALESCE(excluded.local_date,t.local_date),
                 timezone=COALESCE(excluded.timezone,t.timezone),
-                tags=excluded.tags,fields=t.fields || excluded.fields''', rows)
+                tags=excluded.tags,fields=t.fields || excluded.fields''',
+                [[source] * len(rows), [r.dataset for r in rows], [r.key for r in rows], [r.time for r in rows],
+                 [r.nanoseconds for r in rows], [r.original_time for r in rows], [r.device for r in rows],
+                 [r.local_date for r in rows], [r.timezone for r in rows], [Jsonb(r.tags) for r in rows],
+                 [Jsonb(r.values) for r in rows], *bounds])
 
     def request_range(self, datasets, start):
         with self.connection.transaction(), self.connection.cursor() as cur:
