@@ -652,12 +652,12 @@ def test_ski_season_groups_sports_and_counts_vertical_on_foot(db):
              +activity(5,6,'strength_training',elapsedDuration=3000))
     assert run(tiles['Ski season'])==[('Day 41',)]
     assert run(tiles['Vertical, 7 days'])==[(1600.0,)]
-    assert run(tiles['Uphill time, 7 days'])==[(5.0,)]
-    assert run(tiles['Longest uphill, 4 weeks'])==[(4.0,)]
+    assert run(tiles['Uphill time, 7 days'])==[(18000.0,)]
+    assert run(tiles['Longest uphill, 4 weeks'])==[(14400.0,)]
     assert run(tiles['Strength, 14 days'])==[(1,)]
     assert [(sport,value) for _,sport,value in run(titled['Climbing rate on uphill sessions'])]==[('Hiking & trail',400.0),('Ski touring',360.0)]
     season={row[0]:row[1:] for row in run(titled['Season on snow'])}
-    assert season=={'Ski touring':(1,1,4.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,5.0,None,4000.0,None,72.0)}
+    assert season=={'Ski touring':(1,1,14400.0,1200.0,1150.0,None,None),'Resort skiing':(1,1,18000.0,None,4000.0,None,72.0)}
     assert len(run(titled['Snow sessions']))==2
     goal=run(titled['Vertical on foot per week'],'B')
     assert goal and all(value==2000 for _,value in goal)
