@@ -3063,12 +3063,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Hours"
+              "options": "Duration"
             },
             "properties": [
               {
-                "id": "decimals",
-                "value": 1
+                "id": "unit",
+                "value": "dthms"
               }
             ]
           },
@@ -3146,7 +3146,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT initcap(replace(COALESCE(fields->>'activityType', 'other'), '_', ' ')) AS \"Activity\", count(*) AS \"Sessions\", sum(health_number(fields, 'elapsedDuration')) / 3600 AS \"Hours\", sum(health_number(fields, 'distance')) / 1000 AS \"Distance\", avg(health_number(fields, 'averageHR')) AS \"Avg HR\", sum(health_number(fields, 'activityTrainingLoad')) AS \"Training load\" FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityName' IS DISTINCT FROM 'END' GROUP BY 1 ORDER BY 3 DESC NULLS LAST",
+          "rawSql": "SELECT initcap(replace(COALESCE(fields->>'activityType', 'other'), '_', ' ')) AS \"Activity\", count(*) AS \"Sessions\", sum(health_number(fields, 'elapsedDuration')) AS \"Duration\", sum(health_number(fields, 'distance')) / 1000 AS \"Distance\", avg(health_number(fields, 'averageHR')) AS \"Avg HR\", sum(health_number(fields, 'activityTrainingLoad')) AS \"Training load\" FROM all_records WHERE dataset = 'ActivitySummary' AND source_id IN (${Source:csv}) AND $__timeFilter(time) AND fields->>'activityName' IS DISTINCT FROM 'END' GROUP BY 1 ORDER BY 3 DESC NULLS LAST",
           "refId": "A"
         }
       ],

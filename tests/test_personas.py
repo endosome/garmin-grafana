@@ -93,7 +93,7 @@ def test_ski_season_panels_match_the_ski_tourer(load):
     sets = {(local_day(r['time']), r['metric']): r['value'] for r in run(dash, 'Strength sets per week by body area', build)}
     assert sets == want['weekly_sets']
     winter = run(dash, 'Season on snow', datetime(2025, 12, 1, tzinfo=TZ), datetime(2026, 5, 1, tzinfo=TZ))
-    columns = ('Days', 'Sessions', 'Hours', 'Vertical up', 'Vertical down', 'Distance', 'Max speed')
+    columns = ('Days', 'Sessions', 'Duration', 'Vertical up', 'Vertical down', 'Distance', 'Max speed')
     got = {(r['Sport'], c): r[c] for r in winter for c in columns}
     assert got == pytest.approx({(sport, c): v for sport, row in want['season'].items() for c, v in zip(columns, row)})
     assert len(run(dash, 'Climbing rate on uphill sessions', build)) == want['climbing_points']

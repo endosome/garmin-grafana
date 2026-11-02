@@ -153,15 +153,15 @@ def ski_tourer():
         weekly_sets[(week(day), areas[category])] += 1
     for name in snow:
         rows = [a for a in acts if sport[a['kind']] == name and date(2025, 12, 1) <= a['day'] <= date(2026, 4, 30)]
-        season[name] = (len({a['day'] for a in rows}), len(rows), sum(a['secs'] for a in rows) / 3600,
+        season[name] = (len({a['day'] for a in rows}), len(rows), sum(a['secs'] for a in rows),
                         None if name == 'Resort skiing' else sum(a['gain'] for a in rows), sum(a['loss'] for a in rows),
                         sum(a['km'] for a in rows), max(a['max_kmh'] for a in rows))
     p.expected = {
         'tiles': {'Ski season': f'{(date(2026, 12, 1) - TODAY).days} days to go',
                   'Vertical, 7 days': sum(a['gain'] or 0 for a in foot if last(a, 7)),
                   'Vertical / week, 4 weeks': sum(a['gain'] or 0 for a in foot if last(a, 28)) / 4,
-                  'Uphill time, 7 days': sum(a['secs'] for a in acts if uphill(a) and last(a, 7)) / 3600,
-                  'Longest uphill, 4 weeks': max(a['secs'] for a in acts if uphill(a) and last(a, 28)) / 3600,
+                  'Uphill time, 7 days': sum(a['secs'] for a in acts if uphill(a) and last(a, 7)),
+                  'Longest uphill, 4 weeks': max(a['secs'] for a in acts if uphill(a) and last(a, 28)),
                   'Strength, 14 days': sum(1 for a in acts if a['kind'] == 'strength_training' and last(a, 14)),
                   'Load ramp': sum(a['load'] or 0 for a in acts if last(a, 7)) / (sum(a['load'] or 0 for a in acts if last(a, 28)) / 4)},
         'weekly_vertical': dict(weekly_vertical), 'weekly_sets': dict(weekly_sets), 'season': season,
