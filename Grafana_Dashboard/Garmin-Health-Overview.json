@@ -2092,12 +2092,172 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "description": "Hours per stage, stacked, from the intraday sleep timeline: each stage's own duration, summed by the day you woke up. It should match Sleep per night, which reads Garmin's nightly summary; a difference means stages are missing from one of them. Dashed line: 7 hours.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.7,
+            "drawStyle": "bars",
+            "fillOpacity": 90,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 7
+              }
+            ]
+          },
+          "unit": "suffix: h"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Deep"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Light"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REM"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#a352cc",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Awake"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 43,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, sum(health_number(fields, 'SleepStageSeconds')) FILTER (WHERE health_number(fields, 'SleepStageLevel') = 0) / 3600 AS c0, sum(health_number(fields, 'SleepStageSeconds')) FILTER (WHERE health_number(fields, 'SleepStageLevel') = 1) / 3600 AS c1, sum(health_number(fields, 'SleepStageSeconds')) FILTER (WHERE health_number(fields, 'SleepStageLevel') = 2) / 3600 AS c2, sum(health_number(fields, 'SleepStageSeconds')) FILTER (WHERE health_number(fields, 'SleepStageLevel') = 3) / 3600 AS c3 FROM all_records WHERE dataset = 'SleepIntraday' AND source_id IN (${Source:csv}) AND fields ? 'SleepStageSeconds' AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1), days AS (SELECT generate_series(($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date, interval '1 day')::date AS day) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, daily.c0 AS \"Deep\", daily.c1 AS \"Light\", daily.c2 AS \"REM\", daily.c3 AS \"Awake\" FROM days LEFT JOIN daily USING (day) ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Sleep stages per night (stage timeline)",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 49
       },
       "id": 20,
       "panels": [],
@@ -2235,7 +2395,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "id": 21,
       "options": {
@@ -2398,7 +2558,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 42
+        "y": 50
       },
       "id": 22,
       "options": {
@@ -2500,7 +2660,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 42
+        "y": 50
       },
       "id": 23,
       "options": {
@@ -2538,7 +2698,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "id": 24,
       "panels": [],
@@ -2635,7 +2795,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "id": 25,
       "options": {
@@ -2764,7 +2924,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 59
       },
       "id": 26,
       "options": {
@@ -2850,7 +3010,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 27,
       "options": {
@@ -2962,7 +3122,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 67
       },
       "id": 28,
       "options": {
@@ -3062,7 +3222,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 67
+        "y": 75
       },
       "id": 29,
       "options": {
@@ -3201,7 +3361,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 67
+        "y": 75
       },
       "id": 30,
       "options": {
@@ -3308,7 +3468,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 67
+        "y": 75
       },
       "id": 31,
       "options": {
@@ -3346,7 +3506,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "id": 32,
       "panels": [
@@ -3477,7 +3637,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 76
+            "y": 84
           },
           "id": 33,
           "options": {
@@ -3588,7 +3748,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 76
+            "y": 84
           },
           "id": 34,
           "options": {
@@ -3630,7 +3790,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "id": 35,
       "panels": [
@@ -3687,7 +3847,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 77
+            "y": 85
           },
           "id": 36,
           "options": {
@@ -3731,7 +3891,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 85
       },
       "id": 37,
       "panels": [
@@ -3788,7 +3948,7 @@
             "h": 7,
             "w": 24,
             "x": 0,
-            "y": 78
+            "y": 86
           },
           "id": 38,
           "interval": "2m",
@@ -3919,7 +4079,7 @@
             "h": 7,
             "w": 24,
             "x": 0,
-            "y": 85
+            "y": 93
           },
           "id": 39,
           "interval": "3m",
@@ -3963,7 +4123,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 86
       },
       "id": 40,
       "panels": [],
@@ -3991,7 +4151,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 79
+        "y": 87
       },
       "hideTimeOverride": true,
       "id": 41,

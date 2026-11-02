@@ -250,6 +250,9 @@ def test_dashboards_show_a_real_fitbit_month(load):
     assert {d: health[d] for d in want['steps']} == want['steps']
     sleep = {local_day(r['time']): r['Light'] for r in run('Garmin-Health-Overview.json', 'Sleep per night', month, end) if r['Light'] is not None}
     assert sleep == pytest.approx(want['asleep_hours'])
+    stages = {local_day(r['time']): (r['Light'], r['Awake']) for r in run('Garmin-Health-Overview.json', 'Sleep stages per night (stage timeline)', month, end)
+              if r['Light'] is not None}  # Fitbit reports asleep and awake only: deep and REM stay empty
+    assert {d: light for d, (light, awake) in stages.items()} == pytest.approx(want['asleep_hours'])
     day = want['last_day'] - timedelta(days=3)
     start = datetime.combine(day, datetime.min.time(), TZ)
     heart = run('Garmin-Grafana-Dashboard.json', 'Heart Rate', start, start + timedelta(days=1, minutes=-1), interval='2 minutes')
