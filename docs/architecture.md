@@ -104,6 +104,13 @@ paid about 50 ms for the compressed chunks, and the partial ActivitySelector
 index no longer applied. See [Timescale unique index rules](https://www.tigerdata.com/docs/learn/hypertables/hypertable-indexes)
 and [upstream licensing](https://github.com/timescale/timescaledb/blob/main/LICENSE).
 
+Grafana's "Fetch now" button (Business Forms panel) inserts into `fetch_requests`
+through a second data source whose role has only INSERT on that table. The
+collector remembers the newest request id when a sync starts and, while waiting
+for the next one, checks every few seconds for a newer id. Polling a one-row
+aggregate keeps it simple and survives reconnects; nothing in the browser talks
+to the collector, and no port is published.
+
 Each batch of up to 1000 rows is one upsert from arrays, its unchanged-row check
 limited to the batch's time range so it reads only those chunks. COPY would require a
 staging table to preserve upserts; add it only after ingestion benchmarks justify

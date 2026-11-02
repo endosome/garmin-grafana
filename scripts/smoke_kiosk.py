@@ -20,6 +20,10 @@ def main():
     saved = requests.post(base + '/grafana/api/dashboards/db', json={'dashboard': {'title': 'kiosk smoke'}, 'overwrite': True}, timeout=30)
     if saved.status_code not in (401, 403):
         raise RuntimeError(f'Anonymous kiosk viewers could save a dashboard: HTTP {saved.status_code}')
+    request = requests.post(base + '/grafana/api/ds/query', timeout=30, json={'queries': [{'refId': 'A', 'format': 'table', 'rawSql':
+        'INSERT INTO fetch_requests DEFAULT VALUES', 'datasource': {'uid': 'garmin_fetch_request', 'type': 'grafana-postgresql-datasource'}}]})
+    if request.ok and not request.json().get('results', {}).get('A', {}).get('error'):
+        raise RuntimeError('Anonymous kiosk viewers can start Garmin fetches')
     admin = requests.get(base + '/grafana/api/admin/settings', auth=('admin', os.environ['GRAFANA_PASSWORD']), timeout=30)
     if admin.status_code == 200:
         raise RuntimeError('The kiosk accepts password logins')

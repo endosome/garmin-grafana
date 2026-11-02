@@ -51,6 +51,7 @@ RATE_LIMIT_CALLS_SECONDS = int(os.getenv("RATE_LIMIT_CALLS_SECONDS", 5)) # optio
 MAX_CONSECUTIVE_500_ERRORS = int(os.getenv("MAX_CONSECUTIVE_500_ERRORS", 10)) # optional, maximum consecutive HTTP 500 errors before continuing without retrying
 GARMIN_DEVICENAME_AUTOMATIC = False if GARMIN_DEVICENAME != "Unknown" else True # optional
 UPDATE_INTERVAL_SECONDS = int(os.getenv("UPDATE_INTERVAL_SECONDS", 300)) # optional
+FETCH_REQUEST_CHECK_SECONDS = int(os.getenv("FETCH_REQUEST_CHECK_SECONDS", 5)) # optional, how often to look for the Grafana "Fetch now" button while waiting
 FETCH_SELECTION = os.getenv("FETCH_SELECTION", "daily_avg,sleep,steps,heartrate,stress,breathing,hrv,fitness_age,vo2,activity,race_prediction,body_composition,lifestyle") # additional available values are lactate_threshold,training_status,training_readiness,hill_score,endurance_score,blood_pressure,hydration,solar_intensity,cycling_dynamics which you can add to the list separated by , without any space
 ACTIVITY_TYPE_FILTER = [t.strip().lower() for t in os.getenv("ACTIVITY_TYPE_FILTER", "").split(",") if t.strip()] # optional, comma-separated list of activity typeKeys to import only specific activity types. Leave empty to import all. Known typeKeys: running,treadmill_running,indoor_running,cycling,indoor_cycling,road_biking,mountain_biking,walking,hiking,mountaineering,strength_training,hiit,indoor_cardio,elliptical,lap_swimming,open_water_swimming,rock_climbing,indoor_climbing,tennis_v2,kayaking_v2,boating_v2,multi_sport,other
 LACTATE_THRESHOLD_SPORTS = os.getenv("LACTATE_THRESHOLD_SPORTS", "RUNNING").upper().split(",") # Garmin currently implements RUNNING, but has provisions for CYCLING, and SWIMMING
@@ -1722,6 +1723,19 @@ def fetch_write_bulk(start_date_str, end_date_str, *, skip_completed=False):
     return True
 
 
+def wait_for_next_sync(seen_request):
+    """Sleep for the update interval, or only until Grafana's "Fetch now" button adds a newer request."""
+    deadline = time.monotonic() + UPDATE_INTERVAL_SECONDS
+    while (remaining := deadline - time.monotonic()) > 0:
+        time.sleep(min(FETCH_REQUEST_CHECK_SECONDS, remaining))
+        try:
+            if store.latest_fetch_request() > seen_request:
+                logging.info("Fetch requested from Grafana")
+                return
+        except psycopg.Error:
+            logging.warning("Could not check for fetch requests; waiting for the next scheduled sync")
+
+
 def main():
     global garmin_obj
     print(banner_text)
@@ -1735,12 +1749,14 @@ def main():
         raise SystemExit(0)
     while True:
         today = datetime.now(user_zone).date()
+        seen_request = 0
         try:
+            seen_request = store.latest_fetch_request()  # a request made during this sync starts another one
             start = store.pending_start(selected_datasets(), today, USER_TIMEZONE or 'UTC')
             fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True)
         except Exception as err:
             logging.error("Synchronization failed (%s); retrying next cycle", type(err).__name__)
-        time.sleep(UPDATE_INTERVAL_SECONDS)
+        wait_for_next_sync(seen_request)
 
 
 if __name__ == "__main__":

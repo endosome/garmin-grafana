@@ -46,6 +46,10 @@
       const doc = frame.contentDocument;
       ['pointerdown', 'touchstart', 'keydown', 'wheel'].forEach(name => doc.addEventListener(name, touched, { passive: true }));
       doc.addEventListener('contextmenu', noMenu);
+      // Garmin Stats' "Fetch now" button (panel 70) needs a login the kiosk Grafana does not get.
+      const hidden = doc.createElement('style');
+      hidden.textContent = '[data-griditem-key="grid-item-70"] { display: none; }';
+      doc.head.append(hidden);
     } catch (e) { goHome(); }
   });
   document.addEventListener('contextmenu', noMenu);

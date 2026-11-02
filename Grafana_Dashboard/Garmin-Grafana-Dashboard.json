@@ -360,6 +360,99 @@
       "description": "When the watch last uploaded to Garmin Connect. Data recorded after that is not available yet: sync the watch."
     },
     {
+      "description": "Asks the fetcher to sync with Garmin Connect now instead of at its next scheduled run (every 5 minutes by default). Data the watch has not uploaded to Garmin Connect yet still needs a watch sync.",
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 0,
+        "y": 7
+      },
+      "id": 70,
+      "options": {
+        "buttonGroup": {
+          "orientation": "center",
+          "size": "md"
+        },
+        "confirmModal": {
+          "body": "Fetch new data from Garmin Connect now?",
+          "cancel": "Cancel",
+          "columns": {
+            "include": [],
+            "name": "Label",
+            "newValue": "New Value",
+            "oldValue": "Old Value"
+          },
+          "confirm": "Fetch now",
+          "elementDisplayMode": "all",
+          "title": "Fetch now"
+        },
+        "elementValueChanged": "",
+        "elements": [],
+        "initial": {
+          "code": "",
+          "contentType": "application/json",
+          "getPayload": "",
+          "highlight": false,
+          "highlightColor": "red",
+          "method": "-",
+          "payload": {}
+        },
+        "layout": {
+          "orientation": "horizontal",
+          "padding": 0,
+          "sectionVariant": "default",
+          "variant": "none"
+        },
+        "reset": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "process",
+          "text": "Reset",
+          "variant": "hidden"
+        },
+        "resetAction": {
+          "code": "",
+          "confirm": false,
+          "getPayload": "",
+          "mode": "initial",
+          "payload": {}
+        },
+        "saveDefault": {
+          "icon": "save",
+          "text": "Save Default",
+          "variant": "hidden"
+        },
+        "submit": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "sync",
+          "text": "Fetch now",
+          "variant": "primary"
+        },
+        "sync": false,
+        "update": {
+          "code": "if (context.panel.response && context.panel.response.state === 'Done') {\n  context.grafana.notifySuccess(['Fetch now', 'The fetcher starts a Garmin sync within a few seconds. New data shows up when it finishes.']);\n} else {\n  context.grafana.notifyError(['Fetch now', 'The request was not saved: check the Garmin fetch request data source.']);\n}",
+          "confirm": true,
+          "contentType": "application/json",
+          "datasource": "Garmin fetch request",
+          "getPayload": "return {};",
+          "method": "datasource",
+          "payloadMode": "custom",
+          "payload": {
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "INSERT INTO fetch_requests DEFAULT VALUES",
+            "refId": "A"
+          }
+        },
+        "updateEnabled": "auto"
+      },
+      "title": "",
+      "transparent": true,
+      "type": "volkovlabs-form-panel"
+    },
+    {
       "datasource": {
         "type": "grafana-postgresql-datasource",
         "uid": "garmin_postgres"
@@ -430,7 +523,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 7
+        "y": 9
       },
       "hideTimeOverride": true,
       "id": 21,
@@ -558,7 +651,7 @@
         "h": 8,
         "w": 21,
         "x": 3,
-        "y": 10
+        "y": 12
       },
       "id": 29,
       "options": {
@@ -655,7 +748,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 11
+        "y": 13
       },
       "id": 28,
       "options": {
@@ -743,7 +836,7 @@
         "h": 6,
         "w": 3,
         "x": 0,
-        "y": 16
+        "y": 18
       },
       "id": 30,
       "options": {
@@ -863,7 +956,7 @@
         "h": 8,
         "w": 21,
         "x": 3,
-        "y": 18
+        "y": 20
       },
       "id": 16,
       "options": {
@@ -985,7 +1078,7 @@
         "h": 6,
         "w": 3,
         "x": 0,
-        "y": 22
+        "y": 24
       },
       "id": 31,
       "options": {
@@ -1069,7 +1162,7 @@
         "h": 3,
         "w": 21,
         "x": 3,
-        "y": 26
+        "y": 28
       },
       "id": 68,
       "options": {
@@ -1156,7 +1249,7 @@
         "h": 6,
         "w": 3,
         "x": 0,
-        "y": 28
+        "y": 30
       },
       "hideTimeOverride": true,
       "id": 32,
@@ -1274,7 +1367,7 @@
         "h": 7,
         "w": 21,
         "x": 3,
-        "y": 29
+        "y": 31
       },
       "id": 62,
       "interval": "2m",
@@ -1360,7 +1453,7 @@
         "h": 7,
         "w": 3,
         "x": 0,
-        "y": 34
+        "y": 36
       },
       "id": 33,
       "options": {
@@ -1460,7 +1553,7 @@
         "h": 7,
         "w": 21,
         "x": 3,
-        "y": 36
+        "y": 38
       },
       "id": 52,
       "options": {
@@ -1587,7 +1680,7 @@
         "h": 9,
         "w": 3,
         "x": 0,
-        "y": 41
+        "y": 43
       },
       "hideTimeOverride": true,
       "id": 36,
@@ -1760,7 +1853,7 @@
         "h": 9,
         "w": 21,
         "x": 3,
-        "y": 43
+        "y": 45
       },
       "id": 7,
       "options": {
@@ -1947,7 +2040,7 @@
         "h": 9,
         "w": 3,
         "x": 0,
-        "y": 50
+        "y": 52
       },
       "hideTimeOverride": true,
       "id": 35,
@@ -2138,7 +2231,7 @@
         "h": 7,
         "w": 21,
         "x": 3,
-        "y": 52
+        "y": 54
       },
       "id": 6,
       "options": {
@@ -2236,7 +2329,7 @@
         "h": 9,
         "w": 5,
         "x": 0,
-        "y": 59
+        "y": 61
       },
       "id": 43,
       "options": {
@@ -2304,7 +2397,7 @@
         "h": 9,
         "w": 5,
         "x": 5,
-        "y": 59
+        "y": 61
       },
       "id": 44,
       "options": {
@@ -2413,7 +2506,7 @@
         "h": 9,
         "w": 4,
         "x": 10,
-        "y": 59
+        "y": 61
       },
       "id": 48,
       "options": {
@@ -2568,7 +2661,7 @@
         "h": 9,
         "w": 5,
         "x": 14,
-        "y": 59
+        "y": 61
       },
       "id": 53,
       "options": {
@@ -2706,7 +2799,7 @@
         "h": 9,
         "w": 5,
         "x": 19,
-        "y": 59
+        "y": 61
       },
       "id": 54,
       "options": {
@@ -2781,7 +2874,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 70
       },
       "id": 42,
       "panels": [
@@ -2824,7 +2917,7 @@
             "h": 11,
             "w": 12,
             "x": 0,
-            "y": 69
+            "y": 71
           },
           "id": 50,
           "options": {
@@ -2971,7 +3064,7 @@
             "h": 11,
             "w": 12,
             "x": 12,
-            "y": 69
+            "y": 71
           },
           "id": 49,
           "options": {
@@ -3213,7 +3306,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 80
+            "y": 82
           },
           "id": 45,
           "options": {
@@ -3362,7 +3455,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 88
+            "y": 90
           },
           "id": 61,
           "options": {
@@ -3532,7 +3625,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 96
+            "y": 98
           },
           "id": 57,
           "options": {
@@ -3652,7 +3745,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 104
+            "y": 106
           },
           "id": 55,
           "options": {
@@ -3804,7 +3897,7 @@
             "h": 7,
             "w": 24,
             "x": 0,
-            "y": 112
+            "y": 114
           },
           "id": 47,
           "options": {
@@ -3936,7 +4029,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 119
+            "y": 121
           },
           "id": 46,
           "options": {
@@ -4205,7 +4298,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 127
+            "y": 129
           },
           "id": 38,
           "options": {
@@ -4314,7 +4407,7 @@
             "h": 4,
             "w": 24,
             "x": 0,
-            "y": 135
+            "y": 137
           },
           "id": 41,
           "options": {
@@ -4363,7 +4456,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 71
       },
       "id": 9,
       "panels": [
@@ -4640,7 +4733,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 70
+            "y": 72
           },
           "hideTimeOverride": false,
           "id": 59,
@@ -4735,7 +4828,7 @@
             "h": 9,
             "w": 8,
             "x": 0,
-            "y": 81
+            "y": 83
           },
           "id": 1,
           "options": {
@@ -4837,7 +4930,7 @@
             "h": 9,
             "w": 8,
             "x": 8,
-            "y": 81
+            "y": 83
           },
           "id": 3,
           "options": {
@@ -4970,7 +5063,7 @@
             "h": 9,
             "w": 8,
             "x": 16,
-            "y": 81
+            "y": 83
           },
           "id": 10,
           "options": {
@@ -5127,7 +5220,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 90
+            "y": 92
           },
           "id": 11,
           "options": {
@@ -5299,7 +5392,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 90
+            "y": 92
           },
           "id": 51,
           "options": {
@@ -5485,7 +5578,7 @@
             "h": 10,
             "w": 8,
             "x": 0,
-            "y": 99
+            "y": 101
           },
           "id": 63,
           "options": {
@@ -5627,7 +5720,7 @@
             "h": 10,
             "w": 8,
             "x": 8,
-            "y": 99
+            "y": 101
           },
           "id": 64,
           "options": {
@@ -5705,7 +5798,7 @@
             "h": 10,
             "w": 8,
             "x": 16,
-            "y": 99
+            "y": 101
           },
           "id": 69,
           "options": {
@@ -5951,7 +6044,7 @@
             "h": 11,
             "w": 9,
             "x": 0,
-            "y": 109
+            "y": 111
           },
           "id": 13,
           "options": {
@@ -6126,7 +6219,7 @@
             "h": 11,
             "w": 7,
             "x": 9,
-            "y": 109
+            "y": 111
           },
           "id": 23,
           "options": {
@@ -6227,7 +6320,7 @@
             "h": 11,
             "w": 8,
             "x": 16,
-            "y": 109
+            "y": 111
           },
           "id": 12,
           "options": {
@@ -6407,7 +6500,7 @@
             "h": 11,
             "w": 9,
             "x": 0,
-            "y": 120
+            "y": 122
           },
           "id": 17,
           "options": {
@@ -6572,7 +6665,7 @@
             "h": 11,
             "w": 8,
             "x": 9,
-            "y": 120
+            "y": 122
           },
           "id": 19,
           "options": {
@@ -6717,7 +6810,7 @@
             "h": 11,
             "w": 7,
             "x": 17,
-            "y": 120
+            "y": 122
           },
           "id": 4,
           "options": {
@@ -6907,7 +7000,7 @@
             "h": 14,
             "w": 10,
             "x": 0,
-            "y": 131
+            "y": 133
           },
           "id": 18,
           "options": {
@@ -7043,7 +7136,7 @@
             "h": 6,
             "w": 7,
             "x": 10,
-            "y": 131
+            "y": 133
           },
           "id": 22,
           "options": {
@@ -7171,7 +7264,7 @@
             "h": 7,
             "w": 7,
             "x": 17,
-            "y": 131
+            "y": 133
           },
           "id": 37,
           "options": {
@@ -7352,7 +7445,7 @@
             "h": 8,
             "w": 7,
             "x": 10,
-            "y": 137
+            "y": 139
           },
           "id": 34,
           "options": {
@@ -7473,7 +7566,7 @@
             "h": 7,
             "w": 7,
             "x": 17,
-            "y": 138
+            "y": 140
           },
           "id": 58,
           "options": {
@@ -7824,7 +7917,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 145
+            "y": 147
           },
           "id": 66,
           "options": {
@@ -8035,7 +8128,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 156
+            "y": 158
           },
           "id": 67,
           "options": {
@@ -8145,7 +8238,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 164
+            "y": 166
           },
           "id": 65,
           "options": {
@@ -8257,7 +8350,7 @@
             "h": 10,
             "w": 12,
             "x": 0,
-            "y": 172
+            "y": 174
           },
           "id": 20,
           "options": {
@@ -8353,7 +8446,7 @@
             "h": 10,
             "w": 12,
             "x": 12,
-            "y": 172
+            "y": 174
           },
           "id": 27,
           "options": {
@@ -8503,7 +8596,7 @@
             "h": 8,
             "w": 24,
             "x": 0,
-            "y": 182
+            "y": 184
           },
           "id": 60,
           "options": {

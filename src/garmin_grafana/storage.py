@@ -124,6 +124,12 @@ class PostgresStore:
                 SET start_day=LEAST(sync_ranges.start_day,excluded.start_day)''',
                 [(source, dataset, start) for dataset in datasets])
 
+    def latest_fetch_request(self):
+        """Id of the newest "Fetch now" request from Grafana, 0 before the first one."""
+        with self.connection.transaction(), self.connection.cursor() as cur:
+            cur.execute('SELECT COALESCE(max(id), 0) FROM fetch_requests')
+            return cur.fetchone()[0]
+
     # A completed day s is fetched again when the device uploaded after that fetch, unless the fetch already
     # followed an upload made after the day ended (with time for Garmin to process it): a watch that was not
     # synced for days uploads those days later. A watch keeps only a few weeks of data, so older days are

@@ -79,7 +79,8 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `PGSSLMODE` | libpq TLS mode; `prefer` locally, `disable` on Compose's private network; use `verify-full` across untrusted networks |
 | `PGCONNECT_TIMEOUT` | Connection timeout in seconds, 10 |
 | `PGREADER_USER`, `PGREADER_PASSWORD` | Optional migration bootstrap for a SELECT-only Grafana login; default name grafana_reader |
-| `GRAFANA_DB_PASSWORD` | Compose password for the grafana_reader role |
+| `PGFETCH_REQUEST_USER` | With `PGREADER_PASSWORD`: the "Fetch now" button's INSERT-only login, same password; grafana_fetch_request |
+| `GRAFANA_DB_PASSWORD` | Compose password for the grafana_reader and grafana_fetch_request roles |
 | `GRAFANA_PASSWORD`, `GRAFANA_USER`, `GRAFANA_PORT` | Compose Grafana administrator password, username (admin), local port (3000) |
 | `GRAFANA_HOME_DASHBOARD` | Compose: provisioned dashboard file opened after login; `Garmin-Health-Overview.json` (default), `Garmin-Grafana-Dashboard.json` (Garmin Stats), `Garmin-Strength-Training-Dashboard.json` or `Garmin-Ski-Season.json`. A home dashboard chosen in Grafana's user, team or organization preferences takes precedence |
 | `KIOSK_DASHBOARD` | Compose profile `kiosk`: the one dashboard file the touchscreen shows, `Garmin-Health-Overview.json`; any of the four files above |
@@ -91,6 +92,7 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `GARMINCONNECT_IS_CN` | Use Garmin China, False |
 | `GARMIN_DEVICENAME`, `GARMIN_DEVICEID` | Optional device configuration; otherwise detect from latest device |
 | `UPDATE_INTERVAL_SECONDS` | Poll interval, 300; checks dataset progress and refreshes recent days even without a new watch upload |
+| `FETCH_REQUEST_CHECK_SECONDS` | How often a waiting collector looks for Grafana's "Fetch now" button, 5 |
 | `MANUAL_START_DATE`, `MANUAL_END_DATE` | Inclusive YYYY-MM-DD historical range; setting start runs once, end defaults to today |
 | `FETCH_SELECTION` | Comma-separated enabled datasets; see below |
 | `ACTIVITY_TYPE_FILTER` | Comma-separated Garmin activity type keys; empty imports all |
@@ -116,6 +118,16 @@ SETTING=value ...` or add them to the service environment.
 Use the explicit manual date range and stable `ACCOUNT_ID`. Multiple accounts
 use separate ingestion processes and token volumes. Do not change an established
 ACCOUNT_ID casually: it creates a different provenance source, not a rename.
+
+**Fetch now.** The Garmin Stats dashboard has a "Fetch now" button under Last
+Sync. It adds a row to `fetch_requests` through its own Grafana data source,
+whose login may insert there and do nothing else. Every collector notices it
+within `FETCH_REQUEST_CHECK_SECONDS` and syncs straight away instead of waiting
+for the rest of `UPDATE_INTERVAL_SECONDS`. A click during a sync starts one more
+sync after it. Viewers can use the button; the kiosk does not get the data source
+and hides the button. It needs the Business Forms plugin, which Compose installs
+(`volkovlabs-form-panel`, community-signed, like the hourly heatmap). Garmin
+Connect only has what the watch has uploaded, so sync the watch first.
 
 ## Touchscreen kiosk
 
@@ -192,8 +204,10 @@ and `NO_TS_TUNE` settings as the example: with only the image tag changed, the n
 image initializes an empty database beside your data. After the upgrade, going
 back to the Alpine image is no longer a tag change; restore the backup instead. If you
 manage Grafana's reader role yourself rather than through `PGREADER_PASSWORD`, run
-`GRANT SELECT ON samples_hourly, gps_cells_daily, hourly_medians, wear_hourly TO
-grafana_reader` after `migrate`. PostgreSQL major upgrades need a supported
+`GRANT SELECT ON samples_hourly, gps_cells_daily, hourly_medians, wear_hourly,
+fetch_requests TO grafana_reader` after `migrate`; for the "Fetch now" button,
+create a login like grafana_fetch_request with only `GRANT INSERT ON fetch_requests`
+and `GRANT USAGE ON SEQUENCE fetch_requests_id_seq`. PostgreSQL major upgrades need a supported
 dump/restore or pg_upgrade procedure; changing the image tag alone is insufficient.
 No raw-data retention, compression, or automatic deletion policy is installed.
 

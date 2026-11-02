@@ -64,21 +64,26 @@ def record_version(connection):
 
 
 def configure_reader(connection):
-    """Optional explicit deployment bootstrap for Grafana's SELECT-only login."""
+    """Optional explicit deployment bootstrap for Grafana's SELECT-only login and its "Fetch now" button's
+    INSERT-only login (same password), which can add rows to fetch_requests and nothing else."""
     password = os.getenv('PGREADER_PASSWORD')
     if not password:
         return
     username = os.getenv('PGREADER_USER', 'grafana_reader')
+    requester = os.getenv('PGFETCH_REQUEST_USER', 'grafana_fetch_request')
     with connection.transaction(), connection.cursor() as cur:
         cur.execute('SELECT pg_advisory_xact_lock(782643901)')
-        cur.execute('SELECT 1 FROM pg_roles WHERE rolname=%s', (username,))
-        if not cur.fetchone():
-            cur.execute(sql.SQL('CREATE ROLE {} LOGIN').format(sql.Identifier(username)))
-        cur.execute(sql.SQL('ALTER ROLE {} PASSWORD {}').format(sql.Identifier(username), sql.Literal(password)))
-        cur.execute(sql.SQL('GRANT CONNECT ON DATABASE {} TO {}').format(sql.Identifier(connection.info.dbname), sql.Identifier(username)))
-        cur.execute(sql.SQL('GRANT USAGE ON SCHEMA public TO {}').format(sql.Identifier(username)))
+        for role in (username, requester):
+            cur.execute('SELECT 1 FROM pg_roles WHERE rolname=%s', (role,))
+            if not cur.fetchone():
+                cur.execute(sql.SQL('CREATE ROLE {} LOGIN').format(sql.Identifier(role)))
+            cur.execute(sql.SQL('ALTER ROLE {} PASSWORD {}').format(sql.Identifier(role), sql.Literal(password)))
+            cur.execute(sql.SQL('GRANT CONNECT ON DATABASE {} TO {}').format(sql.Identifier(connection.info.dbname), sql.Identifier(role)))
+            cur.execute(sql.SQL('GRANT USAGE ON SCHEMA public TO {}').format(sql.Identifier(role)))
         cur.execute(sql.SQL('GRANT SELECT ON ALL TABLES IN SCHEMA public TO {}').format(sql.Identifier(username)))
         cur.execute(sql.SQL('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {}').format(sql.Identifier(username)))
+        cur.execute(sql.SQL('GRANT INSERT ON fetch_requests TO {}').format(sql.Identifier(requester)))
+        cur.execute(sql.SQL('GRANT USAGE ON SEQUENCE fetch_requests_id_seq TO {}').format(sql.Identifier(requester)))
 
 
 def main():

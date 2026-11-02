@@ -332,19 +332,33 @@ def test_legacy_tag_type_identity_is_compatible():
 def test_grafana_reader_bootstrap_and_permissions(db, monkeypatch):
     import psycopg
     username='reader_'+uuid.uuid4().hex
+    requester='requester_'+uuid.uuid4().hex
     monkeypatch.setenv('PGREADER_USER',username)
+    monkeypatch.setenv('PGFETCH_REQUEST_USER',requester)
     monkeypatch.setenv('PGREADER_PASSWORD','test-reader-password')
     migrate.configure_reader(db.connection)
     migrate.configure_reader(db.connection)
+    before=db.latest_fetch_request()
     monkeypatch.setenv('PGUSER',username)
     monkeypatch.setenv('PGPASSWORD','test-reader-password')
     with storage.connect() as reader:
         with reader.cursor() as cur:
             cur.execute('SELECT count(*) FROM all_records')
             assert cur.fetchone()[0] >= 0
+            for statement in ("INSERT INTO persons VALUES ('should-not-be-allowed')", 'INSERT INTO fetch_requests DEFAULT VALUES'):
+                with pytest.raises(psycopg.errors.InsufficientPrivilege):
+                    cur.execute(statement)
+                reader.rollback()
+    # The "Fetch now" button's login may add a request and do nothing else, not even read.
+    monkeypatch.setenv('PGUSER',requester)
+    with storage.connect() as button:
+        button.autocommit=True
+        button.execute('INSERT INTO fetch_requests DEFAULT VALUES')
+        for statement in ('SELECT max(id) FROM fetch_requests','SELECT count(*) FROM samples',"INSERT INTO persons VALUES ('should-not-be-allowed')",
+                          'DELETE FROM fetch_requests','UPDATE fetch_requests SET requested_at=now()'):
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                cur.execute("INSERT INTO persons VALUES ('should-not-be-allowed')")
-        reader.rollback()
+                button.execute(statement)
+    assert db.latest_fetch_request()>before
     monkeypatch.delenv('PGREADER_PASSWORD')
     migrate.configure_reader(db.connection)
 
@@ -419,6 +433,26 @@ def test_database_failure_after_insert_rolls_back_entire_dataset(db):
         db.write(interrupted(),checkpoint=('heartrate','2026-01-01'))
     assert query(db,'SELECT count(*) FROM samples WHERE source_id=%s',(source(db),))==[(0,)]
     assert db.completed_datasets('2026-01-01')==set()
+
+
+def test_fetch_now_button_inserts_through_its_own_datasource_outside_the_kiosk():
+    root=Path(__file__).resolve().parents[1]
+    def panels(items):
+        for panel in items:
+            yield panel
+            yield from panels(panel.get('panels',[]))
+    owners={path.name for path in (root/'Grafana_Dashboard').glob('*.json') if any(p['id']==70 for p in panels(json.loads(path.read_text())['panels']))}
+    assert owners=={'Garmin-Grafana-Dashboard.json'}  # the kiosk page hides grid-item-70 on every dashboard
+    button=next(p for p in panels(json.loads((root/'Grafana_Dashboard/Garmin-Grafana-Dashboard.json').read_text())['panels']) if p['id']==70)
+    update=button['options']['update']
+    assert button['type']=='volkovlabs-form-panel' and update['method']=='datasource' and update['confirm']
+    assert (update['datasource'],update['payload']['rawSql'])==('Garmin fetch request','INSERT INTO fetch_requests DEFAULT VALUES')
+    request=(root/'Grafana_Datasource/fetch-request.yaml').read_text()
+    assert 'name: Garmin fetch request' in request and 'user: grafana_fetch_request' in request
+    compose=(root/'compose-example.yml').read_text()
+    kiosk=compose[compose.index('  grafana-kiosk:'):compose.index('  kiosk:')]
+    assert 'Grafana_Datasource:' not in kiosk and 'Grafana_Datasource/postgres.yaml:' in kiosk
+    assert 'grid-item-70' in (root/'Grafana_Kiosk/index.html').read_text()
 
 
 def test_dashboard_rows_nest_only_when_collapsed():

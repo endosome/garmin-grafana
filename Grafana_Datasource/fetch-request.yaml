@@ -1,0 +1,19 @@
+apiVersion: 1
+datasources:
+  # Used only by the "Fetch now" button: its login may add rows to fetch_requests and nothing else.
+  # Not mounted into the kiosk Grafana, so anonymous kiosk viewers cannot start fetches.
+  - name: Garmin fetch request
+    uid: garmin_fetch_request
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: ${PGHOST}:${PGPORT}
+    user: grafana_fetch_request
+    secureJsonData:
+      password: ${PGPASSWORD}
+    jsonData:
+      database: ${PGDATABASE}
+      sslmode: ${PGSSLMODE}
+      postgresVersion: 1700
+      maxOpenConns: 1
+    isDefault: false
+    editable: false

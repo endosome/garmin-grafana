@@ -72,7 +72,8 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD in .env}
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/${GRAFANA_HOME_DASHBOARD:-Garmin-Health-Overview.json}
-      GF_PLUGINS_PREINSTALL: marcusolsson-hourly-heatmap-panel@2.0.1
+      # Business Forms draws the "Fetch now" button on the Garmin Stats dashboard.
+      GF_PLUGINS_PREINSTALL: marcusolsson-hourly-heatmap-panel@2.0.1,volkovlabs-form-panel@6.3.5
     ports:
       - '127.0.0.1:${GRAFANA_PORT:-3000}:3000'
     volumes:
@@ -116,7 +117,8 @@ services:
     volumes:
       - grafana_kiosk_data:/var/lib/grafana
       - ./Grafana_Config/grafana.ini:/etc/grafana/grafana.ini:ro
-      - ./Grafana_Datasource:/etc/grafana/provisioning/datasources:ro
+      # Only the read-only datasource: the kiosk gets no "Fetch now" login.
+      - ./Grafana_Datasource/postgres.yaml:/etc/grafana/provisioning/datasources/postgres.yaml:ro
       - ./Grafana_Kiosk/dashboards.yaml:/etc/grafana/provisioning/dashboards/kiosk.yaml:ro
       # Under its own name: Grafana skips a changed file whose name it has already imported.
       - ./Grafana_Dashboard/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:/var/lib/grafana-kiosk/dashboards/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:ro
