@@ -55,7 +55,9 @@ locks concurrent migrators, and commits all pending changes atomically. Ingestio
 never creates or changes tables. There are no automatic downgrade migrations;
 restore a tested backup into a separate database to recover from a bad upgrade.
 `PGREADER_PASSWORD` optionally creates/updates Grafana's SELECT-only login during
-explicit migration bootstrap. The migration role needs extension/DDL/role-grant
+explicit migration bootstrap: the logins and default privileges first, so new tables are
+readable when created, then only the grants still missing, retried on a catalog collision
+with a refresh job. The migration role needs extension/DDL/role-grant
 permissions; it can be provisioned separately by the database administrator.
 
 The domain boundary is `Record` / `RecordBatch` and `RecordStore.write`. Existing

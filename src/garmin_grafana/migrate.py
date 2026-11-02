@@ -1,10 +1,15 @@
 """Apply ordered SQL migrations explicitly; safe for concurrent deployment startups."""
 import hashlib
+import logging
 import os
+import time
 from importlib import metadata
-from psycopg import sql
+import psycopg
+from psycopg import errors, sql
 from pathlib import Path
 from .storage import connect
+
+logger = logging.getLogger(__name__)
 
 
 def migrate(connection):
@@ -63,15 +68,45 @@ def record_version(connection):
         cur.execute("INSERT INTO app_info(key,value) VALUES ('version',%s) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()", (version,))
 
 
-def configure_reader(connection):
-    """Optional explicit deployment bootstrap for Grafana's SELECT-only login and its "Fetch now" button's
-    INSERT-only login (same password), which can add rows to fetch_requests and nothing else."""
+def _transient(error):
+    """A catalog update that collided with a TimescaleDB background job, or another lock conflict that succeeds on a retry."""
+    if isinstance(error, (errors.SerializationFailure, errors.DeadlockDetected, errors.LockNotAvailable)):
+        return True
+    return isinstance(error, errors.InternalError_) and error.sqlstate == 'XX000' and 'concurrently updated' in str(error)
+
+
+def _retrying(connection, action, attempts=6, delay=0.5):
+    """Run action(cursor) in a transaction of its own, again after a short backoff while it hits a transient conflict."""
+    attempt = 1
+    while True:
+        try:
+            with connection.transaction(), connection.cursor() as cur:
+                return action(cur)
+        except psycopg.Error as error:
+            if attempt == attempts or not _transient(error):
+                raise
+            logger.warning('Reader grants collided with a background job (%s); retrying (%d/%d)', str(error).strip(), attempt, attempts - 1)
+            time.sleep(delay * 2 ** (attempt - 1))
+            attempt += 1
+
+
+def _reader_settings():
     password = os.getenv('PGREADER_PASSWORD')
     if not password:
+        return None
+    return password, os.getenv('PGREADER_USER', 'grafana_reader'), os.getenv('PGFETCH_REQUEST_USER', 'grafana_fetch_request')
+
+
+def prepare_reader(connection):
+    """Create the SELECT-only and INSERT-only logins and make tables created from now on readable, so it can run before
+    the migrations: the rollups they create are then granted when they are created, not afterwards while the
+    refresh jobs that start with them are updating the catalog."""
+    settings = _reader_settings()
+    if not settings:
         return
-    username = os.getenv('PGREADER_USER', 'grafana_reader')
-    requester = os.getenv('PGFETCH_REQUEST_USER', 'grafana_fetch_request')
-    with connection.transaction(), connection.cursor() as cur:
+    password, username, requester = settings
+
+    def apply(cur):
         cur.execute('SELECT pg_advisory_xact_lock(782643901)')
         for role in (username, requester):
             cur.execute('SELECT 1 FROM pg_roles WHERE rolname=%s', (role,))
@@ -80,16 +115,44 @@ def configure_reader(connection):
             cur.execute(sql.SQL('ALTER ROLE {} PASSWORD {}').format(sql.Identifier(role), sql.Literal(password)))
             cur.execute(sql.SQL('GRANT CONNECT ON DATABASE {} TO {}').format(sql.Identifier(connection.info.dbname), sql.Identifier(role)))
             cur.execute(sql.SQL('GRANT USAGE ON SCHEMA public TO {}').format(sql.Identifier(role)))
-        cur.execute(sql.SQL('GRANT SELECT ON ALL TABLES IN SCHEMA public TO {}').format(sql.Identifier(username)))
         cur.execute(sql.SQL('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {}').format(sql.Identifier(username)))
-        cur.execute(sql.SQL('GRANT INSERT ON fetch_requests TO {}').format(sql.Identifier(requester)))
-        cur.execute(sql.SQL('GRANT USAGE ON SEQUENCE fetch_requests_id_seq TO {}').format(sql.Identifier(requester)))
+    _retrying(connection, apply)
+
+
+def configure_reader(connection):
+    """Optional explicit deployment bootstrap for Grafana's SELECT-only login and its "Fetch now" button's
+    INSERT-only login (same password), which can add rows to fetch_requests and nothing else.
+
+    Runs on every start, so it only grants what is missing: a blanket GRANT ... ON ALL TABLES rewrites every table's ACL
+    in pg_class and collided with the continuous-aggregate refresh jobs ("tuple concurrently updated")."""
+    settings = _reader_settings()
+    if not settings:
+        return
+    _, username, requester = settings
+    prepare_reader(connection)
+
+    def apply(cur):
+        cur.execute('SELECT pg_advisory_xact_lock(782643901)')
+        cur.execute("""SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p', 'v', 'm', 'f') AND NOT has_table_privilege(%s, c.oid, 'SELECT')
+            ORDER BY c.relname""", (username,))
+        missing = [row[0] for row in cur.fetchall()]
+        if missing:
+            cur.execute(sql.SQL('GRANT SELECT ON {} TO {}').format(sql.SQL(', ').join(sql.Identifier('public', name) for name in missing), sql.Identifier(username)))
+        cur.execute("SELECT has_table_privilege(%s, 'fetch_requests', 'INSERT'), has_sequence_privilege(%s, 'fetch_requests_id_seq', 'USAGE')", (requester, requester))
+        can_insert, can_use = cur.fetchone()
+        if not can_insert:
+            cur.execute(sql.SQL('GRANT INSERT ON fetch_requests TO {}').format(sql.Identifier(requester)))
+        if not can_use:
+            cur.execute(sql.SQL('GRANT USAGE ON SEQUENCE fetch_requests_id_seq TO {}').format(sql.Identifier(requester)))
+    _retrying(connection, apply)
 
 
 def main():
     update_extension()
     rebuild_indexes()
     with connect() as connection:
+        prepare_reader(connection)
         migrate(connection)
         record_version(connection)
         configure_reader(connection)

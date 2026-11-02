@@ -202,7 +202,11 @@ musl) sorts text differently. Allow a few minutes for a large database. A compos
 file of your own needs the same `user: root`, `PGDATA: /var/lib/postgresql/data`
 and `NO_TS_TUNE` settings as the example: with only the image tag changed, the new
 image initializes an empty database beside your data. After the upgrade, going
-back to the Alpine image is no longer a tag change; restore the backup instead. If you
+back to the Alpine image is no longer a tag change; restore the backup instead. With
+`PGREADER_PASSWORD`, `migrate` creates the reader logins and default privileges before it
+creates the rollups, grants only what the reader is still missing, and retries a few times
+if a TimescaleDB refresh job is updating the catalog at that moment; it no longer fails on
+the reader grants while the rollups refresh ("tuple concurrently updated"). If you
 manage Grafana's reader role yourself rather than through `PGREADER_PASSWORD`, run
 `GRANT SELECT ON samples_hourly, gps_cells_daily, hourly_medians, wear_hourly,
 fetch_requests TO grafana_reader` after `migrate`; for the "Fetch now" button,

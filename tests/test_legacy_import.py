@@ -114,12 +114,16 @@ def test_cli_measurement_and_failure_closes_connections(monkeypatch):
 
 def test_migrate_cli_and_checksum_match(db,monkeypatch):
     connection = db.connection
-    with mock.patch.object(migrate,'connect',return_value=connection),mock.patch.object(migrate,'configure_reader') as configure,\
+    calls=mock.Mock()
+    calls.migrate=mock.Mock(wraps=migrate.migrate)  # the real migration still runs: applied files must match their checksums
+    with mock.patch.object(migrate,'connect',return_value=connection),mock.patch.object(migrate,'configure_reader',calls.configure),\
+            mock.patch.object(migrate,'prepare_reader',calls.prepare),mock.patch.object(migrate,'migrate',calls.migrate),\
             mock.patch.object(migrate,'update_extension') as update,mock.patch.object(migrate,'rebuild_indexes') as rebuild:
         migrate.main()
         update.assert_called_once_with()
         rebuild.assert_called_once_with()
-        configure.assert_called_once_with(connection)
+        # The reader's logins and default privileges exist before the migrations create the rollups; its grants follow them.
+        assert calls.mock_calls==[mock.call.prepare(connection),mock.call.migrate(connection),mock.call.configure(connection)]
 
 
 

@@ -363,6 +363,113 @@ def test_grafana_reader_bootstrap_and_permissions(db, monkeypatch):
     migrate.configure_reader(db.connection)
 
 
+class GrantSpy:
+    """Stands in for a connection: records the SQL that configure_reader runs and can fail its GRANTs like a catalog collision."""
+    def __init__(self, connection, failures=()):
+        self.connection, self.failures, self.statements = connection, list(failures), []
+        self.info = connection.info
+
+    def transaction(self):
+        return self.connection.transaction()
+
+    def cursor(self):
+        spy, real = self, self.connection.cursor()
+        class Cursor:
+            def __enter__(self):
+                real.__enter__()
+                return self
+            def __exit__(self, *exc):
+                return real.__exit__(*exc)
+            def execute(self, query, params=None):
+                text = query if isinstance(query, str) else query.as_string(spy.connection)
+                spy.statements.append(text)
+                if text.startswith('GRANT SELECT ON') and spy.failures:
+                    raise spy.failures.pop(0)
+                return real.execute(query, params)
+            def fetchone(self):
+                return real.fetchone()
+            def fetchall(self):
+                return real.fetchall()
+        return Cursor()
+
+    def grants(self):
+        return [text for text in self.statements if text.startswith('GRANT')]
+
+
+def reader_env(monkeypatch):
+    username = 'reader_' + uuid.uuid4().hex
+    monkeypatch.setenv('PGREADER_USER', username)
+    monkeypatch.setenv('PGFETCH_REQUEST_USER', 'requester_' + uuid.uuid4().hex)
+    monkeypatch.setenv('PGREADER_PASSWORD', 'test-reader-password')
+    return username
+
+
+def can_select(db, username, relation):
+    return db.connection.execute("SELECT has_table_privilege(%s, %s, 'SELECT')", (username, relation)).fetchone()[0]
+
+
+def test_reader_grants_cover_the_rollups_and_a_second_run_changes_nothing(db, monkeypatch):
+    username = reader_env(monkeypatch)
+    migrate.configure_reader(db.connection)
+    for view in ('samples_hourly', 'gps_cells_daily', 'hourly_medians', 'wear_hourly', 'all_records', 'fetch_requests'):
+        assert can_select(db, username, view), view
+    # Already granted: no GRANT ... ON ALL TABLES rewriting every table's ACL while TimescaleDB's refresh jobs update the catalog.
+    again = GrantSpy(db.connection)
+    migrate.configure_reader(again)
+    assert [g for g in again.grants() if g.startswith(('GRANT SELECT ON', 'GRANT INSERT', 'GRANT USAGE ON SEQUENCE'))] == []
+    # A table dropped from the reader's access is granted again, and only that one.
+    db.connection.execute(f'REVOKE SELECT ON sync_days FROM "{username}"')
+    repair = GrantSpy(db.connection)
+    migrate.configure_reader(repair)
+    assert [g for g in repair.grants() if g.startswith('GRANT SELECT ON')] == [f'GRANT SELECT ON "public"."sync_days" TO "{username}"']
+    assert can_select(db, username, 'sync_days')
+
+
+def test_tables_created_after_prepare_reader_are_readable_without_a_grant(db, monkeypatch):
+    username = reader_env(monkeypatch)
+    migrate.prepare_reader(db.connection)
+    with db.connection.transaction(force_rollback=True):
+        db.connection.execute('CREATE TABLE created_by_a_migration (id int)')
+        assert can_select(db, username, 'created_by_a_migration')
+
+
+def test_reader_grants_retry_a_catalog_collision_with_a_background_job(db, monkeypatch, caplog):
+    import psycopg
+    username = reader_env(monkeypatch)
+    db.connection.execute('SELECT 1')
+    collision = psycopg.errors.InternalError_('tuple concurrently updated')
+    spy = GrantSpy(db.connection, failures=[collision, collision])
+    with mock.patch.object(migrate.time, 'sleep') as sleep, caplog.at_level('WARNING', logger='garmin_grafana.migrate'):
+        migrate.configure_reader(spy)
+    assert can_select(db, username, 'samples_hourly')
+    assert sleep.call_args_list == [mock.call(0.5), mock.call(1.0)]
+    assert [r.getMessage().count('retrying') for r in caplog.records] == [1, 1]
+    assert 'tuple concurrently updated' in caplog.records[0].getMessage()
+
+
+def test_reader_grants_retry_lock_conflicts_but_not_other_errors(db, monkeypatch):
+    import psycopg
+    username = reader_env(monkeypatch)
+    migrate.configure_reader(db.connection)
+
+    def spy(*failures):  # something is missing again, so there is a GRANT for the failure to hit
+        db.connection.execute(f'REVOKE SELECT ON sync_days FROM "{username}"')
+        return GrantSpy(db.connection, failures=failures)
+    for transient in (psycopg.errors.SerializationFailure('x'), psycopg.errors.DeadlockDetected('x'), psycopg.errors.LockNotAvailable('x')):
+        with mock.patch.object(migrate.time, 'sleep'):
+            migrate.configure_reader(spy(transient))
+        assert can_select(db, username, 'sync_days')
+    with mock.patch.object(migrate.time, 'sleep') as sleep:
+        with pytest.raises(psycopg.errors.InsufficientPrivilege):  # not a collision: fail at once
+            migrate.configure_reader(spy(psycopg.errors.InsufficientPrivilege('denied')))
+        with pytest.raises(psycopg.errors.InternalError_):  # an internal error that is not the collision
+            migrate.configure_reader(spy(psycopg.errors.InternalError_('something else')))
+        assert sleep.call_count == 0
+        with pytest.raises(psycopg.errors.InternalError_):  # gives up after a few attempts instead of looping
+            migrate.configure_reader(spy(*[psycopg.errors.InternalError_('tuple concurrently updated')] * 6))
+        assert sleep.call_count == 5
+
+
 def test_corrected_activity_boundary_updates_instead_of_duplicating(db):
     tags={'Device':'watch','ActivityID':'42','ActivitySelector':'old-type'}
     original=Record.from_mapping(point('ActivitySummary',tags=tags,activityName='END',activityType='No Activity'))
