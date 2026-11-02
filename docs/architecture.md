@@ -92,8 +92,9 @@ hour's start: exact for whole-hour offsets, approximate around local midnight in
 :30 / :45 zones. Hourly and GPS panels read whole hours or days inside the range from
 the rollup and the partial ones at either end from raw samples. Medians cannot
 be combined, so `hourly_medians` serves only panels with one-hour buckets and a
-single source; the Toolkit's mergeable percentile sketches were measured and not
-used, because they moved hourly stress medians by up to 7. Band Wearing merges
+single source. The Toolkit's `percentile_agg` and `uddsketch` were measured and
+not used, because they moved hourly stress medians by up to 7; `tdigest` matched
+only because an hour holds fewer samples than its size. Band Wearing merges
 the hourly heartbeat aggregates with `rollup()` and returns only the changes
 between worn and not worn from `live_ranges()`: a handful of rows instead of one
 per 2 minutes (263 k for a year). Compressing

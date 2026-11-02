@@ -186,7 +186,11 @@ migration 009. `docker compose -f compose-example.yml pull postgres` and `up -d`
 switch the same volume to `timescaledb-ha`: the container starts as root once to
 give the data directory to the image's postgres user (UID 1000), and `migrate`
 rebuilds every index once, because the new image's C library (glibc instead of
-musl) sorts text differently. Allow a few minutes for a large database. If you
+musl) sorts text differently. Allow a few minutes for a large database. A compose
+file of your own needs the same `user: root`, `PGDATA: /var/lib/postgresql/data`
+and `NO_TS_TUNE` settings as the example: with only the image tag changed, the new
+image initializes an empty database beside your data. After the upgrade, going
+back to the Alpine image is no longer a tag change; restore the backup instead. If you
 manage Grafana's reader role yourself rather than through `PGREADER_PASSWORD`, run
 `GRANT SELECT ON samples_hourly, gps_cells_daily, hourly_medians, wear_hourly TO
 grafana_reader` after `migrate`. PostgreSQL major upgrades need a supported
