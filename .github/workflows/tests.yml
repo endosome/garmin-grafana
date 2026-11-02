@@ -51,3 +51,8 @@ jobs:
           uv run --locked python scripts/smoke_grafana.py
           timeout 60 sh -c 'until curl -fsS http://localhost:3001/grafana/api/health >/dev/null; do sleep 2; done'
           uv run --locked python scripts/smoke_kiosk.py
+      - name: Rehearse the upgrade from the Alpine image
+        env:
+          GRAFANA_PASSWORD: test-admin-password
+          GRAFANA_DB_PASSWORD: test-reader-password
+        run: scripts/smoke_upgrade.sh

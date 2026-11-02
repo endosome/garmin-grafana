@@ -112,6 +112,13 @@ Use a protected environment or prompt rather than putting real passwords in
 shell history. This command makes read-only queries using the provisioned reader
 role; it does not authenticate to Garmin or alter health data.
 
+`scripts/smoke_upgrade.sh` rehearses the move from the Alpine
+`timescale/timescaledb` image to the Compose `timescaledb-ha` service on one
+volume, in its own throwaway Compose project: it checks the hand-off to UID 1000,
+that the switch leaves text indexes out of order, and that `migrate` rebuilds
+them. It needs PG* settings, `GRAFANA_PASSWORD`, `GRAFANA_DB_PASSWORD` and the
+built `garmin-grafana:timescale` image; CI runs it.
+
 ## Interactive Garmin acceptance login
 
 Run this in your own terminal on the workspace machine; passwords use a hidden

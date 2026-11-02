@@ -12,3 +12,7 @@ Changes: one participant (6962181067), 12 April to 12 May 2016; steps summed per
 runs of one level. `extract_fitbit_persona.py` rebuilds the excerpt from the
 original download. `tests/personas.py` moves the dates forward 545 weeks and
 writes the data in the shapes the Garmin collectors use.
+
+`raw_panel_queries.json` holds the SQL that the panels now served by continuous
+aggregates ran before, straight on raw samples. `tests/test_personas.py` checks
+that the shipped panels still return the same rows.

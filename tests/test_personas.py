@@ -2,6 +2,7 @@
 from datetime import date, datetime, timedelta, timezone
 import importlib.util
 import json
+import math
 from pathlib import Path
 import uuid
 from zoneinfo import ZoneInfo
@@ -267,3 +268,39 @@ def test_dashboards_show_a_real_fitbit_month(load):
     assert weight == pytest.approx(want['weight'])
     for tile in ('Resting HR', 'HRV', 'Battery at wake'):  # Fitbit never sends these: empty, not zero
         assert all(list(r.values())[-1] is None for r in run('Garmin-Health-Overview.json', tile, end - timedelta(days=14), end)), tile
+
+
+RAW_PANEL_QUERIES = json.loads((ROOT / 'tests/data/raw_panel_queries.json').read_text())['queries']
+
+
+def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, db):  # noqa: F811
+    """Panels served by continuous aggregates must keep the rows the raw-sample SQL gave, at any range edge."""
+    assert set(RAW_PANEL_QUERIES) <= set(STATEMENTS)
+    def same(a, b):
+        return a == b or isinstance(a, float) and isinstance(b, float) and math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-9)
+    def worn_slots(changes, slots):  # Band Wearing now sends only changes; the state holds until the next row
+        times = [t for t, _ in changes]
+        return [next((state for t, state in reversed(changes) if t <= slot), None) == 1 for slot in slots] if times else []
+    mismatches, compared, with_data = [], 0, set()
+    for persona in (healthy_lifestyle(), public_fitbit_user()):
+        sid = load(persona).sid
+        last = max(r.time for r in persona.records if r.dataset == 'HeartRateIntraday')
+        for end in (last, last - timedelta(minutes=17), last - timedelta(days=3, minutes=1)):
+            for days in (0.02, 1, 7, 30):
+                for zone in (persona.timezone, 'Asia/Kolkata'):  # Kolkata: local midnight falls mid UTC hour
+                    for label, raw in RAW_PANEL_QUERIES.items():
+                        for interval in ('30 minutes', '1 hour', '12 hours', '1 day') if '__interval' in raw else ('1 hour',):
+                            args = dict(start=iso(end - timedelta(days=days)), end=iso(end), timezone=zone, interval=interval)
+                            with db.connection.transaction(), db.connection.cursor() as cur:
+                                old = cur.execute(queries.expand_query(raw, sid, **args)).fetchall()
+                                new = cur.execute(queries.expand_query(STATEMENTS[label], sid, **args)).fetchall()
+                            if label.endswith(':67:D'):
+                                old, new = [n > 0 for _, n in old], worn_slots(new, [t for t, _ in old])
+                            ok = len(old) == len(new) and all(all(same(a, b) for a, b in zip(x, y)) if isinstance(x, tuple) else x == y
+                                                                  for x, y in zip(old, new))
+                            compared += 1
+                            if any(x is True or isinstance(x, tuple) and any(v is not None for v in x[1:]) for x in old):
+                                with_data.add(label)
+                            if not ok:
+                                mismatches.append((persona.account, label, args))
+    assert compared > 500 and with_data == set(RAW_PANEL_QUERIES) and mismatches == []
