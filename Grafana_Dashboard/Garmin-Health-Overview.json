@@ -208,15 +208,15 @@
               },
               {
                 "color": "orange",
-                "value": 6
+                "value": 21600
               },
               {
                 "color": "green",
-                "value": 7
+                "value": 25200
               }
             ]
           },
-          "unit": "suffix: h",
+          "unit": "clocks",
           "noValue": "\u2013"
         },
         "overrides": []
@@ -255,7 +255,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepTimeSeconds')) / 3600 AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
+          "rawSql": "WITH daily AS (SELECT COALESCE(local_date, (time AT TIME ZONE ${TimeZone:sqlstring})::date) AS day, avg(health_number(fields, 'sleepTimeSeconds')) AS value FROM all_records WHERE dataset = 'SleepSummary' AND source_id IN (${Source:csv}) AND time >= $__timeFrom()::timestamptz - interval '2 days' AND time <= $__timeTo()::timestamptz + interval '2 days' GROUP BY 1) SELECT day::timestamp AT TIME ZONE ${TimeZone:sqlstring} AS time, value AS \"Sleep\" FROM daily FULL JOIN (SELECT ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AS day, true AS is_today) today USING (day) WHERE day BETWEEN ($__timeFrom()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND ($__timeTo()::timestamptz AT TIME ZONE ${TimeZone:sqlstring})::date AND (value IS NOT NULL OR is_today) ORDER BY 1",
           "refId": "A"
         }
       ],

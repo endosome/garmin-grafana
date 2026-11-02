@@ -4,6 +4,16 @@ As of 2026-10-26, updated 2026-10-27 and 2026-11-02. At the default 30-day range
 probably not where the seconds go, so the next round of work targets Grafana and
 the browser, after measuring them first.
 
+## Status (2026-11-02, evening): phases 3 and 4
+
+The main dashboard went from 128 to 87 queries and from 40 to 25 browser
+transformations (see the worklist). Old and new SQL were compared with Grafana's
+joins, value filters and moving averages emulated in Python, on four personas,
+ranges of 1 to 120 days and two time zones: no differences in about 190 k rows.
+Screenshots of the changed panels from Grafana 13.0.2 before and after are pixel
+identical except Breathing Rates (97 pixels of float rounding) and Recent
+Activity, whose Max Speed column now stays visible when the week has no value.
+
 ## Status (2026-11-02, later): timescaledb-ha and the Toolkit
 
 The image moved to `timescale/timescaledb-ha:pg17.11-ts2.31.0`, which adds the
@@ -158,16 +168,16 @@ change their meaning.
 | Panel (id) | Queries now | Browser transformations | Proposed change | Meaning changes |
 | --- | --- | --- | --- | --- |
 | Month at a Glance (Daily Average) (66) | ~~9~~ 1 | – | Done: one scan, `avg(...) FILTER (WHERE dataset=...)` per metric | No |
-| Week at a Glance (59, table, pinned 1w) | 8 | join | One table query | No |
-| Recent Activity (38, table, pinned 1w) | 6 | join | One table query; keep `AS "Time"` column | No |
-| Month at a Glance (Intraday) (67) | 5 | – | One query with hourly CTE; `Band Wearing` stays 2m or moves to 1h with new mappings | Only if D moves to 1h |
-| Stress overview, Activity HR Zones (mean) | 5 each | – | One row / one query each | No |
-| Heart Rate Distribution (21) | 4 identical scans | – | One scan, four `CASE` columns | No |
+| Week at a Glance (59, table, pinned 1w) | ~~8~~ 1 | ~~join~~ | Done: one scan, one column per metric | No |
+| Recent Activity (38, table, pinned 1w) | ~~6~~ 1 | ~~join~~ | Done: one row per activity, `AS "Time"` kept | A column with no value in the whole week now shows empty instead of disappearing |
+| Month at a Glance (Intraday) (67) | 5 | – | Superseded: A, B, E read `hourly_medians`, C `samples_hourly`, D sends only wear changes, so they cannot share one query | No |
+| Stress overview (18), Activity HR Zones (mean) (43) | ~~5~~ 1 each | – | Done: one scan, series in the old order | No |
+| Heart Rate Distribution (21) | ~~4~~ 1 | – | Done: one scan, four `CASE` columns | No |
 | GPS Track by Velocity / by Heart Rate (50, 49) | ~~4~~ 1 each | – | Done: one `table` query; marker layers' `filterData` now `byRefId: I` | No |
-| Distance vs HR (57), Heart Rate vs Pace (55), GPS Track pace (47) | 4 / 2 / 2 | join | One query each | No |
-| Piecharts (Today Activity, Last Sleep, Average Sleep trends, Avg Activity) | 4 each | – | One row with one column per slice | No |
-| Heart Rate (15), Breathing Rates (62) | 1 | calculateField, filterByValue | Drop moving average; filter in SQL | Slightly smoother line removed |
-| Stress (29) | 2 | calculateField, filterByValue | Filter in SQL; keep raw | No |
+| Distance vs HR (57), Heart Rate vs Pace (55), GPS Track pace (47) | ~~4 / 2 / 2~~ 1 each | ~~join, field filter, moving average~~ | Done: one row per GPS sample; 47's 20-point moving average and pace in SQL, its unused Duration query dropped | No |
+| Piecharts (Today Activity 35, Last Sleep 36, Average Sleep trends 22, Avg Activity 23), Activity Calories (44) | ~~4 / 2~~ 1 each | – | Done: one scan, one column per slice | No |
+| Heart Rate (15), Breathing Rates (62) | 1 | ~~calculateField, filterByValue~~ | Done: Grafana's centered moving average ported to SQL exactly (window `ceil(share × rows)`, empty buckets dropped as its value filters did) | No |
+| Stress (29) | 2 | ~~filterFieldsByName~~ | Done: the no-op field filter removed; smoothing was already in SQL | No |
 
 ## Measurement and acceptance
 
@@ -210,8 +220,9 @@ has not been measured yet.
 
 1. Measure (section above) at 30 days and 1 year.
 2. Refresh interval and collapsed rows; fix the top-level-only test.
-3. Consolidate the 9-, 8- and 6-query panels, then the rest of the worklist.
-4. Move transformations into SQL; drop redundant moving averages.
+3. *(done 2026-11-02)* Consolidate the 9-, 8- and 6-query panels, then the rest of the worklist.
+4. *(done 2026-11-02)* Move transformations into SQL. The moving averages were ported, not dropped:
+   Breathing's covers about 40 minutes, so removing it would have changed the chart.
 5. Re-measure against the acceptance targets.
 6. *(done 2026-11-02)* Precomputation for 6–12 month views: continuous
    aggregates on the Community image, see the status above.

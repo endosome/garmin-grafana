@@ -105,10 +105,9 @@ def test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person(load):
     persona = healthy_lifestyle()
     run, want = load(persona), persona.expected
     dash = 'Garmin-Grafana-Dashboard.json'
-    week = run(dash, 'Week at a Glance', NOW - timedelta(days=7), ref='C')  # starts mid-day: the first day still counts
+    week = run(dash, 'Week at a Glance', NOW - timedelta(days=7), ref='B')  # starts mid-day: the first day still counts
     assert {local_day(r['time']): r['Steps'] for r in week} == {d: want['steps'][d] for d in want['steps'] if d >= TODAY - timedelta(days=7)}
-    rhr = run(dash, 'Week at a Glance', NOW - timedelta(days=7), ref='A')
-    assert {local_day(r['time']): r['Resting Heart Rate'] for r in rhr} == {d: want['rhr'][d] for d in want['rhr'] if d >= TODAY - timedelta(days=7)}
+    assert {local_day(r['time']): r['Resting Heart Rate'] for r in week} == {d: want['rhr'][d] for d in want['rhr'] if d >= TODAY - timedelta(days=7)}
     month = {local_day(r['time']): r for r in run(dash, 'Daily Steps', NOW - timedelta(days=30))}
     for day in want['gap']:
         assert not month[day].get('Steps'), day  # the sync gap stays empty, never a copy of a neighbour
@@ -257,7 +256,11 @@ def test_dashboards_show_a_real_fitbit_month(load):
     day = want['last_day'] - timedelta(days=3)
     start = datetime.combine(day, datetime.min.time(), TZ)
     heart = run('Garmin-Grafana-Dashboard.json', 'Heart Rate', start, start + timedelta(days=1, minutes=-1), interval='2 minutes')
-    assert {r['time']: r['Heart Rate'] for r in heart if r['Heart Rate'] is not None} == pytest.approx(want['heart'][day])
+    # Smoothed in SQL as Grafana's centered moving average did: 0.4 % of the 2-minute buckets (3), only averages above 0.
+    raw = [want['heart'][day].get(start + timedelta(minutes=2 * n)) for n in range(720)]
+    size = math.ceil(0.004 * len(raw))
+    smooth = {start + timedelta(minutes=2 * n): [v for v in raw[max(0, n - size // 2):n + math.ceil(size / 2)] if v is not None] for n in range(len(raw))}
+    assert {r['time']: r['Heart Rate'] for r in heart} == pytest.approx({t: sum(v) / len(v) for t, v in smooth.items() if v and sum(v) > 0})
     changes = run('Garmin-Grafana-Dashboard.json', 'Month at a Glance (Intraday)', start, start + timedelta(days=1, minutes=-1), ref='D')
     worn = {r['time'] + timedelta(minutes=2 * n) for r, after in zip(changes, changes[1:]) if r['Band Wearing']
             for n in range((after['time'] - r['time']) // timedelta(minutes=2))}

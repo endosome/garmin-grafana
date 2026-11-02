@@ -533,8 +533,11 @@ def test_dashboard_missing_buckets_preserve_null_and_zero_semantics(db):
     statements={label:sql for label,sql,fmt in module.dashboard_queries()}
     sid=source(db)
     heart_rate=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:15:A'],sid))
+    breathing=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:62:B'],sid))
+    hrv=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:11:A'],sid))
     steps=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:68:A'],sid))
-    assert len(heart_rate)>1 and all(row[1] is None for row in heart_rate)
+    # The smoothed lines leave out empty buckets, as Grafana's value filters did; averages never turn them into 0.
+    assert heart_rate==[] and breathing==[] and len(hrv)>1 and all(row[1] is None for row in hrv)
     assert len(steps)>1 and all(row[1]==0 for row in steps)
 
 
@@ -579,6 +582,10 @@ def test_health_today_tiles_stay_empty_until_today_is_synced(db):
         Record.from_mapping(point('SleepSummary','2026-01-10T06:00:00Z',sleepScore=74))])
     assert [value for _,value in tile('Steps today')]==[9000,4000,1200]
     assert [value for _,value in tile('Sleep score')]==[81,74]
+    # Sleep comes in seconds and shows as hours and minutes (11h:12m), not decimal hours (11.2 h).
+    db.write([Record.from_mapping(point('SleepSummary','2026-01-09T06:00:00Z',sleepScore=81,sleepTimeSeconds=40320))])
+    assert [value for _,value in tile('Sleep')]==[40320,None]
+    assert (tiles['Sleep']['fieldConfig']['defaults']['unit'],tiles['Sleep']['fieldConfig']['defaults']['decimals'])==('clocks',1)
     # VO2 max is the latest estimate, not a today value: running is preferred over cycling.
     assert tiles['VO2 max']['options']['reduceOptions']['calcs']==['lastNotNull']
     # Whether a VO2 max is good depends on age and sex, so the tile carries no rating colour.
