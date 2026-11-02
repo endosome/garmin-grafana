@@ -297,6 +297,8 @@ def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, db): 
                             with db.connection.transaction(), db.connection.cursor() as cur:
                                 old = cur.execute(queries.expand_query(raw, sid, **args)).fetchall()
                                 new = cur.execute(queries.expand_query(STATEMENTS[label], sid, **args)).fetchall()
+                            if 'ORDER BY' not in raw.upper():  # a set of cells: the plan decides its row order, so compare it sorted
+                                old, new = sorted(old, key=repr), sorted(new, key=repr)
                             if label.endswith(':67:D'):
                                 old, new = [n > 0 for _, n in old], worn_slots(new, [t for t, _ in old])
                             ok = len(old) == len(new) and all(all(same(a, b) for a, b in zip(x, y)) if isinstance(x, tuple) else x == y
