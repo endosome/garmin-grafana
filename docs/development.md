@@ -21,8 +21,9 @@ To run the full coverage gate
 
 ```bash
 docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
-  -e POSTGRES_DB=garmin -p 127.0.0.1:55439:5432 timescale/timescaledb:2.31.0-pg17
-# Wait for pg_isready.
+  -e POSTGRES_DB=garmin -e NO_TS_TUNE=true -p 127.0.0.1:55439:5432 \
+  timescale/timescaledb-ha:pg17.11-ts2.31.0
+# Wait for: docker exec garmin-test-db pg_isready -h 127.0.0.1 (TCP: first-time setup runs a socket-only server)
 export PGHOST=localhost PGPORT=55439 PGUSER=postgres PGDATABASE=garmin
 export PGPASSWORD=test-only-password TEST_DATABASE=1
 uv run --locked pytest --cov --cov-report=term-missing
@@ -36,8 +37,8 @@ existing integration tests. Only databases created by those tests are dropped. T
 real hypertables, idempotent migrations, upserts, chunked import, archive
 validation, snapshot rollback, source isolation, progress holes, and all
 provisioned SQL queries with empty and representative data. The test database's
-rollup refresh policies are paused: tests that read `samples_hourly` or
-`gps_cells_daily` call `helpers.refresh_rollups()` after writing, because samples
+rollup refresh policies are paused: tests that read a continuous aggregate
+call `helpers.refresh_rollups()` after writing, because samples
 written into hours an earlier refresh covered appear only after the next one. CI starts PostgreSQL. Unit-only coverage is lower because it omits real persistence tests;
 the coverage gate applies to the complete suite.
 

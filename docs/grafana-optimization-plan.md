@@ -4,6 +4,35 @@ As of 2026-10-26, updated 2026-10-27 and 2026-11-02. At the default 30-day range
 probably not where the seconds go, so the next round of work targets Grafana and
 the browser, after measuring them first.
 
+## Status (2026-11-02, later): timescaledb-ha and the Toolkit
+
+The image moved to `timescale/timescaledb-ha:pg17.11-ts2.31.0`, which adds the
+TimescaleDB Toolkit. Compose runs it as root with `PGDATA` on the old volume
+path, so its entrypoint hands the files to UID 1000; `migrate` rebuilds the
+indexes once after the move from musl to glibc (amcheck found 2 of 51 indexes
+out of order on a persona database before the rebuild, none after). Tested from
+an Alpine compose volume with the personas and from an empty volume, each with
+Grafana's smoke test through the reader role.
+
+Migration `009` adds `hourly_medians` (exact hourly medians) for Month at a
+Glance (Intraday) Body Battery / Stress / HR Zones (67 A, B, E) and Sleep
+Regularity (27), and `wear_hourly` (Toolkit `heartbeat_agg`) for Band Wearing
+(67 D), which now returns only the changes between worn and not worn. Old and
+new SQL agree for 30 minutes to 1 year, ranges ending on and off the hour:
+identical medians, and the same worn state at every old 2-minute row. Toolkit
+percentile sketches (`percentile_agg`, `uddsketch`) moved stress medians by up to
+7 and were not used; `lttb` had no panel to serve, since the remaining raw panels
+already bucket by `$__interval`.
+
+| Range | Before (ha image) | After |
+| --- | --- | --- |
+| 30 days | 1.19 s | 0.59 s |
+| 1 year | 6.17 s | 2.16 s |
+
+At 1 year Band Wearing went from 1,609 ms and 262,801 rows to 19 ms and 4 rows,
+each median panel from about 0.5 s to 35 ms. The four new and old rollups take
+24 MB next to 797 MB of samples.
+
 ## Status (2026-11-02): Community TimescaleDB and rollups
 
 Phase 6 is done with continuous aggregates. The image moved from
@@ -36,9 +65,7 @@ Per panel at 1 year: Average stress 873 → 21 ms, Daily avg Stress / Breathing
 500 / 551 → 25 / 23 ms, GPS heatmap 305 → 63 ms, Hourly walk heatmap 143 → 25 ms,
 HRV 120 → 12 ms. What remains is Month at a Glance (Intraday) (67): hourly
 medians (A, B, E) and the 2-minute Band Wearing count (D, 1.2 s and 263 k rows at
-1 year), plus Sleep Regularity (27). Medians cannot be rolled up without the
-Toolkit extension, which ships only in the much larger `timescaledb-ha` image
-with a different data directory.
+1 year), plus Sleep Regularity (27); done later the same day, see above.
 
 Compression was measured and left off: converting chunks older than 90 days
 cut the table from 803 to 277 MB but raised the 1-year total from 5.4 to 7.9 s.

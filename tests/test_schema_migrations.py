@@ -111,18 +111,48 @@ def test_command_updates_timescaledb_from_an_older_image(fresh_database, monkeyp
     connection = fresh_database
     settings = conninfo_to_dict(connection.info.dsn)
     with connection.transaction(), connection.cursor() as cur:
-        cur.execute("SELECT default_version FROM pg_available_extensions WHERE name = 'timescaledb'")
-        latest = cur.fetchone()[0]
-        cur.execute(r"""SELECT version FROM pg_available_extension_versions WHERE name = 'timescaledb' AND version ~ '^[0-9.]+$'
-            AND version <> %s ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1""", (latest,))
-        previous = cur.fetchone()[0]
-        cur.execute('DROP EXTENSION IF EXISTS timescaledb')
+        latest, previous = {}, {}
+        for name in ('timescaledb', 'timescaledb_toolkit'):
+            cur.execute('SELECT default_version FROM pg_available_extensions WHERE name = %s', (name,))
+            latest[name] = cur.fetchone()[0]
+            cur.execute(r"""SELECT version FROM pg_available_extension_versions WHERE name = %s AND version ~ '^[0-9.]+$'
+                AND version <> %s ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1""", (name, latest[name]))
+            previous[name] = cur.fetchone()[0]
+            cur.execute(sql.SQL('DROP EXTENSION IF EXISTS {}').format(sql.Identifier(name)))
     connection.close()
     with psycopg.connect(**settings, autocommit=True) as older:  # a new session, before any version is loaded
-        older.execute(sql.SQL('CREATE EXTENSION timescaledb VERSION {}').format(sql.Literal(previous)))
+        for name, version in previous.items():
+            older.execute(sql.SQL('CREATE EXTENSION {} VERSION {}').format(sql.Identifier(name), sql.Literal(version)))
     monkeypatch.setattr(migrate, 'connect', lambda: psycopg.connect(**settings))
     migrate.update_extension()
     migrate.update_extension()  # already current: nothing to do
     with psycopg.connect(**settings) as upgraded:
-        assert upgraded.execute("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'").fetchone() == (latest,)
+        assert dict(upgraded.execute("SELECT extname, extversion FROM pg_extension WHERE extname LIKE 'timescaledb%'").fetchall()) == latest
         migrate.migrate(upgraded)
+
+
+@pytest.mark.parametrize('recorded', [None, 'stale'], ids=['alpine-musl', 'older-glibc'])
+def test_command_rebuilds_indexes_when_the_c_library_sorts_differently(recorded, monkeypatch):
+    if os.getenv('TEST_DATABASE') != '1':
+        pytest.skip('Set TEST_DATABASE=1 with PG* for a disposable database administrator')
+    name = 'garmin_test_collation_' + uuid.uuid4().hex
+    with storage.connect() as administrator:
+        administrator.autocommit = True
+        # A linguistic locale, unlike the image's C.UTF-8 default, has a version that changes with the C library.
+        administrator.execute(sql.SQL("CREATE DATABASE {} TEMPLATE template0 LOCALE 'en_US.utf8'").format(sql.Identifier(name)))
+        try:
+            settings = conninfo_to_dict(administrator.info.dsn)
+            settings['dbname'] = name
+            with psycopg.connect(**settings, autocommit=True) as connection:
+                connection.execute('CREATE TABLE words (word text PRIMARY KEY)')
+                index = connection.execute("SELECT pg_relation_filenode('words_pkey')").fetchone()
+                actual = connection.execute('SELECT datcollversion FROM pg_database WHERE datname = %s', (name,)).fetchone()[0]
+                connection.execute('UPDATE pg_database SET datcollversion = %s WHERE datname = %s', (recorded, name))
+                monkeypatch.setattr(migrate, 'connect', lambda: psycopg.connect(**settings))
+                migrate.rebuild_indexes()
+                rebuilt = connection.execute("SELECT pg_relation_filenode('words_pkey')").fetchone()
+                assert rebuilt != index and connection.execute('SELECT datcollversion FROM pg_database WHERE datname = %s', (name,)).fetchone() == (actual,)
+                migrate.rebuild_indexes()  # recorded now: nothing to do
+                assert connection.execute("SELECT pg_relation_filenode('words_pkey')").fetchone() == rebuilt
+        finally:
+            administrator.execute(sql.SQL('DROP DATABASE {}').format(sql.Identifier(name)))

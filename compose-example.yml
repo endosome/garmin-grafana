@@ -9,17 +9,24 @@ x-database-env: &database-env
 
 services:
   postgres:
-    image: timescale/timescaledb:2.31.0-pg17
+    image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+    # The entrypoint starts as root only to hand the data directory to the image's postgres user (UID 1000), then
+    # runs PostgreSQL as that user. Volumes from the earlier timescale/timescaledb image belong to UID 70.
+    user: root
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${PGDATABASE:-garmin}
       POSTGRES_USER: ${PGUSER:-garmin}
       POSTGRES_PASSWORD: ${PGPASSWORD:?Set PGPASSWORD in .env}
+      PGDATA: /var/lib/postgresql/data
       TIMESCALEDB_TELEMETRY: "off"
+      # timescaledb-tune would size memory for the whole host on first start; keep PostgreSQL's defaults.
+      NO_TS_TUNE: "true"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      # TCP, so the server the entrypoint runs during first-time setup does not count as ready.
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 5s
       retries: 20

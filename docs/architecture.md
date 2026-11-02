@@ -73,20 +73,30 @@ interpreted as deletion. Deleted/corrected GPS samples need explicit reconciliat
 
 SQL migrations are ordered, checksummed, advisory-locked, transactional, and run
 by `python -m garmin_grafana.migrate`, separately from normal ingestion. Before
-them it updates the TimescaleDB extension to the image's version in a fresh
-session, which existing databases otherwise keep. No retention or compression
-is enabled. The pinned Community image (Timescale License; this project stays
-BSD-3-Clause) provides continuous aggregates: `samples_hourly` (count, sum, min
-and max per source, dataset, local date and UTC hour of the intraday series) and
-`gps_cells_daily` (the GPS heatmap's grid cells per UTC day). They are real-time,
+them it updates the TimescaleDB and Toolkit extensions to the image's versions in
+a fresh session, which existing databases otherwise keep, and rebuilds every
+index once if the C library's collation version changed (moving from the Alpine
+image's musl to glibc reorders text). No retention or compression is enabled.
+The pinned `timescale/timescaledb-ha` image (Timescale License; this project stays
+BSD-3-Clause) provides continuous aggregates and the Toolkit: `samples_hourly`
+(count, sum, min and max per source, dataset, local date and UTC hour of the
+intraday series), `gps_cells_daily` (the GPS heatmap's grid cells per UTC day),
+`hourly_medians` (exact `percentile_cont` per source, dataset and UTC hour) and
+`wear_hourly` (a Toolkit `heartbeat_agg` per source and hour of the 2-minute
+slots with a heart rate). They are real-time,
 and a policy refreshes changed buckets of the whole history every five minutes,
 so a backfill below the last refresh shows up within five minutes. Daily panels
 divide sums by counts per local date, which matches the raw averages in every
 time zone. Rows without a local date (InfluxDB imports) fall back to the UTC
 hour's start: exact for whole-hour offsets, approximate around local midnight in
 :30 / :45 zones. Hourly and GPS panels read whole hours or days inside the range from
-the rollup and the partial ones at either end from raw samples. Medians
-(`percentile_cont`) cannot be rolled up, so those panels stay raw. Compressing
+the rollup and the partial ones at either end from raw samples. Medians cannot
+be combined, so `hourly_medians` serves only panels with one-hour buckets and a
+single source; the Toolkit's mergeable percentile sketches were measured and not
+used, because they moved hourly stress medians by up to 7. Band Wearing merges
+the hourly heartbeat aggregates with `rollup()` and returns only the changes
+between worn and not worn from `live_ranges()`: a handful of rows instead of one
+per 2 minutes (263 k for a year). Compressing
 chunks older than 90 days cut the table to a third but made the dashboards
 slower at 1 year (5.4 s to 7.9 s of database time): every `all_records` query
 paid about 50 ms for the compressed chunks, and the partial ActivitySelector

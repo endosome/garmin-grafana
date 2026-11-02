@@ -11,13 +11,14 @@ jobs:
     runs-on: ubuntu-26.04
     services:
       postgres:
-        image: timescale/timescaledb:2.31.0-pg17
+        image: timescale/timescaledb-ha:pg17.11-ts2.31.0
         env:
           POSTGRES_DB: garmin
           POSTGRES_PASSWORD: test-only-password
+          NO_TS_TUNE: "true"
         ports: [5432:5432]
         options: >-
-          --health-cmd "pg_isready -U postgres -d garmin"
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d garmin"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       TEST_DATABASE: "1"

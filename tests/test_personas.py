@@ -254,6 +254,10 @@ def test_dashboards_show_a_real_fitbit_month(load):
     start = datetime.combine(day, datetime.min.time(), TZ)
     heart = run('Garmin-Grafana-Dashboard.json', 'Heart Rate', start, start + timedelta(days=1, minutes=-1), interval='2 minutes')
     assert {r['time']: r['Heart Rate'] for r in heart if r['Heart Rate'] is not None} == pytest.approx(want['heart'][day])
+    changes = run('Garmin-Grafana-Dashboard.json', 'Month at a Glance (Intraday)', start, start + timedelta(days=1, minutes=-1), ref='D')
+    worn = {r['time'] + timedelta(minutes=2 * n) for r, after in zip(changes, changes[1:]) if r['Band Wearing']
+            for n in range((after['time'] - r['time']) // timedelta(minutes=2))}
+    assert worn == set(want['heart'][day]) and len(changes) > 3  # on the wrist exactly when a heart rate was recorded
     intensity = run('Garmin-Health-Overview.json', 'Intensity, 7 days', end - timedelta(days=14), end)
     assert intensity[-1]['Intensity minutes (7 days)'] == sum(want['intensity'][want['last_day'] - timedelta(days=n)] for n in range(7))
     weight = {local_day(r['time']): r['Weight'] for r in run('Garmin-Health-Overview.json', 'Weight', month, end) if r['Weight'] is not None}

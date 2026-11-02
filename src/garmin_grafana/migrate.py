@@ -25,16 +25,32 @@ def migrate(connection):
 
 
 def update_extension():
-    """Move an existing database to the TimescaleDB version of a newer image, which does not do it itself."""
+    """Move an existing database to the TimescaleDB and Toolkit versions of a newer image, which does not do it itself."""
     with connect() as connection:
-        row = connection.execute("""SELECT e.extversion, a.default_version FROM pg_extension e
-            JOIN pg_available_extensions a ON a.name = e.extname WHERE e.extname = 'timescaledb'""").fetchone()
-    if row is None or row[0] == row[1]:
+        outdated = [row[0] for row in connection.execute("""SELECT e.extname FROM pg_extension e
+            JOIN pg_available_extensions a ON a.name = e.extname
+            WHERE e.extname IN ('timescaledb', 'timescaledb_toolkit') AND e.extversion <> a.default_version ORDER BY e.extname""")]
+    for name in outdated:
+        # TimescaleDB's must be the first statement of a new session, before the old version's library is loaded.
+        with connect() as connection:
+            connection.autocommit = True
+            connection.execute(sql.SQL('ALTER EXTENSION {} UPDATE').format(sql.Identifier(name)))
+
+
+def rebuild_indexes():
+    """Rebuild every index once the C library sorts text differently, as after moving from an Alpine (musl) image."""
+    with connect() as connection:
+        name, recorded, actual = connection.execute("""SELECT datname, datcollversion, pg_database_collation_actual_version(oid)
+            FROM pg_database WHERE datname = current_database()""").fetchone()
+    if recorded == actual:
         return
-    # It must be the first statement of a new session, before the old version's library is loaded.
     with connect() as connection:
         connection.autocommit = True
-        connection.execute('ALTER EXTENSION timescaledb UPDATE')
+        connection.execute(sql.SQL('REINDEX DATABASE {}').format(sql.Identifier(name)))
+        if recorded is None:  # musl reports no version and PostgreSQL refuses to refresh one it never recorded
+            connection.execute('UPDATE pg_database SET datcollversion = %s WHERE datname = %s', (actual, name))
+        else:
+            connection.execute(sql.SQL('ALTER DATABASE {} REFRESH COLLATION VERSION').format(sql.Identifier(name)))
 
 
 def record_version(connection):
@@ -67,6 +83,7 @@ def configure_reader(connection):
 
 def main():
     update_extension()
+    rebuild_indexes()
     with connect() as connection:
         migrate(connection)
         record_version(connection)

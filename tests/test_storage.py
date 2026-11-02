@@ -641,10 +641,10 @@ def test_gps_activity_dropdown_and_heatmap_queries(db):
 
 def test_rollups_are_real_time_and_pick_up_backfills_on_refresh(db):
     assert query(db, 'SELECT view_name, materialized_only FROM timescaledb_information.continuous_aggregates ORDER BY 1') == [
-        ('gps_cells_daily', False), ('samples_hourly', False)]
+        ('gps_cells_daily', False), ('hourly_medians', False), ('samples_hourly', False), ('wear_hourly', False)]
     # The whole history stays in the refresh window, so a backfill of any age is materialized on the next run.
     assert query(db, """SELECT config->'start_offset', schedule_interval FROM timescaledb_information.jobs
-        WHERE proc_name = 'policy_refresh_continuous_aggregate'""") == [(None, timedelta(minutes=5))] * 2
+        WHERE proc_name = 'policy_refresh_continuous_aggregate'""") == [(None, timedelta(minutes=5))] * 4
     watermark = query(db, """SELECT _timescaledb_functions.to_timestamp(_timescaledb_functions.cagg_watermark(mat_hypertable_id))
         FROM _timescaledb_catalog.continuous_agg WHERE user_view_name = 'samples_hourly'""")[0][0]
     hour = max(watermark, datetime.now(timezone.utc)).replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
@@ -659,3 +659,28 @@ def test_rollups_are_real_time_and_pick_up_backfills_on_refresh(db):
     assert rollup() == [(1, 20, 20, 20)]  # an hour that is already materialized waits for the next refresh
     refresh_rollups()
     assert rollup() == [(2, 60, 20, 40)]
+
+
+def test_hourly_medians_and_band_wearing_combine_rollups_with_raw_edge_hours(db):
+    spec = importlib.util.spec_from_file_location('queries', Path(__file__).resolve().parents[1] / 'scripts/validate_dashboard_queries.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    statements = {label: sql for label, sql, fmt in module.dashboard_queries()}
+    watermark = query(db, """SELECT max(_timescaledb_functions.to_timestamp(_timescaledb_functions.cagg_watermark(mat_hypertable_id)))
+        FROM _timescaledb_catalog.continuous_agg WHERE user_view_name IN ('hourly_medians', 'wear_hourly')""")[0][0]
+    day = max(watermark, datetime.now(timezone.utc)).replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=2)
+    def at(hour, minute):
+        return day + timedelta(hours=hour, minutes=minute)
+    def heart(hour, minute, **values):
+        return Record.from_mapping(point('HeartRateIntraday', at(hour, minute).isoformat(), **values))
+    db.write([heart(10, 0, HeartRate=60), heart(10, 2, HeartRate=70), heart(10, 4, HeartRate=90), heart(10, 40, Other=1),
+              heart(11, 0, HeartRate=80), heart(11, 2, HeartRate=100), heart(12, 10, HeartRate=50)])
+    def panel(ref):  # 10:01 to 12:11: hour 11 from the rollups, the partial hours 10 and 12 from raw samples
+        return query(db, module.expand_query(statements[f'Garmin-Grafana-Dashboard.json:67:{ref}'], source(db),
+                                             start=at(10, 1).isoformat(), end=at(12, 11).isoformat()))
+    medians = [(at(10, 0), 80), (at(11, 0), 90), (at(12, 0), 50)]  # 10:00 is before the range; 10:40 has no heart rate
+    # Only the changes: worn in the 2-minute slots with a heart rate reading, off before, between and after them.
+    worn = [(at(10, 0), 0), (at(10, 2), 1), (at(10, 6), 0), (at(11, 0), 1), (at(11, 4), 0), (at(12, 10), 1), (at(12, 12), 0)]
+    assert (panel('E'), panel('D')) == (medians, worn)  # aggregated at query time
+    refresh_rollups()
+    assert (panel('E'), panel('D')) == (medians, worn)  # materialized
