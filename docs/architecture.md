@@ -93,7 +93,8 @@ paid about 50 ms for the compressed chunks, and the partial ActivitySelector
 index no longer applied. See [Timescale unique index rules](https://www.tigerdata.com/docs/learn/hypertables/hypertable-indexes)
 and [upstream licensing](https://github.com/timescale/timescaledb/blob/main/LICENSE).
 
-Batched executemany uses psycopg pipeline optimization. COPY would require a
+Each batch of up to 1000 rows is one upsert from arrays, its unchanged-row check
+limited to the batch's time range so it reads only those chunks. COPY would require a
 staging table to preserve upserts; add it only after ingestion benchmarks justify
 it. JSONB avoids an enormous speculative domain schema but costs query CPU and
 storage: promote heavily queried fields into typed domain tables / indexes when
