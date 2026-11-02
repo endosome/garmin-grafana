@@ -21,7 +21,7 @@ To run the full coverage gate
 
 ```bash
 docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
-  -e POSTGRES_DB=garmin -p 127.0.0.1:55439:5432 timescale/timescaledb:2.26.4-pg17-oss
+  -e POSTGRES_DB=garmin -p 127.0.0.1:55439:5432 timescale/timescaledb:2.31.0-pg17
 # Wait for pg_isready.
 export PGHOST=localhost PGPORT=55439 PGUSER=postgres PGDATABASE=garmin
 export PGPASSWORD=test-only-password TEST_DATABASE=1
@@ -35,7 +35,10 @@ test role needs CREATEDB as well as the role/extension privileges used by the
 existing integration tests. Only databases created by those tests are dropped. They exercise
 real hypertables, idempotent migrations, upserts, chunked import, archive
 validation, snapshot rollback, source isolation, progress holes, and all
-provisioned SQL queries with empty and representative data. CI starts PostgreSQL. Unit-only coverage is lower because it omits real persistence tests;
+provisioned SQL queries with empty and representative data. The test database's
+rollup refresh policies are paused: tests that read `samples_hourly` or
+`gps_cells_daily` call `helpers.refresh_rollups()` after writing, because samples
+written into hours an earlier refresh covered appear only after the next one. CI starts PostgreSQL. Unit-only coverage is lower because it omits real persistence tests;
 the coverage gate applies to the complete suite.
 
 For local operation, export PG* credentials and ACCOUNT_ID/USER_TIMEZONE, then:
@@ -69,6 +72,10 @@ high-frequency connector may need a finer checkpoint interval and a typed sample
 table: add these when implementing that connector. Keep extraction outside
 persistence, with atomic data/checkpoint writes. Synthetic provider isolation is
 already covered in integration tests.
+
+To time every dashboard query on a year of synthetic data, use another disposable
+database: `uv run --locked python scripts/bench_dashboards.py seed`, then
+`... bench_dashboards.py run` (30 days and 1 year; `--json` saves per-query times).
 
 `docker compose -f compose-example.yml config --quiet`, `docker build .`, and
 `uv build` validate configuration, runtime image and package distribution.

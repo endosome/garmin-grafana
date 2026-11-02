@@ -18,7 +18,10 @@ until you have verified the import and dashboards.
 
 Requires Docker Engine with Compose v2, about 2 GB available RAM for a modest
 personal deployment, disk space for your health history, and a Garmin account.
-The example pins TimescaleDB 2.26.4 Apache-only on PostgreSQL 17 and Grafana 13.0.2.
+The example pins TimescaleDB 2.31.0 on PostgreSQL 17 and Grafana 13.0.2. The
+`timescale/timescaledb` image is under the [Timescale License](https://github.com/timescale/timescaledb/blob/main/tsl/LICENSE-TIMESCALE)
+(free to self-host; it may not be offered as a hosted database service); the
+dashboards use its continuous aggregates. This project stays BSD-3-Clause.
 It builds ingestion from this checkout, rather than pulling the old Influx image.
 The optional hourly heatmap plugin needs internet access during installation.
 
@@ -174,9 +177,15 @@ files from a running database.
 
 For app upgrades: take a backup, build the new checkout, run `migrate`, restart
 ingestion/Grafana. SQL migrations are checksummed and transactional; do not edit
-an applied migration. PostgreSQL major upgrades need a supported dump/restore or
-pg_upgrade procedure; changing the image tag alone is insufficient. No raw-data
-retention, compression, or automatic deletion policy is installed.
+an applied migration. `migrate` also updates the TimescaleDB extension to the
+version in the pinned image, which a newer image does not do by itself. Releases
+up to 0.10.3 pinned the Apache-only `-oss` image, which cannot run migration 008:
+`docker compose -f compose-example.yml pull postgres` and `up -d` switch the same
+volume to the Community image. If you manage Grafana's reader role yourself rather
+than through `PGREADER_PASSWORD`, run `GRANT SELECT ON samples_hourly, gps_cells_daily
+TO grafana_reader` after `migrate`. PostgreSQL major upgrades need a supported
+dump/restore or pg_upgrade procedure; changing the image tag alone is insufficient.
+No raw-data retention, compression, or automatic deletion policy is installed.
 
 ## Development and other deployments
 

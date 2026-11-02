@@ -12,6 +12,7 @@ import pytest
 from garmin_grafana.domain import Record, parse_timestamp, RecordBatch
 from garmin_grafana.storage import PostgresStore
 from garmin_grafana import storage, migrate
+from helpers import refresh_rollups
 
 
 def point(dataset='HeartRateIntraday', time='2026-01-01T00:00:00.123456789Z', tags=None, **values):
@@ -66,6 +67,9 @@ def db():
         pytest.skip('Set TEST_DATABASE=1 with PG* pointing to a disposable TimescaleDB database')
     connection = storage.connect()
     migrate.migrate(connection)
+    # Tests refresh the rollups themselves (helpers.refresh_rollups); a scheduled refresh running at the same time would fail it.
+    with connection.transaction():
+        connection.execute("SELECT alter_job(job_id, scheduled => false) FROM timescaledb_information.jobs WHERE proc_name = 'policy_refresh_continuous_aggregate'")
     store = PostgresStore(account='test-' + uuid.uuid4().hex, connection=connection)
     yield store
     store.close()
@@ -614,7 +618,30 @@ def test_gps_activity_dropdown_and_heatmap_queries(db):
         return Record.from_mapping(point('ActivityGPS',time=time,tags={'Device':'watch','ActivitySelector':selector},Latitude=lat,Longitude=-0.1))
     db.write([gps('b-run','2026-01-02T00:00:00Z',51.50001),gps('b-run','2026-01-02T00:00:01Z',51.50002),
         gps('a-ride','2026-01-03T00:00:00Z',51.6),gps('c-outside','2026-02-01T00:00:00Z',51.7)])
+    refresh_rollups()
     selectors=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:ActivityGPS'],source(db)))
     assert selectors==[('a-ride',),('b-run',)]
     cells=query(db,module.expand_query(statements['Garmin-Grafana-Dashboard.json:69:I'],source(db)))
     assert sorted(cells)==[(51.5,-0.1),(51.6,-0.1)]
+
+
+def test_rollups_are_real_time_and_pick_up_backfills_on_refresh(db):
+    assert query(db, 'SELECT view_name, materialized_only FROM timescaledb_information.continuous_aggregates ORDER BY 1') == [
+        ('gps_cells_daily', False), ('samples_hourly', False)]
+    # The whole history stays in the refresh window, so a backfill of any age is materialized on the next run.
+    assert query(db, """SELECT config->'start_offset', schedule_interval FROM timescaledb_information.jobs
+        WHERE proc_name = 'policy_refresh_continuous_aggregate'""") == [(None, timedelta(minutes=5))] * 2
+    watermark = query(db, """SELECT _timescaledb_functions.to_timestamp(_timescaledb_functions.cagg_watermark(mat_hypertable_id))
+        FROM _timescaledb_catalog.continuous_agg WHERE user_view_name = 'samples_hourly'""")[0][0]
+    hour = max(watermark, datetime.now(timezone.utc)).replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
+    def stress(minute, level):
+        return Record.from_mapping(point('StressIntraday', (hour + timedelta(minutes=minute)).isoformat(), stressLevel=level), local_date=hour.date(), timezone='UTC')
+    def rollup():
+        return query(db, "SELECT samples, total, lowest, highest FROM samples_hourly WHERE source_id = %s AND dataset = 'StressIntraday'", (source(db),))
+    db.write([stress(0, 20), stress(3, -1)])
+    assert rollup() == [(1, 20, 20, 20)]  # newer than the last refresh: aggregated at query time, without Garmin's -1
+    refresh_rollups()
+    db.write([stress(6, 40)])
+    assert rollup() == [(1, 20, 20, 20)]  # an hour that is already materialized waits for the next refresh
+    refresh_rollups()
+    assert rollup() == [(2, 60, 20, 40)]

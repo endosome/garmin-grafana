@@ -114,8 +114,10 @@ def test_cli_measurement_and_failure_closes_connections(monkeypatch):
 
 def test_migrate_cli_and_checksum_match(db,monkeypatch):
     connection = db.connection
-    with mock.patch.object(migrate,'connect',return_value=connection),mock.patch.object(migrate,'configure_reader') as configure:
+    with mock.patch.object(migrate,'connect',return_value=connection),mock.patch.object(migrate,'configure_reader') as configure,\
+            mock.patch.object(migrate,'update_extension') as update:
         migrate.main()
+        update.assert_called_once_with()
         configure.assert_called_once_with(connection)
 
 

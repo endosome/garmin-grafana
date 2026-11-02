@@ -1,0 +1,147 @@
+"""Time every provisioned dashboard query against a year of synthetic data.
+
+Run with PG* settings for a disposable database, never your real health database.
+`seed` writes the healthy-lifestyle persona with a full year of intraday series at
+Garmin's cadence and a 5-second GPS track for every run (a few minutes, about
+3.5 million rows). `run` executes each query with the panel's pinned range, or the
+selected range, ending at the persona's "now", and prints database time per panel:
+
+    uv run --locked python scripts/bench_dashboards.py seed
+    uv run --locked python scripts/bench_dashboards.py run --days 30 --days 365 [--json out.json]
+
+Grafana and browser time are not measured here.
+"""
+import argparse
+import json
+import statistics
+import sys
+import time
+from datetime import date, timedelta
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import personas  # noqa: E402
+from garmin_grafana.storage import PostgresStore, connect  # noqa: E402
+from validate_dashboard_queries import expand_query  # noqa: E402
+
+ACCOUNT = 'bench-year'
+END = personas.NOW
+# Grafana rounds range / max data points to these steps; 1000 points approximates a full-width panel.
+STEPS = [(s, f'{s} seconds') for s in (1, 2, 5, 10, 15, 20, 30)] + [(m * 60, f'{m} minutes') for m in (1, 2, 5, 10, 15, 20, 30)] \
+    + [(h * 3600, f'{h} hours') for h in (1, 2, 3, 6, 12)] + [(86400, '1 day'), (7 * 86400, '7 days')]
+UNITS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800}
+
+
+def seed():
+    p = personas.healthy_lifestyle()
+    p.account = ACCOUNT
+    rng = personas.random.Random(5)
+    summaries = [r for r in p.records if r.dataset == 'ActivitySummary' and r.values.get('activityType') == 'running'
+                 and r.values.get('activityName') != 'END' and r.local_date < date(2026, 10, 25)]
+    day = date(2025, 10, 28)
+    while day < date(2026, 10, 25):
+        personas.intraday(p, rng, day, personas.at(day, -1), personas.at(day, 6, 50), 55, 46, [], personas.at(day, 24))
+        day += timedelta(1)
+    for summary in summaries:
+        personas.gps(p, summary)
+    # Documents go through the application's write path; samples are copied, since the upsert
+    # path checks every row against the table and would take about an hour.
+    store = PostgresStore(account=ACCOUNT)
+    try:
+        store.write([r for r in p.records if not r.is_sample])
+        source = store.source_id(store.connection.cursor())
+        store.connection.commit()
+    finally:
+        store.close()
+    # Records with the same key are merged on upsert, e.g. a sleep stage and a movement reading in one minute.
+    merged = {}
+    for r in (r for r in p.records if r.is_sample):
+        key = (r.dataset, r.key, r.time, r.nanoseconds)
+        if key in merged:
+            merged[key].values.update(r.values)
+        else:
+            merged[key] = r
+    samples = list(merged.values())
+    with connect() as connection, connection.cursor() as cur:
+        cur.execute('INSERT INTO devices SELECT DISTINCT %s, unnest(%s::text[]) ON CONFLICT DO NOTHING',
+                    (source, sorted({r.device for r in samples})))
+        with cur.copy('COPY samples (source_id,dataset,record_key,time,nanoseconds,original_time,device_id,local_date,timezone,tags,fields) FROM STDIN') as copy:
+            for r in samples:
+                copy.write_row((source, r.dataset, r.key, r.time, r.nanoseconds, r.original_time, r.device, r.local_date,
+                                r.timezone, json.dumps(r.tags), json.dumps(r.values)))
+        print(f'{len(samples)} samples', flush=True)
+    with connect() as connection:
+        connection.autocommit = True
+        connection.execute('VACUUM ANALYZE')
+
+
+def seconds(text):
+    return int(text[:-1]) * UNITS[text[-1]]
+
+
+def interval(range_seconds, minimum=None):
+    floor = max(range_seconds / 1000, seconds(minimum) if minimum else 0)
+    return next((label for step, label in STEPS if step >= floor), STEPS[-1][1])
+
+
+def panels(items):
+    for panel in items:
+        yield panel
+        yield from panels(panel.get('panels', []))
+
+
+def run(days, output):
+    root = Path(__file__).resolve().parents[1] / 'Grafana_Dashboard'
+    results = {}
+    with connect() as connection, connection.cursor() as cur:
+        cur.execute("SELECT s.id FROM sources s WHERE s.account=%s", (ACCOUNT,))
+        source = cur.fetchone()[0]
+        selector = cur.execute("SELECT tags->>'ActivitySelector' FROM samples WHERE source_id=%s AND dataset='ActivityGPS' ORDER BY time DESC LIMIT 1",
+                               (source,)).fetchone()[0]
+        for span in days:
+            totals, rows = {}, []
+            for path in sorted(root.glob('*.json')):
+                dashboard = json.loads(path.read_text())
+                for panel in panels(dashboard['panels']):
+                    pinned = panel.get('timeFrom')
+                    range_seconds = seconds(pinned) if pinned else span * 86400
+                    start = END - timedelta(seconds=range_seconds)
+                    for target in panel.get('targets', []):
+                        query = expand_query(target['rawSql'], source, start=start.isoformat(), end=END.isoformat(),
+                                             timezone=personas.TZ_NAME, activity=selector,
+                                             interval=interval(range_seconds, panel.get('interval')))
+                        timings = []
+                        for _ in range(3):
+                            began = time.perf_counter()
+                            cur.execute(query)
+                            count = len(cur.fetchall())
+                            timings.append(time.perf_counter() - began)
+                        label = f"{path.stem}:{panel['id']}:{target['refId']}"
+                        rows.append((statistics.median(timings), count, label, panel.get('title', '')))
+                        totals[path.stem] = totals.get(path.stem, 0) + statistics.median(timings)
+            rows.sort(reverse=True)
+            print(f'\n== {span} days: {sum(totals.values()):.2f} s total over {len(rows)} queries')
+            for name, total in totals.items():
+                print(f'  {name}: {total:.2f} s')
+            for elapsed, count, label, title in rows[:15]:
+                print(f'  {elapsed * 1000:8.1f} ms {count:7d} rows  {label}  {title}')
+            results[span] = {label: {'ms': round(elapsed * 1000, 2), 'rows': count} for elapsed, count, label, _ in rows}
+    if output:
+        Path(output).write_text(json.dumps(results, indent=2) + '\n')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument('command', choices=('seed', 'run'))
+    parser.add_argument('--days', type=int, action='append')
+    parser.add_argument('--json')
+    args = parser.parse_args()
+    if args.command == 'seed':
+        seed()
+    else:
+        run(args.days or [30, 365], args.json)
+
+
+if __name__ == '__main__':
+    main()

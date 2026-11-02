@@ -24,6 +24,19 @@ def migrate(connection):
             cur.execute('INSERT INTO schema_migrations(name,checksum) VALUES (%s,%s)', (path.name, digest))
 
 
+def update_extension():
+    """Move an existing database to the TimescaleDB version of a newer image, which does not do it itself."""
+    with connect() as connection:
+        row = connection.execute("""SELECT e.extversion, a.default_version FROM pg_extension e
+            JOIN pg_available_extensions a ON a.name = e.extname WHERE e.extname = 'timescaledb'""").fetchone()
+    if row is None or row[0] == row[1]:
+        return
+    # It must be the first statement of a new session, before the old version's library is loaded.
+    with connect() as connection:
+        connection.autocommit = True
+        connection.execute('ALTER EXTENSION timescaledb UPDATE')
+
+
 def record_version(connection):
     """Store the installed package version so the Grafana dashboard can show what is running."""
     try:
@@ -53,6 +66,7 @@ def configure_reader(connection):
 
 
 def main():
+    update_extension()
     with connect() as connection:
         migrate(connection)
         record_version(connection)

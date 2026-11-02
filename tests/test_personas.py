@@ -7,6 +7,7 @@ import uuid
 from zoneinfo import ZoneInfo
 import pytest
 from garmin_grafana.storage import PostgresStore
+from helpers import refresh_rollups
 from personas import NOW, PERSONAS, TODAY, TZ, gym_goer, healthy_lifestyle, legacy_cyclist, newcomer, public_fitbit_user, ski_tourer
 from test_storage import db  # noqa: F401  (a fixture)
 
@@ -43,6 +44,7 @@ def load(db):  # noqa: F811
     def load(persona):
         store = PostgresStore(account=f'{persona.account}-{uuid.uuid4().hex}', connection=db.connection)
         store.write(persona.records)
+        refresh_rollups()
         with db.connection.transaction(), db.connection.cursor() as cur:
             sid = store.source_id(cur)
 

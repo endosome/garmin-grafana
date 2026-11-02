@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-26.04
     services:
       postgres:
-        image: timescale/timescaledb:2.26.4-pg17-oss
+        image: timescale/timescaledb:2.31.0-pg17
         env:
           POSTGRES_DB: garmin
           POSTGRES_PASSWORD: test-only-password

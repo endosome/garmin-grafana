@@ -72,10 +72,25 @@ interpreted as deletion. Deleted/corrected GPS samples need explicit reconciliat
 ## Operations and limits
 
 SQL migrations are ordered, checksummed, advisory-locked, transactional, and run
-by `python -m garmin_grafana.migrate`, separately from normal ingestion. No
-retention or compression is enabled. The pinned Apache-only Timescale image
-provides hypertables without requiring Timescale-licensed columnstore policies.
-See [Timescale unique index rules](https://www.tigerdata.com/docs/learn/hypertables/hypertable-indexes)
+by `python -m garmin_grafana.migrate`, separately from normal ingestion. Before
+them it updates the TimescaleDB extension to the image's version in a fresh
+session, which existing databases otherwise keep. No retention or compression
+is enabled. The pinned Community image (Timescale License; this project stays
+BSD-3-Clause) provides continuous aggregates: `samples_hourly` (count, sum, min
+and max per source, dataset, local date and UTC hour of the intraday series) and
+`gps_cells_daily` (the GPS heatmap's grid cells per UTC day). They are real-time,
+and a policy refreshes changed buckets of the whole history every five minutes,
+so a backfill below the last refresh shows up within five minutes. Daily panels
+divide sums by counts per local date, which matches the raw averages in every
+time zone. Rows without a local date (InfluxDB imports) fall back to the UTC
+hour's start: exact for whole-hour offsets, approximate around local midnight in
+:30 / :45 zones. Hourly and GPS panels read whole hours or days inside the range from
+the rollup and the partial ones at either end from raw samples. Medians
+(`percentile_cont`) cannot be rolled up, so those panels stay raw. Compressing
+chunks older than 90 days cut the table to a third but made the dashboards
+slower at 1 year (5.4 s to 7.9 s of database time): every `all_records` query
+paid about 50 ms for the compressed chunks, and the partial ActivitySelector
+index no longer applied. See [Timescale unique index rules](https://www.tigerdata.com/docs/learn/hypertables/hypertable-indexes)
 and [upstream licensing](https://github.com/timescale/timescaledb/blob/main/LICENSE).
 
 Batched executemany uses psycopg pipeline optimization. COPY would require a

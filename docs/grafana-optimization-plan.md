@@ -1,8 +1,47 @@
 # Grafana dashboard optimization plan
 
-As of 2026-10-26, updated 2026-10-27. At the default 30-day range the database is
+As of 2026-10-26, updated 2026-10-27 and 2026-11-02. At the default 30-day range the database is
 probably not where the seconds go, so the next round of work targets Grafana and
 the browser, after measuring them first.
+
+## Status (2026-11-02): Community TimescaleDB and rollups
+
+Phase 6 is done with continuous aggregates. The image moved from
+`2.26.4-pg17-oss` to the Community `timescale/timescaledb:2.31.0-pg17` (Timescale
+License for the database image; this project stays BSD-3-Clause). It stays on
+PostgreSQL 17: a pg18 image does not start on an existing PG17 volume, and a
+major upgrade is a dump/restore decision of its own. `migrate` now runs
+`ALTER EXTENSION timescaledb UPDATE` first; tested on a 2.26.4-oss volume with
+the personas, then Grafana's smoke test through the reader role.
+
+Migration `008` adds `samples_hourly` and `gps_cells_daily` (see
+[architecture](architecture.md#operations-and-limits)). Panels moved to them:
+Daily avg health metrics HRV / Stress / Breathing (11, 51), Month at a Glance
+(Daily Average) HRV (66), Month at a Glance (Intraday) steps (67 C), Hourly walk
+heatmap (20), HR Histogram Heatmap (65), Heatmap for GPS Activity (69), and
+Health Overview Average stress (16) and Stress today (6). On the bench data old
+and new SQL return identical rows for 1, 7, 30 and 365 days, ranges ending on
+and off the hour, and 30m / 1h / 12h / 1d intervals.
+
+`scripts/bench_dashboards.py` seeds a year of the healthy-lifestyle persona
+(1.29 M samples at Garmin's cadence, GPS every 5 s rather than 1 s) and times
+every query of all four dashboards. Database time, both versions on 2.31.0:
+
+| Range | Before | After |
+| --- | --- | --- |
+| 30 days | 1.48 s | 0.97 s |
+| 1 year | 7.29 s | 5.20 s |
+
+Per panel at 1 year: Average stress 873 → 21 ms, Daily avg Stress / Breathing
+500 / 551 → 25 / 23 ms, GPS heatmap 305 → 63 ms, Hourly walk heatmap 143 → 25 ms,
+HRV 120 → 12 ms. What remains is Month at a Glance (Intraday) (67): hourly
+medians (A, B, E) and the 2-minute Band Wearing count (D, 1.2 s and 263 k rows at
+1 year), plus Sleep Regularity (27). Medians cannot be rolled up without the
+Toolkit extension, which ships only in the much larger `timescaledb-ha` image
+with a different data directory.
+
+Compression was measured and left off: converting chunks older than 90 days
+cut the table from 803 to 277 MB but raised the 1-year total from 5.4 to 7.9 s.
 
 ## Status (2026-10-27)
 
@@ -147,7 +186,5 @@ has not been measured yet.
 3. Consolidate the 9-, 8- and 6-query panels, then the rest of the worklist.
 4. Move transformations into SQL; drop redundant moving averages.
 5. Re-measure against the acceptance targets.
-6. Only then decide on precomputation for 6–12 month views. The pinned
-   `timescaledb-oss` image has no continuous aggregates; the options are the
-   Community-licensed image or app-maintained rollup tables written by the
-   fetcher.
+6. *(done 2026-11-02)* Precomputation for 6–12 month views: continuous
+   aggregates on the Community image, see the status above.

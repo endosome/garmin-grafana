@@ -9,7 +9,7 @@ x-database-env: &database-env
 
 services:
   postgres:
-    image: timescale/timescaledb:2.26.4-pg17-oss
+    image: timescale/timescaledb:2.31.0-pg17
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${PGDATABASE:-garmin}

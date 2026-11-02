@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from garmin_grafana import storage
 from garmin_grafana.domain import Record
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "garmin_grafana"
@@ -67,3 +68,11 @@ def run_module_command(monkeypatch, module_name, *arguments):
         # runpy otherwise warns if an earlier test imported the target module.
         context.delitem(sys.modules, module_name, raising=False)
         return runpy.run_module(module_name, run_name='__main__')
+
+
+def refresh_rollups():
+    """Materializes the rollups, so they include samples a test wrote into hours an earlier refresh already covered."""
+    with storage.connect() as connection:
+        connection.autocommit = True
+        for view in ('samples_hourly', 'gps_cells_daily'):
+            connection.execute(f"CALL refresh_continuous_aggregate('{view}', NULL, NULL)")

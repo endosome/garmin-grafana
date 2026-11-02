@@ -75,9 +75,14 @@ def test_module_command_initializes_a_fresh_database(fresh_database, monkeypatch
     connection = fresh_database
     settings = conninfo_to_dict(connection.info.dsn)
     monkeypatch.delenv('PGREADER_PASSWORD', raising=False)
-    monkeypatch.setattr(storage, 'connect', lambda: connection)
+    opened = []
+
+    def connect():  # the command opens more than one connection; all go to the fresh database
+        opened.append(psycopg.connect(**settings) if opened else connection)
+        return opened[-1]
+    monkeypatch.setattr(storage, 'connect', connect)
     run_module_command(monkeypatch, 'garmin_grafana.migrate')
-    assert connection.closed
+    assert connection.closed and all(c.closed for c in opened)
     with psycopg.connect(**settings) as verification, verification.cursor() as cur:
         cur.execute('SELECT count(*) FROM schema_migrations')
         assert cur.fetchone()[0] == len(list(Path(migrate.__file__).with_name('migrations').glob('*.sql')))
@@ -100,3 +105,24 @@ def test_record_version_stores_installed_package_version(fresh_database):
     with connection.transaction(), connection.cursor() as cur:
         cur.execute("SELECT value FROM app_info WHERE key = 'version'")
         assert cur.fetchone() == ('unknown',)
+
+
+def test_command_updates_timescaledb_from_an_older_image(fresh_database, monkeypatch):
+    connection = fresh_database
+    settings = conninfo_to_dict(connection.info.dsn)
+    with connection.transaction(), connection.cursor() as cur:
+        cur.execute("SELECT default_version FROM pg_available_extensions WHERE name = 'timescaledb'")
+        latest = cur.fetchone()[0]
+        cur.execute(r"""SELECT version FROM pg_available_extension_versions WHERE name = 'timescaledb' AND version ~ '^[0-9.]+$'
+            AND version <> %s ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1""", (latest,))
+        previous = cur.fetchone()[0]
+        cur.execute('DROP EXTENSION IF EXISTS timescaledb')
+    connection.close()
+    with psycopg.connect(**settings, autocommit=True) as older:  # a new session, before any version is loaded
+        older.execute(sql.SQL('CREATE EXTENSION timescaledb VERSION {}').format(sql.Literal(previous)))
+    monkeypatch.setattr(migrate, 'connect', lambda: psycopg.connect(**settings))
+    migrate.update_extension()
+    migrate.update_extension()  # already current: nothing to do
+    with psycopg.connect(**settings) as upgraded:
+        assert upgraded.execute("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'").fetchone() == (latest,)
+        migrate.migrate(upgraded)
