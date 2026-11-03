@@ -99,6 +99,13 @@ def test_csv_follows_the_tool_for_sub_fields_and_invalid_values():
     assert all(cell == '' for row in rows if row[0] == 'Definition' for cell in row[5::3])  # definition units are blank
 
 
+def test_csv_value_forms():
+    assert convert._csv_value(None, None) == ''
+    assert convert._csv_value([1, None], None) == '1|'
+    field = {'scale': [1], 'offset': [0], 'type': 'float32', 'base_type': 'float32'}
+    assert convert._csv_value(-0.2857142984867096, field) == '-0.2857143'
+
+
 def test_csv_float32_prints_the_shortest_form():
     assert convert._float32(-0.2857142984867096) == '-0.2857143'
     assert convert._float32(0.5) == '0.5'

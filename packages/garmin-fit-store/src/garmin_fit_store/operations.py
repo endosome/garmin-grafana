@@ -170,7 +170,7 @@ def ref_recompute_totals(fit_file, removed=None, closed=False):
             if removed:
                 lo, hi = removed
                 if lo <= s < hi:
-                    s = lo if closed else hi
+                    s = hi
                 if lo < t < hi:
                     t = lo
                 if not closed:
@@ -208,7 +208,51 @@ def ref_remove_section(fit_file, start, end, close_gap=True):
     """Times as FIT seconds."""
     delta = -(end - start) if close_gap else 0
     out = ref_copy(fit_file, delta=delta, delta_from=end, drop=(start, end))
-    return ref_recompute_totals(out, removed=(start, end), closed=close_gap)
+    if not close_gap:
+        return ref_recompute_totals(out, removed=(start, end), closed=False)
+    _clamp_summaries(fit_file, out, start, end)
+    _close_distance(out, start)
+    return ref_recompute_totals(out)
+
+
+def _clamp_summaries(original, out, start, end):
+    """Mirror of the lap and session step in fit.remove_section (close_gap): clamp in the original time, then shift."""
+    profile = Profile()
+    for name in ('lap', 'session'):
+        number = profile.message_number(name)
+        start_n, end_n = profile.field_number(name, 'start_time'), profile.field_number(name, 'timestamp')
+        pairs = zip([m for m in original.messages if m.global_num == number], [m for m in out.messages if m.global_num == number])
+        for old, new in pairs:
+            if start_n not in old.fields or end_n not in old.fields:
+                continue
+            s, t = old.fields[start_n], old.fields[end_n]
+            if start <= s < end:
+                s = start
+            if start < t < end:
+                t = start
+            t = max(t, s)
+            new.fields[start_n] = s - (end - start) if s >= end else s
+            new.fields[end_n] = t - (end - start) if t >= end else t
+            if 253 in new.fields:
+                new.fields[253] = new.fields[end_n]
+
+
+def _close_distance(fit_file, start):
+    """Mirror of the distance step in fit.remove_section: records from `start` on continue from the last one before it."""
+    profile = Profile()
+    record = profile.message_number('record')
+    distance = profile.field_number('record', 'distance')
+    rows = [(m.fields[253], i, m) for i, m in enumerate(fit_file.messages)
+            if m.global_num == record and isinstance(m.fields.get(253), int) and m.fields[253] >= ABSOLUTE
+            and isinstance(m.fields.get(distance), (int, float))]
+    before = [r for r in rows if r[0] < start]
+    after = sorted(r for r in rows if r[0] >= start)
+    if not before or not after:
+        return
+    gap = after[0][2].fields[distance] - max(before, key=lambda r: (r[0], r[1]))[2].fields[distance]
+    if gap > 0:
+        for _, _, m in after:
+            m.fields[distance] -= gap
 
 
 def fit_seconds(moment):

@@ -255,7 +255,7 @@ def _float32(value):
         text = f'{value:.{digits}g}'
         if struct.pack('<f', float(text)) == packed:
             return text
-    return repr(value)
+    return repr(value)  # pragma: no cover - every 32-bit float has a decimal of at most 9 digits
 
 
 def convert(fit_file, target):

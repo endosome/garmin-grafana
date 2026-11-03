@@ -112,10 +112,35 @@ def test_section_remover(connection, activity, close_gap):
     assert lap.fields[8] == (20_000 if close_gap else 20_000) or lap.fields[8] == 29_500 - 10_000
     if close_gap:
         assert records[10].fields[253] == records[9].fields[253] + 1
+        assert records[10].fields[5] == records[9].fields[5]  # the first record after the section continues from the last before it
+        assert lap.fields[9] == records[-1].fields[5] - records[0].fields[5]  # the lap's distance no longer counts the removed part
     else:
         assert records[10].fields[253] == records[9].fields[253] + 11
     session = next(m for m in result.messages if m.global_num == 18)
     assert session.fields[16] == pytest.approx(sum(m.fields[3] for m in records) / 20, abs=1)  # avg_heart_rate
+
+
+def test_section_remover_closing_a_gap_across_a_lap_boundary(connection):
+    from garmin_fit_store.builder import build_fit
+    base = fit_seconds(T0)
+    records = [('record', {'timestamp': base + i, 'heart_rate': 100 + i % 7, 'distance': 3.0 * i}) for i in range(200)]
+    laps = [('lap', {'timestamp': base + 99, 'start_time': base, 'total_elapsed_time': 99.0, 'total_timer_time': 99.0, 'total_distance': 297.0}),
+            ('lap', {'timestamp': base + 199, 'start_time': base + 100, 'total_elapsed_time': 99.0, 'total_timer_time': 99.0, 'total_distance': 297.0})]
+    bare_lap = ('lap', {'timestamp': base + 199})  # no start_time: left alone
+    session = ('session', {'timestamp': base + 199, 'start_time': base, 'total_elapsed_time': 199.0, 'total_timer_time': 199.0, 'total_distance': 597.0})
+    data = build_fit([records[0], *records[1:], *laps, bare_lap, session])
+    file_id = store.import_file(connection, data, source_id=8101)
+    ir = decode(data)
+    start, end = T0 + timedelta(seconds=50), T0 + timedelta(seconds=150)
+    new_id = operations.remove_section(connection, file_id, start, end, True)
+    check(connection, file_id, new_id, operations.ref_remove_section(ir, fit_seconds(start), fit_seconds(end), True))
+    result = decode(store.export_file(connection, new_id))
+    first, second = [m for m in result.messages if m.global_num == 19 and 2 in m.fields]
+    assert (first.fields[2], first.fields[253]) == (base, base + 50)  # start_time, timestamp
+    assert (second.fields[2], second.fields[253]) == (base + 50, base + 99)  # starts in the removed part: clamped, then shifted back
+    sess = next(m for m in result.messages if m.global_num == 18)
+    assert sess.fields[7] == 99_000  # elapsed: 200 seconds minus the 100 removed
+    assert sess.fields[9] == 294 * 100  # 99 seconds at 3 m a second: the distance of the removed seconds is gone
 
 
 def test_section_remover_edge_cases(connection, activity):

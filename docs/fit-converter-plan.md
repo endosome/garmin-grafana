@@ -418,10 +418,11 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   metric keys, not by eye. No rejection.
   Edits (items 13 and 14), all accepted: `time_shift` +3 days of the run (Connect: 2015-08-18, 9008 m, 2832 s, 4 laps, as the
   original); `remove_section` of minutes 5 to 15 of the run with the gap closed (9007 m, 2258 s, 4 laps); `combine` of two real
-  runs (one `multi_sport` activity, 2 sessions, 9165 m, 2933 s). **Worklist:** the removed section's distance is not taken out
-  of the later records' cumulative `distance`, so the run still shows 9007 m after losing ten minutes and the lap after the
-  gap reports 3746 m (the original lap 2979 m). Connect accepts it, but `remove_section` with `close_gap` should subtract the
-  removed distance from later records (SQL function and `ref_remove_section` together, R4 oracle between them). Not done.
+  runs (one `multi_sport` activity, 2 sessions, 9165 m, 2933 s). The `remove_section` upload exposed two defects, both fixed (migration `fit/007`, `ref_remove_section`, tests): the later records'
+  cumulative `distance` kept the removed stretch (the run showed 9007 m after losing ten minutes), and with `close_gap` a lap
+  that straddled the section was clamped after the shift, when a time moved into the section can't be told from one inside it
+  (laps 849/2988/2979/2193 m became 845/92/3746/2185 m). Re-exported and re-uploaded (the first removed-section activity
+  deleted from the account): Connect shows 6882 m, 2258 s, 4 laps of 845, 861, 2975 and 2185 m, which add up to the session.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted
