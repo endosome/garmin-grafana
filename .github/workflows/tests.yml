@@ -102,14 +102,14 @@ jobs:
             uv run --locked pytest -m grafana tests/test_grafana_stack.py --durations=5
       - name: Rehearse the upgrade from the Alpine image
         run: scripts/smoke_upgrade.sh
-  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4), in four shards that each start their own stack.
+  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4), in eight shards that each start their own stack.
   # They run beside the stack job; the image comes from the layer cache the stack job leaves behind.
   e2e:
     name: e2e (shard ${{ matrix.shard }})
     strategy:
       fail-fast: false
       matrix:
-        shard: ['1/4', '2/4', '3/4', '4/4']
+        shard: ['1/8', '2/8', '3/8', '4/8', '5/8', '6/8', '7/8', '8/8']
     runs-on: ubuntu-26.04
     env:
       PGDATABASE: garmin
