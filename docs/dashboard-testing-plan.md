@@ -403,5 +403,4 @@ the "Data does not have a time field" wording above, now allowed there too, then
 repeats), the upgrade rehearsal, the nightly matrix (`DASHBOARD_MATRIX=full`, 40 passed) and the nightly
 budget job (330 measurements within budget). Two things only the nightly commands showed: the persona fixture
 now records the application version as `migrate` does, and `bench_dashboards.py seed` refreshes the rollups,
-because without it every query read the raw samples and the budgets failed 10 to 50 times over. The runs on
-GitHub are still to come: baselines on the runner, and `cancel-in-progress` on a release.
+because without it every query read the raw samples and the budgets failed 10 to 50 times over. On GitHub (run 41661821531, green): `stack` 114 s and `e2e` all 29 browser tests in 266 s, with the screenshot baselines generated here matching on the runner. Still to be seen on a release: `cancel-in-progress` (the called `Tests` run's concurrency group contains the caller's workflow name and the tag ref, so it does not share a group with a branch push) and the native arm64 build.

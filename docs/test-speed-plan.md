@@ -331,8 +331,7 @@ the persona and contract tests, gate 100 %) 20 s, then the persona and contract 
 coverage 51 s, 72 s in all. The full suite with coverage took 122 s before, and 82 s without. The
 persona tests alone took about 70 s before and 35 s after item 1, but they now share one persona load
 with the contract tests. Container image: uv bumped to 0.9.30, the newest `python3.13-bookworm-slim`
-tag published; the arm64 build is verified by the next release run only. CI numbers: see the
-first run after this commit. The `pytest` job also ran under `act` from the workflow file (504 passed in
+tag published; the arm64 build is verified by the next release run only. CI numbers, first green run 2026-11-03 (run 41661821531): `Tests` 7 m 48 s wall clock, of which `pytest` 73 s (containers 31 s, coverage run 15 s, persona and contract tests 20 s), `stack` 114 s (image build 21 s, stack checks 54 s, upgrade rehearsal 25 s) and `e2e` 5 m 50 s (browser tests 266 s), which runs after `stack`. The first run of the same commit had a cold `setup-uv` cache (66 s). The persona and contract tests are inside the 23 s target on the runner; the pytest job's two steps total 35 s against the 25 s target. The `pytest` job also ran under `act` from the workflow file (504 passed in
 31 s, then 27 passed in 39 s, about 80 s with setup; command in `development.md`).
 
 Item 10 (xdist) was tried and taken out. Two workers on the shared database, with the 11 s rollup
