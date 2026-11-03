@@ -81,6 +81,12 @@ services:
       - ./Grafana_Config/grafana.ini:/etc/grafana/grafana.ini:ro
       - ./Grafana_Datasource:/etc/grafana/provisioning/datasources:ro
       - ./Grafana_Dashboard:/etc/grafana/provisioning/dashboards:ro
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:3000/api/health >/dev/null']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -122,6 +128,12 @@ services:
       - ./Grafana_Kiosk/dashboards.yaml:/etc/grafana/provisioning/dashboards/kiosk.yaml:ro
       # Under its own name: Grafana skips a changed file whose name it has already imported.
       - ./Grafana_Dashboard/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:/var/lib/grafana-kiosk/dashboards/${KIOSK_DASHBOARD:-Garmin-Health-Overview.json}:ro
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:3000/grafana/api/health >/dev/null']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
     depends_on:
       migrate:
         condition: service_completed_successfully
