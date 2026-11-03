@@ -376,20 +376,20 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   an indoor-trainer activity and the 24,274-row multisport file), after fixing sub-field names (`garmin_product`), omitted
   invalid fields, blank Definition units, expanded components (`enhanced_speed`) and 32-bit float text. Remaining documented
   differences: local message numbers (the IR renumbers definitions; the tool prints the wire's), the compressed-timestamp
-  definition, developer fields (the tool adds their columns), the 65535 sentinels it prints in arrays instead of scaled
-  numbers, and unknown byte fields it prints as text.
-  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 8
-  (activity, chained, zero_header_crc, the fenix 2 run, the multisport, the indoor trainer, ...) and differ only in those
-  documented categories for the rest: developer-field columns (ELEMNT 125 rows, the developer-types sample 3424,
-  developer_fields 1), array sentinels (Edge 820, fenix 5, big_endian, unknown_things), one unknown byte field (fenix 5), the
-  compressed-timestamp file, and the COROS file, whose `event.data` field is defined one byte wide with a 32-bit base type (the
-  tool reads past the field, we keep the byte). The test `test_csv_equals_the_official_tool` runs the comparison when
-  `FIT_CSV_TOOL_JAR` is set.
+  definition, and fields defined narrower than their base type.
+  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 11
+  (including both developer-field files, the ELEMNT, the Edge 820, the multisport and `big_endian`, after developer-field
+  columns, unscaled array sentinels and 32-bit float text were added). The other 4 differ in two documented ways: the
+  compressed-timestamp file (the tool lists the timestamp from the compressed header first; the IR can't tell it from a
+  definition that really puts the timestamp last, as Wahoo's do), and three files with a field defined narrower than its
+  base type (`unknown_things`, the fenix 5 file's one unknown message, and COROS's `event.data`), where the tool reads past
+  the field and we keep the bytes. The test `test_csv_equals_the_official_tool` runs the comparison on five committed files
+  when `FIT_CSV_TOOL_JAR` is set.
 - Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
   package as a differential oracle.
 - Items 13 and 14: SQL functions and Python references agree on the R4 oracle; originals unchanged; SDK decodes the output.
   Totals recomputed: start/end clamping, elapsed and timer time, distance, avg/max/min by name where the scales agree.
-  Developer data collisions on combine raise an error. The combined-file Garmin Connect check is manual and open.
+  Developer data collisions on combine raise an error. The Garmin Connect check of a combined file, a time-shifted file and a section-removed file is done (see item 7 below).
 - Item 15: documents updated.
 - Item 16: `packages/garmin-fit-store-ts` has the decoder, encoder, a store (`importFile`, `exportFile`) and a semantics layer
   (enum names, scale and offset, date_time, components with accumulation; sub-field selection is not ported). Its profile
@@ -429,6 +429,7 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   that straddled the section was clamped after the shift, when a time moved into the section can't be told from one inside it
   (laps 849/2988/2979/2193 m became 845/92/3746/2185 m). Re-exported and re-uploaded (the first removed-section activity
   deleted from the account): Connect shows 6882 m, 2258 s, 4 laps of 845, 861, 2975 and 2185 m, which add up to the session.
+- Item 16: the Node job (`fit-ts` in `tests.yml`) is green under `act` on the final commit; by the user's decision (2026-11-03) `act` is the evidence and `tests.yml` was not run on GitHub.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted

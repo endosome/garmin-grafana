@@ -12,6 +12,8 @@ from .semantics import Semantics
 GPX_NS = 'http://www.topografix.com/GPX/1/1'
 TPX_NS = 'http://www.garmin.com/xmlschemas/TrackPointExtension/v1'
 PWR_NS = 'http://www.garmin.com/xmlschemas/PowerExtension/v1'
+from .protocol import BASE_TYPES
+
 TCX_NS = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 ACT_NS = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 XSI = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -170,6 +172,7 @@ def to_csv(fit_file):
     writer = csv.writer(out, lineterminator='\n')
     rows = []
     announced = set()
+    descriptions = {(m.fields.get(0), m.fields.get(1)): m.fields for m in fit_file.messages if m.global_num == 206}
     for message in fit_file.messages:
         definition = fit_file.definitions[message.def_id]
         name = profile.message_name(message.global_num) or f'unknown'
@@ -179,6 +182,10 @@ def to_csv(fit_file):
             cells = []
             for (number, size, base), (_, field) in zip(definition.fields, fields):
                 cells += [field['name'] if field else f'unknown', _count(size, base), '']
+            for number, size, index in definition.dev_fields:
+                described = descriptions.get((index, number), {})
+                base = BASE_TYPES[described[2] & 0x1F][2] if described.get(2) is not None else 1
+                cells += [described.get(3) or 'unknown', size // base, '']
             rows.append(['Definition', definition.id % 16, name, *cells])
         wire = {n: base for n, _, base in definition.fields}
         values = semantics.named(message.global_num, message.fields, wire=wire)
@@ -190,12 +197,16 @@ def to_csv(fit_file):
                 shown.add(fname)
                 continue  # the tool leaves out a field whose value is invalid
             shown.add(fname)
-            # A sub-field the reference selects replaces the field's name and units (product -> garmin_product).
+            # A sub-field the reference selects replaces the field's name, not its units (product -> garmin_product).
             for sub in (field['sub_fields'] if field else ()):
                 if sub['name'] in values:
-                    fname, shown_field = sub['name'], dict(field, **{k: sub[k] for k in ('units', 'scale', 'offset', 'type') if k in sub})
+                    fname, shown_field = sub['name'], dict(field, **{k: sub[k] for k in ('scale', 'offset', 'type') if k in sub})
                     break
             text = _csv_value(raw, shown_field)
+            if isinstance(raw, list) and number in wire and BASE_TYPES[wire[number] & 0x1F][3] is not None:
+                # the tool prints an invalid array element as the type's raw invalid value, unscaled
+                invalid = BASE_TYPES[wire[number] & 0x1F][3]
+                text = '|'.join(str(invalid) if v is None or v == invalid else str(_csv_value(v, shown_field)) for v in raw)
             if field is None and wire.get(number, 0) & 0x1F == 8 and isinstance(raw, float):
                 text = _float32(raw)  # an unknown float32 field: the tool prints the 32-bit shortest form too
             cells += [fname, text, _units(shown_field)]
@@ -212,6 +223,12 @@ def to_csv(fit_file):
                 if isinstance(value, int) and target['scale'][0] != 1:
                     value = float(value)
                 cells += [key, _csv_value(value, None), _units(target)]
+        for number, size, index in definition.dev_fields:
+            if (index, number) in message.dev:
+                described = descriptions.get((index, number), {})
+                value = message.dev[(index, number)]
+                text = _float32(value) if described.get(2) == 136 and isinstance(value, float) else _csv_value(value, None)
+                cells += [described.get(3) or 'unknown', text, described.get(8) or 'null']
         rows.append(['Data', definition.id % 16, name, *cells])
     widest = max((len(r) - 3) // 3 for r in rows) if rows else 0
     writer.writerow(['Type', 'Local Number', 'Message'] + [x for i in range(1, widest + 1) for x in (f'Field {i}', f'Value {i}', f'Units {i}')])
@@ -220,7 +237,6 @@ def to_csv(fit_file):
 
 
 def _count(size, base):
-    from .protocol import BASE_TYPES
     return size // BASE_TYPES[base & 0x1F][2]
 
 
@@ -254,7 +270,7 @@ def _float32(value):
     for digits in range(1, 10):
         text = f'{value:.{digits}g}'
         if struct.pack('<f', float(text)) == packed:
-            return text
+            return repr(float(text))
     return repr(value)  # pragma: no cover - every 32-bit float has a decimal of at most 9 digits
 
 

@@ -99,6 +99,17 @@ def test_csv_follows_the_tool_for_sub_fields_and_invalid_values():
     assert all(cell == '' for row in rows if row[0] == 'Definition' for cell in row[5::3])  # definition units are blank
 
 
+def test_csv_developer_fields_and_array_sentinels():
+    rows = csv_rows((CORPUS / 'developer_fields.fit').read_bytes())
+    definition = next(r for r in rows if r[0] == 'Definition' and r[2] == 'record' and 'Stride' in r)
+    assert definition[definition.index('Stride') + 1] == '1'
+    data = next(r for r in rows if r[0] == 'Data' and r[2] == 'record' and 'Stride' in r)
+    assert data[data.index('Stride') + 1:data.index('Stride') + 3] == ['1234', 'mm']
+    assert data[data.index('Flag') + 1:data.index('Flag') + 3] == ['3', 'null']  # no units: the tool prints null
+    odd = csv_rows((CORPUS / 'big_endian.fit').read_bytes())
+    assert any('65535' in cell for row in odd for cell in row)  # an invalid array element is the raw sentinel, unscaled
+
+
 def test_csv_value_forms():
     assert convert._csv_value(None, None) == ''
     assert convert._csv_value([1, None], None) == '1|'
@@ -117,20 +128,14 @@ def test_csv_equals_the_official_tool(tmp_path):
     jar = os.getenv('FIT_CSV_TOOL_JAR')
     if not jar or not shutil.which('java'):
         pytest.skip('Set FIT_CSV_TOOL_JAR and install java')
-    path = CORPUS / 'activity.fit'
-    subprocess.run(['java', '-cp', jar, 'com.garmin.fit.csv.CSVTool', '-b', str(path), str(tmp_path / 'tool.csv')], check=True, capture_output=True)
+    def data_rows(rows):  # the tool's local numbers are the wire's; the IR renumbers, so compare the rows without them
+        return [[c for c in r[2:] if c] for r in rows if r and r[0] == 'Data']
 
-    def normal(rows):
-        out = []
-        for r in rows[1:]:
-            r = r + [''] * (-len(r) % 3)
-            out.append((r[0], r[2], tuple((r[i], r[i + 1]) for i in range(3, len(r), 3) if r[i] and (r[0] == 'Definition' or r[i + 1] != ''))))
-        return out
-
-    ours = normal(csv_rows(path.read_bytes()))
-    with open(tmp_path / 'tool.csv', encoding='utf-8-sig') as handle:
-        theirs = normal(list(csv.reader(handle)))
-    assert ours == theirs
+    for path in [CORPUS / 'activity.fit', CORPUS / 'developer_fields.fit', CORPUS / 'big_endian.fit', CORPUS / 'chained.fit', CORPUS / 'zero_header_crc.fit']:
+        subprocess.run(['java', '-cp', jar, 'com.garmin.fit.csv.CSVTool', '-b', str(path), str(tmp_path / 'tool.csv')], check=True, capture_output=True)
+        with open(tmp_path / 'tool.csv', encoding='utf-8-sig') as handle:
+            theirs = data_rows(list(csv.reader(handle)))
+        assert data_rows(csv_rows(path.read_bytes())) == theirs, path.name
 
 
 def test_csv_of_unknown_and_odd_values():
