@@ -386,7 +386,10 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   locally). `tests.yml` runs the Node job (`act push -j fit-ts` passes); `pglite.yml` builds the fork and runs the pglite
   test, manual only and **not yet run on GitHub** (it follows the fork's build script). `demo/` holds the browser page and its
   build step; it is written and its modules load, but it has not been opened in a browser.
-- Item 7 remains manual: it needs a Garmin Connect account.
+- Item 7 remains manual: it needs a Garmin Connect account. Checklist: `python -m garmin_fit_store export <id> out.fit` for a
+  run with GPS, an indoor activity with developer fields, and a multisport activity (also try `time_shift` and `combine` results);
+  upload each at Activities, Import; compare summary, laps, charts and Connect IQ fields with the original; record the outcome
+  and any rejection (with the file's shape) here.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted
