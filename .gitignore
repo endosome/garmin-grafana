@@ -18,3 +18,7 @@ e2e/node_modules/
 e2e/test-results/
 e2e/playwright-report/
 e2e/.auth/
+
+# act checkout of the PGlite fork (.github/workflows/pglite.yml)
+pglite/
+.pnpm-store/

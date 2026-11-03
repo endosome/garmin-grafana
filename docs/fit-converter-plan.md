@@ -384,7 +384,9 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   with the Python layer by field number. The codec passes every corpus pair; the pglite test imports each corpus file
   through the TypeScript store into PGlite with the TimescaleDB fork, exports it and checks the R4 oracle (it passes
   locally). `tests.yml` runs the Node job (`act push -j fit-ts` passes); `pglite.yml` builds the fork and runs the pglite
-  test, manual only and **not yet run on GitHub** (it follows the fork's build script). `demo/` holds the browser page, its
+  test; manual only. It **passed under act** (`act workflow_dispatch --bind -W .github/workflows/pglite.yml`; `--bind`
+  because the fork's build script bind-mounts the workspace into a Docker builder; the build took 27 minutes, the test 5 s).
+  Not yet run on GitHub itself. `demo/` holds the browser page, its
   build step and `demo/check.mjs`, which opens it in headless Chromium, imports a corpus file, downloads the export and
   compares it (passes locally). That run found and fixed a Node-only `Buffer` in the codec.
 - Item 7 remains manual: it needs a Garmin Connect account. Checklist: `python -m garmin_fit_store export <id> out.fit` for a
