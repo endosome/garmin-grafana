@@ -1,14 +1,11 @@
 # syntax=docker/dockerfile:1
-FROM ghcr.io/astral-sh/uv:0.6.17-python3.13-bookworm-slim AS build
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+FROM ghcr.io/astral-sh/uv:0.9.30-python3.13-bookworm-slim AS build
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 UV_LINK_MODE=copy
 WORKDIR /app
-RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential git \
- && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --locked --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project
 COPY src ./src
-RUN uv sync --locked --no-dev --no-editable
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-editable
 
 FROM python:3.13-slim-bookworm AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH"
