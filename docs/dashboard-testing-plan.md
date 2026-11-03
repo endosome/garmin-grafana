@@ -333,7 +333,7 @@ pre-release test can.
 | L4 browser, tier 5 screenshots | `e2e` job, pinned Grafana only | | yes |
 | L5 performance | | yes | |
 
-The `e2e` job runs in parallel with `pytest` and after `stack`. It gets the same
+The `e2e` job runs in eight shards, in parallel with `pytest`, `dashboards` and `stack` (the status section has the timing). It gets the same
 image by rebuilding it from the GitHub Actions build cache, which takes seconds
 once item 6 of the [test speed plan](test-speed-plan.md) is done, rather than by
 uploading a 268 MB artifact. Target:
@@ -404,3 +404,16 @@ repeats), the upgrade rehearsal, the nightly matrix (`DASHBOARD_MATRIX=full`, 40
 budget job (330 measurements within budget). Two things only the nightly commands showed: the persona fixture
 now records the application version as `migrate` does, and `bench_dashboards.py seed` refreshes the rollups,
 because without it every query read the raw samples and the budgets failed 10 to 50 times over. On GitHub (run 41661821531, green): `stack` 114 s and `e2e` all 29 browser tests in 266 s, with the screenshot baselines generated here matching on the runner. The release path ran end to end on a rehearsal tag (run 41664860657): the called `Tests` run, including the e2e job, completed without being cancelled, and the native arm64 build and the multi-arch merge worked.
+
+### Done means, checked (run 41667987788, 2026-11-03)
+
+- The standards doc no longer says anything is "only verified by looking": step 3 is "run the e2e suite".
+- Every panel is in the registry: 61 with value tests, 3 with a written reason (`NO_VALUES`), 69 in `NOT_YET`,
+  which `test_every_panel_is_in_the_registry` keeps visible. The plan's bar is "value tests or a written reason", so
+  the 69 are the part that is not done.
+- A broken query, unit, override, layout, link, isolation or kiosk behaviour fails a CI job (`dashboards`, `stack`,
+  `e2e`); the release workflow calls `Tests` before it builds the image.
+- Screenshot baselines change only through `e2e/update-baselines.sh`; the budget file only with `--update`, both as diffs.
+- The browser suite runs on genesis in the memory limit with two workers: 29 of 29 in 7.0 minutes.
+- Timing target: `e2e` under 3 minutes and the whole push under about 4 minutes. Eight shards, each 2 m 02 s to
+  3 m 03 s; the whole `Tests` run 3 m 06 s.
