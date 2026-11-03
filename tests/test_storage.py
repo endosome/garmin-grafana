@@ -832,3 +832,11 @@ def test_hourly_medians_and_band_wearing_combine_rollups_with_raw_edge_hours(db)
     assert (panel('E'), panel('D')) == (medians, worn)  # aggregated at query time
     refresh_rollups()
     assert (panel('E'), panel('D')) == (medians, worn)  # materialized
+
+
+def test_record_fetch_stamps_the_source_for_the_last_fetch_panel(db):
+    db.record_fetch()
+    first = query(db, 'SELECT key, updated_at FROM app_info WHERE key LIKE %s', ('last_fetch:%',))
+    assert [row[0] for row in first] == [f'last_fetch:{source(db)}']
+    db.record_fetch()
+    assert query(db, 'SELECT count(*) FROM app_info WHERE key LIKE %s', ('last_fetch:%',)) == [(1,)]

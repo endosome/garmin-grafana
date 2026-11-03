@@ -1753,7 +1753,8 @@ def main():
         try:
             seen_request = store.latest_fetch_request()  # a request made during this sync starts another one
             start = store.pending_start(selected_datasets(), today, USER_TIMEZONE or 'UTC')
-            fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True)
+            if fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True):
+                store.record_fetch()
         except Exception as err:
             logging.error("Synchronization failed (%s); retrying next cycle", type(err).__name__)
         wait_for_next_sync(seen_request)

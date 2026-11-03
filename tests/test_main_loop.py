@@ -69,3 +69,14 @@ def test_a_request_during_a_sync_starts_the_next_one_right_after(gf, clock, monk
     with pytest.raises(StopLoop):
         gf.main()
     assert fetch.call_count == 2 and clock[0] == 5
+
+
+@pytest.mark.parametrize('complete,recorded', [(True, 1), (False, 0)])
+def test_only_a_finished_sync_updates_last_fetch(gf, monkeypatch, complete, recorded):
+    monkeypatch.setattr(gf, 'garmin_login', lambda: mock.Mock())
+    gf.store.pending_start.return_value = date(2026, 1, 1)
+    monkeypatch.setattr(gf, 'fetch_write_bulk', mock.Mock(return_value=complete))
+    gf.time.sleep.side_effect = StopLoop
+    with pytest.raises(StopLoop):
+        gf.main()
+    assert gf.store.record_fetch.call_count == recorded

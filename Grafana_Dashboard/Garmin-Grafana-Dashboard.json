@@ -314,7 +314,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
+        "h": 2,
         "w": 3,
         "x": 0,
         "y": 4
@@ -360,12 +360,84 @@
       "description": "When the watch last uploaded to Garmin Connect. Data recorded after that is not available yet: sync the watch."
     },
     {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow",
+          "noValue": "Never"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 0,
+        "y": 6
+      },
+      "hideTimeOverride": true,
+      "id": 71,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Time$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "refId": "A",
+          "rawQuery": true,
+          "rawSql": "SELECT max(updated_at) AS time FROM app_info WHERE key IN (SELECT 'last_fetch:' || id FROM sources WHERE id IN (${Source:csv}))",
+          "format": "time_series",
+          "editorMode": "code",
+          "hide": false
+        }
+      ],
+      "timeFrom": "24h",
+      "title": "Last Fetch",
+      "transparent": true,
+      "type": "stat",
+      "description": "When the fetcher last finished a sync with Garmin Connect, for example after Fetch now. It does not change the Last Sync time unless the watch has uploaded since."
+    },
+    {
       "description": "Asks the fetcher to sync with Garmin Connect now instead of at its next scheduled run (every 5 minutes by default). Data the watch has not uploaded to Garmin Connect yet still needs a watch sync.",
       "gridPos": {
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 70,
       "options": {
@@ -431,7 +503,7 @@
         },
         "sync": false,
         "update": {
-          "code": "if (context.panel.response && context.panel.response.state === 'Done') {\n  context.grafana.notifySuccess(['Fetch now', 'The fetcher starts a Garmin sync within a few seconds. New data shows up when it finishes.']);\n} else {\n  context.grafana.notifyError(['Fetch now', 'The request was not saved: check the Garmin fetch request data source.']);\n}",
+          "code": "if (context.panel.response && context.panel.response.state === 'Done') {\n  context.grafana.notifySuccess(['Fetch now', 'The fetcher starts a Garmin sync within a few seconds. Last Fetch shows when it finishes; Last Sync only changes after the watch uploads to Garmin Connect.']);\n} else {\n  context.grafana.notifyError(['Fetch now', 'The request was not saved: check the Garmin fetch request data source.']);\n}",
           "confirm": true,
           "contentType": "application/json",
           "datasource": "Garmin fetch request",
@@ -520,10 +592,10 @@
         ]
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 3,
         "x": 0,
-        "y": 9
+        "y": 10
       },
       "hideTimeOverride": true,
       "id": 21,

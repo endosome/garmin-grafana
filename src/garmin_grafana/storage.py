@@ -124,6 +124,12 @@ class PostgresStore:
                 SET start_day=LEAST(sync_ranges.start_day,excluded.start_day)''',
                 [(source, dataset, start) for dataset in datasets])
 
+    def record_fetch(self):
+        """Remember when a sync last finished, for the dashboard's "Last Fetch" (the watch's own upload is "Last Sync")."""
+        with self.connection.transaction(), self.connection.cursor() as cur:
+            cur.execute("INSERT INTO app_info(key,value) VALUES (%s,%s) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()",
+                        (f"last_fetch:{self.source_id(cur)}", "ok"))
+
     def latest_fetch_request(self):
         """Id of the newest "Fetch now" request from Grafana, 0 before the first one."""
         with self.connection.transaction(), self.connection.cursor() as cur:

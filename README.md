@@ -127,7 +127,10 @@ for the rest of `UPDATE_INTERVAL_SECONDS`. A click during a sync starts one more
 sync after it. Viewers can use the button; the kiosk does not get the data source
 and hides the button. It needs the Business Forms plugin, which Compose installs
 (`volkovlabs-form-panel`, community-signed, like the hourly heatmap). Garmin
-Connect only has what the watch has uploaded, so sync the watch first.
+Connect only has what the watch has uploaded, so sync the watch first. "Last Sync" is
+the watch's last upload to Garmin Connect and only moves when the watch uploads; "Last
+Fetch" below it is when the collector last finished a sync, so it moves after every
+Fetch now.
 
 ## Touchscreen kiosk
 
