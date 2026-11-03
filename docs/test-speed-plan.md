@@ -348,3 +348,16 @@ each pushing by digest with its own cache scope, and a merge job runs `docker bu
 Not run: there is no way to run it without a tag and the package registry, so the first release shows
 whether the target of 1 m 15 s holds. Pushing the image the `stack` job tested, instead of rebuilding it,
 stays a later step.
+
+### Second CI run and the release dry run (2026-11-03)
+
+The dashboard tests are now their own job, `dashboards`, with its own database service, in parallel with `pytest`
+and `stack` (run 41663379031, green, 7 m 19 s): the coverage step takes 11 s, the persona and contract step 16 s, so
+both are inside the 25 s and 23 s targets, and the `pytest` and `dashboards` jobs finish in 57 s and 62 s, before
+`stack` (115 s) does. `e2e` (5 m 20 s) sets the wall clock.
+
+The release workflow has a manual dry run (`workflow_dispatch`: builds both platforms, pushes nothing). Run 41663452177:
+amd64 37 s on `ubuntu-26.04` and arm64 31 s on `ubuntu-26.04-arm`, in parallel, against 2 m 15 s before (target 1 m 15 s),
+with a cold layer cache. Not exercised, because it needs a real tag and writes to GHCR: the push by digest and the
+merge job (`imagetools create`). The first tag shows that; the concurrency group of the called `Tests` run contains the
+caller's workflow name and the tag ref, so a branch push does not cancel it.
