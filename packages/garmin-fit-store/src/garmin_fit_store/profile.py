@@ -19,6 +19,7 @@ def _scalar_list(values, default):
 def _field(raw):
     """One field of a message in the document's shape; subfields keep their reference-field maps."""
     return {
+        'number': raw['num'],
         'name': raw['name'],
         'type': raw['type'],
         'base_type': raw['base_type'],
