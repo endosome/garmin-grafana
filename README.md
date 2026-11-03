@@ -82,6 +82,7 @@ Do not commit secrets. Base64 is encoding, not encryption.
 | `PGFETCH_REQUEST_USER` | With `PGREADER_PASSWORD`: the "Fetch now" button's INSERT-only login, same password; grafana_fetch_request |
 | `GRAFANA_DB_PASSWORD` | Compose password for the grafana_reader and grafana_fetch_request roles |
 | `GRAFANA_PASSWORD`, `GRAFANA_USER`, `GRAFANA_PORT` | Compose Grafana administrator password, username (admin), local port (3000) |
+| `GRAFANA_IMAGE` | Compose: the Grafana image for both instances, `grafana/grafana:13.0.2`; the nightly compatibility run sets the newest release |
 | `GRAFANA_HOME_DASHBOARD` | Compose: provisioned dashboard file opened after login; `Garmin-Health-Overview.json` (default), `Garmin-Grafana-Dashboard.json` (Garmin Stats), `Garmin-Strength-Training-Dashboard.json` or `Garmin-Ski-Season.json`. A home dashboard chosen in Grafana's user, team or organization preferences takes precedence |
 | `KIOSK_DASHBOARD` | Compose profile `kiosk`: the one dashboard file the touchscreen shows, `Garmin-Health-Overview.json`; any of the four files above |
 | `KIOSK_BIND`, `KIOSK_PORT` | Address and port of the touchscreen page, 127.0.0.1 and 3001; see Touchscreen kiosk |

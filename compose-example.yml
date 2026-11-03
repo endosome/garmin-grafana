@@ -62,7 +62,7 @@ services:
       migrate:
         condition: service_completed_successfully
   grafana:
-    image: grafana/grafana:13.0.2
+    image: ${GRAFANA_IMAGE:-grafana/grafana:13.0.2}
     restart: unless-stopped
     environment:
       <<: *database-env
@@ -92,7 +92,7 @@ services:
         condition: service_completed_successfully
   # Touchscreen kiosk (docker compose --profile kiosk up -d): one dashboard, anonymous viewers, no settings.
   grafana-kiosk:
-    image: grafana/grafana:13.0.2
+    image: ${GRAFANA_IMAGE:-grafana/grafana:13.0.2}
     restart: unless-stopped
     profiles: [kiosk]
     environment:

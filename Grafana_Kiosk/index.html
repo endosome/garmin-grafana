@@ -6,6 +6,8 @@
 <title>Garmin Kiosk</title>
 <style>
   html, body { margin: 0; height: 100%; background: #111217; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  main { height: 100%; }
+  h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   iframe { border: 0; width: 100%; height: 100%; display: block; }
   #back {
     position: fixed; right: 200px; bottom: 12px; display: none; align-items: center; gap: 8px;
@@ -19,8 +21,11 @@
 <!-- The dashboard runs in a locked-down Grafana (anonymous viewer, one dashboard, kiosk mode).
      This page adds what kiosk mode lacks on a touchscreen: a way back from a full-screen panel,
      a return to the dashboard when nobody touches it, and a fence against leaving it. -->
+<main>
+<h1>Garmin health dashboard</h1>
 <iframe id="grafana" sandbox="allow-scripts allow-same-origin allow-forms" title="Garmin dashboard"></iframe>
 <button id="back" type="button" aria-label="Back to the dashboard">&#8592; Back</button>
+</main>
 <script>
   // Options come from this page's address and pass through to Grafana, e.g.
   // /?var-Source=1&var-TimeZone=Europe/Budapest&_dash.hideVariables&idle=180
