@@ -361,4 +361,4 @@ amd64 37 s on `ubuntu-26.04` and arm64 31 s on `ubuntu-26.04-arm`, in parallel, 
 with a cold layer cache. Then a rehearsal tag, `v0.0.0-ci-rehearsal` (run 41664860657, green, 9 m 27 s: the called `Tests` 8 m 5 s, the two native
 builds 46 s and 55 s in parallel, and the merge job 16 s). The push by digest and `imagetools create` work, and the
 manifest lists linux/amd64 and linux/arm64 (plus the two attestation entries). Release build 55 s against the 1 m 15 s
-target, from 2 m 15 s. The tag was removed from git afterwards; the image version of that tag is left in GHCR.
+target, from 2 m 15 s. The tag was removed from git and its image version from GHCR afterwards.
