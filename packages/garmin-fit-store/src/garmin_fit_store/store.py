@@ -149,3 +149,11 @@ def retry_pending(connection, source_id=None):
             stored += 1
             connection.execute('DELETE FROM fit.pending_imports WHERE id = %s', (pending_id,))
     return stored, failing
+
+
+def materialize(connection, file_id):
+    """Encode a derived file's rows and keep the bytes (and their hash) as its blob; returns the bytes."""
+    data = export_file(connection, file_id)
+    connection.execute('UPDATE fit.files SET sha256 = %s WHERE id = %s', (hashlib.sha256(data).digest(), file_id))
+    connection.execute('INSERT INTO fit.blobs VALUES (%s, %s) ON CONFLICT (file_id) DO UPDATE SET data = excluded.data', (file_id, data))
+    return data

@@ -50,6 +50,17 @@ if (process.env.PROFILE_SQL) {
   console.log('v_record:', JSON.stringify(view))
   if (view.n !== 30 || view.hr !== 124) { console.log('v_record DIFFERENT'); failures++ }
 }
+if (process.env.PROFILE_SQL) {
+  const activity = (await pg.query("SELECT id FROM fit.files WHERE sha256 = decode(md5('activity.jsonl'), 'hex')")).rows[0].id
+  const shifted = (await pg.query('SELECT fit.time_shift($1, 3600) AS id', [activity])).rows[0].id
+  const first = (await pg.query('SELECT min(time) AS t FROM fit.records WHERE file_id = $1', [shifted])).rows[0].t.toISOString()
+  const removed = (await pg.query("SELECT fit.remove_section($1, '2026-01-01T10:00:10Z', '2026-01-01T10:00:20Z', true) AS id", [activity])).rows[0].id
+  const left = (await pg.query('SELECT count(*)::int AS n FROM fit.records WHERE file_id = $1', [removed])).rows[0].n
+  const combined = (await pg.query('SELECT fit.combine(ARRAY[$1::bigint]) AS id', [activity])).rows[0].id
+  const kept = (await pg.query('SELECT count(*)::int AS n FROM fit.records WHERE file_id = $1', [combined])).rows[0].n
+  console.log('operations:', first, left, kept)
+  if (first !== '2026-01-01T11:00:00.000Z' || left !== 20 || kept !== 30) { console.log('operations DIFFERENT'); failures++ }
+}
 const { rows } = await pg.query("SELECT count(*)::int AS chunks FROM timescaledb_information.chunks WHERE hypertable_name = 'records'")
 console.log('record chunks:', rows[0].chunks)
 await pg.close()
