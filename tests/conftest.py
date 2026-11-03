@@ -27,6 +27,34 @@ def pytest_terminal_summary(terminalreporter):
     terminalreporter.write_line(f'dashboard panels: {covered} with value tests, {len(panel_registry.SCREENSHOT)} with a screenshot baseline, {len(panel_registry.NO_VALUES)} with a written reason (of {total})')
 
 
+
+
+
+
+def pytest_configure(config):
+    """With pytest-xdist (`-n 2`), each worker gets its own empty database next to the configured one: two workers sharing a database
+    deadlock on migrations and rollup refreshes. Without xdist nothing changes."""
+    if hasattr(config, 'workerinput') and os.getenv('TEST_DATABASE') == '1':
+        name = f"{os.environ['PGDATABASE']}_{config.workerinput['workerid']}"
+        from psycopg import sql
+        with storage.connect() as admin:
+            admin.autocommit = True
+            admin.execute(sql.SQL('DROP DATABASE IF EXISTS {} WITH (FORCE)').format(sql.Identifier(name)))
+            admin.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(name)))
+        os.environ['PGDATABASE'] = name
+
+
+def pytest_unconfigure(config):
+    """The controller process drops the workers' databases once they have finished."""
+    if hasattr(config, 'workerinput') or not getattr(config.option, 'numprocesses', None) or os.getenv('TEST_DATABASE') != '1':
+        return
+    from psycopg import sql
+    with storage.connect() as admin:
+        admin.autocommit = True
+        for (name,) in admin.execute("SELECT datname FROM pg_database WHERE datname LIKE %s", (os.environ['PGDATABASE'] + r'\_gw%',)).fetchall():
+            admin.execute(sql.SQL('DROP DATABASE IF EXISTS {} WITH (FORCE)').format(sql.Identifier(name)))
+
+
 TEST_ENV = {
     "RATE_LIMIT_CALLS_SECONDS": "0",
 }

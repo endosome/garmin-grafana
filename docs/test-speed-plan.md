@@ -370,11 +370,12 @@ target, from 2 m 15 s. The tag was removed from git and its image version from G
 | `Tests` wall clock on a push | ≤ 1 m 50 s | 3 m 06 s with the browser tests; the jobs of this plan alone (`pytest` 54 s, `dashboards` 68 s, `stack` 112 s) finish in 1 m 52 s, the `stack` job being the floor the target names |
 | CI pytest step | ≤ 25 s | 11 s (coverage run) and 16 s (persona and contract tests, in the `dashboards` job) |
 | Persona tests alone | < 23 s | 16 s with the contract tests, as its own job |
-| Local full DB suite (no coverage) | ≤ 40 s | 61 s serial for everything including the persona load; 20 s + 40 s in the CI split |
+| Local full DB suite (no coverage) | ≤ 40 s | 38–42 s with `pytest -n 2` (each worker has its own database, see item 10 below), 58–66 s serial |
 | Test runs per release | 1 | 1 |
 | Release multi-arch build | ≤ 1 m 15 s | 55 s (rehearsal tag) |
 
 The wall clock grew from 2 m 46 s to 3 m 06 s because the browser suite of the dashboard testing plan was added
 (7 m 19 s when it ran in two workers on one runner; eight shards each starting their own stack brought it back
-down). The local full suite does not reach 40 s: 61 s is the serial run of 531 tests, and CI gets under it only by
-running the two halves in separate jobs. xdist was tried, deadlocked on the runner and is out.
+down). Item 10 came back for local runs only: `pytest -n 2` gives every xdist worker its own database (`garmin_gw0`, `garmin_gw1`,
+created empty and dropped afterwards by `tests/conftest.py`), which is what the deadlock on a shared database called for.
+CI does not need it: the two halves already run as separate jobs.
