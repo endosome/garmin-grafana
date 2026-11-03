@@ -380,7 +380,7 @@ Phases 0 to 5 are implemented. What exists, and what is deliberately not done:
 | Layer | Where | Notes |
 | --- | --- | --- |
 | L0 lint | `tests/test_dashboard_lint.py`, `tests/dashboards.py` | Ratchet file `tests/data/lint_ratchet.json`: 58 missing descriptions and 21 `noValue` that are not an en dash. The fixes made on the way: canonical JSON, `weekStart`, `graphTooltip` and `description` for Garmin Stats and Strength, a dead datasource variable, the Ski to Strength link keeps variables. |
-| L1 contracts | `tests/test_dashboard_contracts.py`, `tests/panel_registry.py`, `tests/data/panel_schemas.json` | Push runs one zone and two ranges, the nightly workflow all fifteen. Panel registry: 61 of 130 panels have value assertions, 69 are in `NOT_YET`. |
+| L1 contracts | `tests/test_dashboard_contracts.py`, `tests/panel_registry.py`, `tests/data/panel_schemas.json` | Push runs one zone and two ranges, the nightly workflow all fifteen. Panel registry, all 130 panels: 64 with value tests, 63 chart panels with a reviewed screenshot baseline (`SCREENSHOT`), 6 with a written reason (`NO_VALUES`: text, button, version, three geomaps). |
 | L2 semantics | `tests/test_personas.py` | Unchanged; the registry now says what is still missing. Baseline bands, the remaining Garmin Stats panels and the strength filters are the next ones. |
 | L3 Grafana server | `tests/test_grafana_stack.py` | Replaces `smoke_grafana.py` and `smoke_kiosk.py`. The datasource expands the time macros itself (checked against Grafana 13.0.2); the frontend substitutes variables and `${__interval}`. The API returns each dashboard as its file (minus `id` and `version`), so the drift check compares them directly. |
 | L4 browser | `e2e/` | Tiers 1 to 5. Run with `e2e/run.sh` (pinned Playwright 1.64.1 image, 3 GB, two workers); baselines with `e2e/update-baselines.sh`. 1.7 MB of screenshots for 93 chart panels. Geomaps are left out of the screenshots: their basemap needs the internet. |
@@ -408,9 +408,8 @@ because without it every query read the raw samples and the budgets failed 10 to
 ### Done means, checked (run 41667987788, 2026-11-03)
 
 - The standards doc no longer says anything is "only verified by looking": step 3 is "run the e2e suite".
-- Every panel is in the registry: 61 with value tests, 3 with a written reason (`NO_VALUES`), 69 in `NOT_YET`,
-  which `test_every_panel_is_in_the_registry` keeps visible. The plan's bar is "value tests or a written reason", so
-  the 69 are the part that is not done.
+- Every panel is in the registry with value tests (64), a reviewed screenshot baseline (63) or a written reason (6):
+  `test_every_panel_is_in_the_registry` fails for a panel that is in none of them.
 - A broken query, unit, override, layout, link, isolation or kiosk behaviour fails a CI job (`dashboards`, `stack`,
   `e2e`); the release workflow calls `Tests` before it builds the image.
 - Screenshot baselines change only through `e2e/update-baselines.sh`; the budget file only with `--update`, both as diffs.

@@ -1,12 +1,14 @@
 """Which tests assert the values each dashboard panel shows, or why none does.
 
 Every panel of every dashboard must be listed, as 'File.json:panel id'. A new panel therefore cannot land without either a
-value test (name it here) or a written reason. `NOT_YET` is the backlog: panels that only have query-execution and column
-contract coverage; the list may only shrink, and the terminal summary prints the share of panels with value assertions.
+value test (name it here) or a written reason. Chart panels that only a screenshot baseline covers are in `SCREENSHOT`. The terminal summary prints the share of panels with value tests.
 """
 
 # panel -> tests that assert its values
 VALUE_TESTS = {
+    'Garmin-Grafana-Dashboard.json:38': ['test_personas.py::test_recent_activity_table_lists_the_last_weeks_activities'],
+    'Garmin-Ski-Season.json:3': ['test_personas.py::test_ski_vertical_per_week_tile_averages_the_last_four_weeks_on_foot'],
+    'Garmin-Strength-Training-Dashboard.json:1014': ['test_personas.py::test_recent_sets_table_lists_the_latest_weighted_sets_first'],
     'Garmin-Grafana-Dashboard.json:1': ['test_personas.py::test_dashboards_show_a_real_fitbit_month', 'test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person', 'test_personas.py::test_records_without_local_dates_use_the_dashboard_time_zone'],  # Daily Steps
     'Garmin-Grafana-Dashboard.json:15': ['test_personas.py::test_dashboards_show_a_real_fitbit_month'],  # Heart Rate
     'Garmin-Grafana-Dashboard.json:26': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Last Sync 
@@ -72,80 +74,78 @@ VALUE_TESTS = {
 
 # panel -> why no test asserts its values
 NO_VALUES = {
+    'Garmin-Grafana-Dashboard.json:49': 'geomap: the basemap comes from the internet, which the browser tests block; the query is covered by the contract and persona tests',
+    'Garmin-Grafana-Dashboard.json:50': 'geomap: the basemap comes from the internet, which the browser tests block; the query is covered by the contract and persona tests',
+    'Garmin-Grafana-Dashboard.json:69': 'geomap: the basemap comes from the internet, which the browser tests block; the query is covered by the contract and persona tests',
     'Garmin-Grafana-Dashboard.json:25': 'text panel: static content',
     'Garmin-Grafana-Dashboard.json:70': 'button: the insert is checked by test_fetch_now_button_inserts_through_its_own_datasource_outside_the_kiosk',
     'Garmin-Health-Overview.json:41': 'the version of the application: not a health value',
 }
 
-# Panels with no value assertions yet (query execution, column contract and isolation only)
-NOT_YET = {
-    'Garmin-Grafana-Dashboard.json:10',  # barchart: Daily Calories
-    'Garmin-Grafana-Dashboard.json:11',  # timeseries: Daily avg health metrics
-    'Garmin-Grafana-Dashboard.json:12',  # barchart: Sleep Score
-    'Garmin-Grafana-Dashboard.json:13',  # barchart: Sleep Stages
-    'Garmin-Grafana-Dashboard.json:16',  # timeseries: Steps Cumulative (24h)
-    'Garmin-Grafana-Dashboard.json:17',  # barchart: Daily Activity Overview
-    'Garmin-Grafana-Dashboard.json:18',  # barchart: Stress overview
-    'Garmin-Grafana-Dashboard.json:19',  # barchart: Body Battery overview
-    'Garmin-Grafana-Dashboard.json:20',  # marcusolsson-hourly-heatmap-panel: Hourly walk heatmap
-    'Garmin-Grafana-Dashboard.json:21',  # histogram: Heart Rate Distribution
-    'Garmin-Grafana-Dashboard.json:22',  # piechart: Average Sleep trends
-    'Garmin-Grafana-Dashboard.json:23',  # piechart: Avg Activity over given duration
-    'Garmin-Grafana-Dashboard.json:27',  # Sleep Regularity
-    'Garmin-Grafana-Dashboard.json:3',  # barchart: Daily Distance
-    'Garmin-Grafana-Dashboard.json:32',  # gauge: Last Sleep Hours
-    'Garmin-Grafana-Dashboard.json:35',  # piechart: Today Activity
-    'Garmin-Grafana-Dashboard.json:36',  # piechart: Last Sleep
-    'Garmin-Grafana-Dashboard.json:37',  # barchart: Body Battery Level Change
-    'Garmin-Grafana-Dashboard.json:38',  # table: Recent Activity
-    'Garmin-Grafana-Dashboard.json:4',  # barchart: Daily Intensity Minutes
-    'Garmin-Grafana-Dashboard.json:41',  # state-timeline: Activities
-    'Garmin-Grafana-Dashboard.json:43',  # piechart: Activity HR Zones (mean)
-    'Garmin-Grafana-Dashboard.json:44',  # piechart: Activity Calories (mean)
-    'Garmin-Grafana-Dashboard.json:46',  # barchart: GPS Track Altitude
-    'Garmin-Grafana-Dashboard.json:47',  # barchart: GPS Track pace
-    'Garmin-Grafana-Dashboard.json:48',  # barchart: Activity HR difference (Max-Avg)
-    'Garmin-Grafana-Dashboard.json:49',  # geomap: GPS Track by Heart Rate
-    'Garmin-Grafana-Dashboard.json:50',  # geomap: GPS Track by Velocity
-    'Garmin-Grafana-Dashboard.json:51',  # timeseries: Daily avg health metrics
-    'Garmin-Grafana-Dashboard.json:52',  # timeseries: Sleep Movement Activity
-    'Garmin-Grafana-Dashboard.json:53',  # barchart: Activity Distance
-    'Garmin-Grafana-Dashboard.json:54',  # barchart: Activity Duration
-    'Garmin-Grafana-Dashboard.json:55',  # xychart: Heart Rate vs Pace
-    'Garmin-Grafana-Dashboard.json:57',  # trend: Distance vs HR
-    'Garmin-Grafana-Dashboard.json:58',  # barchart: HR Range (Max-Min)
-    'Garmin-Grafana-Dashboard.json:6',  # timeseries: Sleep Stages
-    'Garmin-Grafana-Dashboard.json:61',  # barchart: GPS Track Cadence
-    'Garmin-Grafana-Dashboard.json:62',  # timeseries: Breathing Rates
-    'Garmin-Grafana-Dashboard.json:63',  # timeseries: Race Predictions
-    'Garmin-Grafana-Dashboard.json:64',  # timeseries: VO2 Max
-    'Garmin-Grafana-Dashboard.json:65',  # heatmap: HR Histogram Heatmap
-    'Garmin-Grafana-Dashboard.json:66',  # state-timeline: Month at a Glance (Daily Average)
-    'Garmin-Grafana-Dashboard.json:69',  # geomap: Heatmap for GPS Activity (within selected time)
-    'Garmin-Grafana-Dashboard.json:7',  # timeseries: Sleep Intraday Stats
-    'Garmin-Health-Overview.json:10',  # state-timeline: Sleep stages (last 24 hours)
-    'Garmin-Health-Overview.json:11',  # bargauge: Last sleep by stage
-    'Garmin-Health-Overview.json:15',  # timeseries: Body Battery
-    'Garmin-Health-Overview.json:16',  # timeseries: Average stress
-    'Garmin-Health-Overview.json:21',  # timeseries: Breathing rate during sleep
-    'Garmin-Health-Overview.json:22',  # timeseries: SpO2 during sleep
-    'Garmin-Health-Overview.json:23',  # timeseries: Skin temperature change
-    'Garmin-Health-Overview.json:26',  # timeseries: Intensity minutes per week
-    'Garmin-Health-Overview.json:30',  # timeseries: Fitness age
-    'Garmin-Health-Overview.json:33',  # timeseries: Training load: acute vs chronic
-    'Garmin-Health-Overview.json:34',  # timeseries: Training readiness (first reading of the day)
-    'Garmin-Health-Overview.json:38',  # timeseries: Heart rate
-    'Garmin-Health-Overview.json:39',  # timeseries: Stress and Body Battery
-    'Garmin-Ski-Season.json:11',  # timeseries: Training time per week by discipline
-    'Garmin-Ski-Season.json:13',  # timeseries: Time in heart-rate zones per week
-    'Garmin-Ski-Season.json:16',  # timeseries: Training load per week
-    'Garmin-Ski-Season.json:21',  # timeseries: Vertical on snow per week
-    'Garmin-Ski-Season.json:23',  # timeseries: Training load: acute vs chronic
-    'Garmin-Ski-Season.json:24',  # timeseries: Training readiness (first reading of the day)
-    'Garmin-Ski-Season.json:3',  # stat: Vertical / week, 4 weeks
-    'Garmin-Strength-Training-Dashboard.json:1009',  # barchart: Training Volume per Workout
-    'Garmin-Strength-Training-Dashboard.json:1012',  # piechart: Volume by Category
-    'Garmin-Strength-Training-Dashboard.json:1014',  # table: Recent Sets (Workout Detail)
-    'Garmin-Strength-Training-Dashboard.json:1018',  # barchart: Time Under Tension by Exercise
-    'Garmin-Strength-Training-Dashboard.json:1021',  # state-timeline: Workout Calendar
+# Chart panels whose rendered values are asserted by a reviewed screenshot baseline (e2e/tests/__screenshots__/screenshots.spec.ts/),
+# taken on one persona over one range. A change to what the panel draws is a diff someone has to accept.
+SCREENSHOT = {
+    'Garmin-Grafana-Dashboard.json:10': 'stats-10.png',
+    'Garmin-Grafana-Dashboard.json:11': 'stats-11.png',
+    'Garmin-Grafana-Dashboard.json:12': 'stats-12.png',
+    'Garmin-Grafana-Dashboard.json:13': 'stats-13.png',
+    'Garmin-Grafana-Dashboard.json:16': 'stats-16.png',
+    'Garmin-Grafana-Dashboard.json:17': 'stats-17.png',
+    'Garmin-Grafana-Dashboard.json:18': 'stats-18.png',
+    'Garmin-Grafana-Dashboard.json:19': 'stats-19.png',
+    'Garmin-Grafana-Dashboard.json:20': 'stats-20.png',
+    'Garmin-Grafana-Dashboard.json:21': 'stats-21.png',
+    'Garmin-Grafana-Dashboard.json:22': 'stats-22.png',
+    'Garmin-Grafana-Dashboard.json:23': 'stats-23.png',
+    'Garmin-Grafana-Dashboard.json:27': 'stats-27.png',
+    'Garmin-Grafana-Dashboard.json:3': 'stats-3.png',
+    'Garmin-Grafana-Dashboard.json:32': 'stats-32.png',
+    'Garmin-Grafana-Dashboard.json:35': 'stats-35.png',
+    'Garmin-Grafana-Dashboard.json:36': 'stats-36.png',
+    'Garmin-Grafana-Dashboard.json:37': 'stats-37.png',
+    'Garmin-Grafana-Dashboard.json:4': 'stats-4.png',
+    'Garmin-Grafana-Dashboard.json:41': 'stats-41.png',
+    'Garmin-Grafana-Dashboard.json:43': 'stats-43.png',
+    'Garmin-Grafana-Dashboard.json:44': 'stats-44.png',
+    'Garmin-Grafana-Dashboard.json:46': 'stats-46.png',
+    'Garmin-Grafana-Dashboard.json:47': 'stats-47.png',
+    'Garmin-Grafana-Dashboard.json:48': 'stats-48.png',
+    'Garmin-Grafana-Dashboard.json:51': 'stats-51.png',
+    'Garmin-Grafana-Dashboard.json:52': 'stats-52.png',
+    'Garmin-Grafana-Dashboard.json:53': 'stats-53.png',
+    'Garmin-Grafana-Dashboard.json:54': 'stats-54.png',
+    'Garmin-Grafana-Dashboard.json:55': 'stats-55.png',
+    'Garmin-Grafana-Dashboard.json:57': 'stats-57.png',
+    'Garmin-Grafana-Dashboard.json:58': 'stats-58.png',
+    'Garmin-Grafana-Dashboard.json:6': 'stats-6.png',
+    'Garmin-Grafana-Dashboard.json:61': 'stats-61.png',
+    'Garmin-Grafana-Dashboard.json:62': 'stats-62.png',
+    'Garmin-Grafana-Dashboard.json:63': 'stats-63.png',
+    'Garmin-Grafana-Dashboard.json:64': 'stats-64.png',
+    'Garmin-Grafana-Dashboard.json:65': 'stats-65.png',
+    'Garmin-Grafana-Dashboard.json:66': 'stats-66.png',
+    'Garmin-Grafana-Dashboard.json:7': 'stats-7.png',
+    'Garmin-Health-Overview.json:10': 'health-10.png',
+    'Garmin-Health-Overview.json:11': 'health-11.png',
+    'Garmin-Health-Overview.json:15': 'health-15.png',
+    'Garmin-Health-Overview.json:16': 'health-16.png',
+    'Garmin-Health-Overview.json:21': 'health-21.png',
+    'Garmin-Health-Overview.json:22': 'health-22.png',
+    'Garmin-Health-Overview.json:23': 'health-23.png',
+    'Garmin-Health-Overview.json:26': 'health-26.png',
+    'Garmin-Health-Overview.json:30': 'health-30.png',
+    'Garmin-Health-Overview.json:33': 'health-33.png',
+    'Garmin-Health-Overview.json:34': 'health-34.png',
+    'Garmin-Health-Overview.json:38': 'health-38.png',
+    'Garmin-Health-Overview.json:39': 'health-39.png',
+    'Garmin-Ski-Season.json:11': 'ski-11.png',
+    'Garmin-Ski-Season.json:13': 'ski-13.png',
+    'Garmin-Ski-Season.json:16': 'ski-16.png',
+    'Garmin-Ski-Season.json:21': 'ski-21.png',
+    'Garmin-Ski-Season.json:23': 'ski-23.png',
+    'Garmin-Ski-Season.json:24': 'ski-24.png',
+    'Garmin-Strength-Training-Dashboard.json:1009': 'strength-1009.png',
+    'Garmin-Strength-Training-Dashboard.json:1012': 'strength-1012.png',
+    'Garmin-Strength-Training-Dashboard.json:1018': 'strength-1018.png',
+    'Garmin-Strength-Training-Dashboard.json:1021': 'strength-1021.png',
 }

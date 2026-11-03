@@ -2,6 +2,7 @@
 from datetime import date, datetime, timedelta, timezone
 import json
 import math
+import re
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import pytest
@@ -263,3 +264,37 @@ def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, reade
                             if not ok:
                                 mismatches.append((persona.account, label, args))
     assert compared > 500 and with_data == set(RAW_PANEL_QUERIES) and mismatches == []
+
+
+def test_recent_activity_table_lists_the_last_weeks_activities(load):
+    persona = healthy_lifestyle()
+    rows = load(persona)('Garmin-Grafana-Dashboard.json', 38, NOW - timedelta(days=7), ref='B')
+    want = sorted((r.time, r.values['activityType'], r.values.get('distance')) for r in persona.records
+                  if r.dataset == 'ActivitySummary' and NOW - timedelta(days=7) <= r.time <= NOW and r.values['activityType'] != 'No Activity')
+    assert want
+    assert [(r['Time'], r['Activity Type'], r['Distance']) for r in rows] == pytest.approx(want)
+
+
+def test_ski_vertical_per_week_tile_averages_the_last_four_weeks_on_foot(load):
+    persona = ski_tourer()
+    # The panel's sports on foot, found by the same patterns as its CASE, first match wins: resort skiing is not one of them.
+    resort_first = re.compile(r'backcountry|ski_?tour|splitboard|cross_country_ski|skate_ski|classic_ski|nordic|ski|snowboard', re.I)
+    on_foot = re.compile(r'backcountry|ski_?tour|splitboard|cross_country_ski|skate_ski|classic_ski|nordic|snowshoe|hik|mountaineer|trail_run|stair|floor_climb|incline|run|walk', re.I)
+    first_day = local_day(NOW) - timedelta(days=27)
+    gains = [r.values.get('elevationGain') or 0 for r in persona.records
+             if r.dataset == 'ActivitySummary' and r.values.get('activityName') != 'END' and local_day(r.time) >= first_day and r.time <= NOW
+             and on_foot.search(r.values['activityType']) and not (resort_first.search(r.values['activityType']) and not re.search(r'backcountry|ski_?tour|splitboard|cross_country_ski|skate_ski|classic_ski|nordic', r.values['activityType'], re.I))]
+    got = list(load(persona)('Garmin-Ski-Season.json', 3, NOW - timedelta(days=30))[0].values())[0]
+    assert got == pytest.approx(sum(gains) / 4)
+
+
+def test_recent_sets_table_lists_the_latest_weighted_sets_first(load):
+    persona = gym_goer()
+    rows = load(persona)('Garmin-Strength-Training-Dashboard.json', 'Recent Sets (Workout Detail)', NOW - timedelta(days=400))
+    sets = sorted((r for r in persona.records if r.dataset == 'StrengthExerciseSet' and (r.values.get('Weight_kg') or 0) > 0
+                   and r.tags['ExerciseLabel'] != 'ROW/INDOOR_ROW' and r.tags['ExerciseCategory'] != 'RUN'), key=lambda r: r.time, reverse=True)
+    assert len(rows) == min(100, len(sets))
+    assert [r['Time'] for r in rows] == sorted((r['Time'] for r in rows), reverse=True)
+    assert {(r['Time'], r['Exercise'], r['Reps'], r['Weight (kg)']) for r in rows[:5]} <= {
+        (s.time, s.tags['ExerciseLabel'], s.values['Reps'], s.values['Weight_kg']) for s in sets[:100]}
+    assert all(r['Volume (kg)'] == pytest.approx(r['Reps'] * r['Weight (kg)']) for r in rows)

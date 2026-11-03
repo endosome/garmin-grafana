@@ -275,7 +275,7 @@ def test_dashboard_colours_are_grafana_colours():
 def test_every_panel_is_in_the_registry():
     import panel_registry as registry
     panels = {label(n, p) for n, _, p in PANELS if p['type'] != 'row'}
-    listed = [set(registry.VALUE_TESTS), set(registry.NO_VALUES), set(registry.NOT_YET)]
+    listed = [set(registry.VALUE_TESTS), set(registry.NO_VALUES), set(registry.SCREENSHOT)]
     assert sum(len(part) for part in listed) == len(set().union(*listed)), 'a panel is listed twice'
     assert set().union(*listed) == panels, (f'not in the registry: {sorted(panels - set().union(*listed))}; '
                                             f'no longer a panel: {sorted(set().union(*listed) - panels)}')
@@ -283,3 +283,9 @@ def test_every_panel_is_in_the_registry():
     for test in named:  # a renamed or removed test must be renamed here too
         path, function = test.split('::')
         assert re.search(rf'^def {function}\b', (ROOT / 'tests' / path).read_text(), re.M), test
+
+
+def test_every_screenshot_in_the_registry_has_a_baseline():
+    import panel_registry as registry
+    for panel, image in registry.SCREENSHOT.items():
+        assert (ROOT / 'e2e/tests/__screenshots__/screenshots.spec.ts' / image).is_file(), f'{panel}: no baseline {image}'

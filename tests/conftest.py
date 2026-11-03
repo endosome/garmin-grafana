@@ -22,8 +22,9 @@ def pytest_addoption(parser):
 
 def pytest_terminal_summary(terminalreporter):
     import panel_registry
-    covered, total = len(panel_registry.VALUE_TESTS), len(panel_registry.VALUE_TESTS) + len(panel_registry.NOT_YET)
-    terminalreporter.write_line(f'dashboard panels with value assertions: {covered} of {total} ({covered * 100 // total} %)')
+    covered = len(panel_registry.VALUE_TESTS)
+    total = covered + len(panel_registry.SCREENSHOT) + len(panel_registry.NO_VALUES)
+    terminalreporter.write_line(f'dashboard panels: {covered} with value tests, {len(panel_registry.SCREENSHOT)} with a screenshot baseline, {len(panel_registry.NO_VALUES)} with a written reason (of {total})')
 
 
 TEST_ENV = {
