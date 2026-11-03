@@ -1,0 +1,47 @@
+[project]
+name = "garmin-fit-store"
+version = "0.1.0"
+description = "Convert Garmin FIT files to and from PostgreSQL + TimescaleDB without losing data"
+requires-python = "==3.13.*"
+license = { file = "LICENSE" }
+dependencies = [
+    "garmin-fit-sdk==21.218.0",
+    "psycopg[binary]>=3.2,<4",
+]
+
+[project.scripts]
+garmin-fit-store = "garmin_fit_store.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/garmin_fit_store"]
+
+[dependency-groups]
+dev = [
+    "fitparse==1.2.0",
+    "pytest>=8",
+    "pytest-cov>=6",
+    "pytest-xdist>=3.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = [
+    "error",
+    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:fitparse.*",
+]
+
+[tool.coverage.run]
+source = ["src/garmin_fit_store"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 98

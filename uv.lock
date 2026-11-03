@@ -2,6 +2,12 @@ version = 1
 revision = 5
 requires-python = "==3.13.*"
 
+[manifest]
+members = [
+    "garmin-fit-store",
+    "garmin-grafana",
+]
+
 [[package]]
 name = "certifi"
 version = "2025.1.31"
@@ -141,12 +147,53 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/61/ed/5637fe96c56d55dfa6317ab16745f9a83ef2690d093cee8f0b59f983675f/fitparse-1.2.0.tar.gz", hash = "sha256:2d691022452dea6dabad13cc6e017ca467fe8a3a895cd3ac67a50a7bb716b4a9", size = 65716, upload-time = "2020-09-07T03:27:21.926Z" }
 
 [[package]]
+name = "garmin-fit-sdk"
+version = "21.218.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b2/c7e1984d828332e7d36d75044f91f2113de246c206931d185e5ed224fc62/garmin_fit_sdk-21.218.0.tar.gz", hash = "sha256:70dc8c39cec3483871f966415ee786a12e121af2a1729b5719f430078d2de495", size = 216076, upload-time = "2026-10-06T17:30:49.952Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/82/2d2c84c316186bb0cd055d96068395705e8d4d70eeb0085943b5cffd8895/garmin_fit_sdk-21.218.0-py3-none-any.whl", hash = "sha256:7b912cde3b0b8f4acd7b543c202d15ac94f6b37b58eab5bad2186ca787b9ab37", size = 238238, upload-time = "2026-10-06T17:30:48.026Z" },
+]
+
+[[package]]
+name = "garmin-fit-store"
+version = "0.1.0"
+source = { editable = "packages/garmin-fit-store" }
+dependencies = [
+    { name = "garmin-fit-sdk" },
+    { name = "psycopg", extra = ["binary"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "fitparse" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-xdist" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "garmin-fit-sdk", specifier = "==21.218.0" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "fitparse", specifier = "==1.2.0" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cov", specifier = ">=6" },
+    { name = "pytest-xdist", specifier = ">=3.6" },
+]
+
+[[package]]
 name = "garmin-grafana"
 version = "0.11.1"
 source = { editable = "." }
 dependencies = [
     { name = "dotenv" },
     { name = "fitparse" },
+    { name = "garmin-fit-store" },
     { name = "garminconnect" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pytz" },
@@ -164,6 +211,7 @@ dev = [
 requires-dist = [
     { name = "dotenv", specifier = "==0.9.9" },
     { name = "fitparse", specifier = "==1.2.0" },
+    { name = "garmin-fit-store", editable = "packages/garmin-fit-store" },
     { name = "garminconnect", specifier = "==0.3.7" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
     { name = "pytz", specifier = ">=2025.2" },

@@ -5,6 +5,7 @@ description = "A Python application to fetch Garmin health data and populate it 
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
+    "garmin-fit-store",
     "dotenv==0.9.9",
     "fitparse==1.2.0",
     "garminconnect==0.3.7",
@@ -15,6 +16,12 @@ dependencies = [
 
 [project.scripts]
 garmin-fetch = "garmin_grafana:main"
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+garmin-fit-store = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
