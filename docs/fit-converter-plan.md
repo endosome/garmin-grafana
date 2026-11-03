@@ -377,7 +377,13 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   invalid fields, blank Definition units, expanded components (`enhanced_speed`) and 32-bit float text. Remaining documented
   differences: local message numbers (the IR renumbers definitions; the tool prints the wire's), the compressed-timestamp
   definition, developer fields (the tool adds their columns), the 65535 sentinels it prints in arrays instead of scaled
-  numbers, and unknown byte fields it prints as text. The test `test_csv_equals_the_official_tool` runs the comparison when
+  numbers, and unknown byte fields it prints as text.
+  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 8
+  (activity, chained, zero_header_crc, the fenix 2 run, the multisport, the indoor trainer, ...) and differ only in those
+  documented categories for the rest: developer-field columns (ELEMNT 125 rows, the developer-types sample 3424,
+  developer_fields 1), array sentinels (Edge 820, fenix 5, big_endian, unknown_things), one unknown byte field (fenix 5), the
+  compressed-timestamp file, and the COROS file, whose `event.data` field is defined one byte wide with a 32-bit base type (the
+  tool reads past the field, we keep the byte). The test `test_csv_equals_the_official_tool` runs the comparison when
   `FIT_CSV_TOOL_JAR` is set.
 - Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
   package as a differential oracle.
