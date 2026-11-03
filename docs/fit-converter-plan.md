@@ -371,7 +371,14 @@ The current description lives in [architecture.md](architecture.md), [testing.md
 - Item 10: `fetch_activity_GPS` returns a `RecordBatch` carrying `(activity id, bytes)`; the orchestration stores them after
   the records are written; failures go to `fit.pending_imports` and are retried. The bulk importer uses the same path.
 - Item 11: GPX (TrackPointExtension, PowerExtension) and TCX validate against Garmin's and Topografix's XSDs. The CSV follows
-  the FIT CSV Tool's layout from memory and is **not** diffed against the tool (not obtainable).
+  the FIT CSV Tool's layout; amended 2026-11-03 against the real tool (the Maven Central jar `com.garmin:fit` holds
+  `com.garmin.fit.csv.CSVTool`): 0 differing rows for the committed activity file and for three real files (a fenix 2 run,
+  an indoor-trainer activity and the 24,274-row multisport file), after fixing sub-field names (`garmin_product`), omitted
+  invalid fields, blank Definition units, expanded components (`enhanced_speed`) and 32-bit float text. Remaining documented
+  differences: local message numbers (the IR renumbers definitions; the tool prints the wire's), the compressed-timestamp
+  definition, developer fields (the tool adds their columns), the 65535 sentinels it prints in arrays instead of scaled
+  numbers, and unknown byte fields it prints as text. The test `test_csv_equals_the_official_tool` runs the comparison when
+  `FIT_CSV_TOOL_JAR` is set.
 - Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
   package as a differential oracle.
 - Items 13 and 14: SQL functions and Python references agree on the R4 oracle; originals unchanged; SDK decodes the output.
@@ -405,9 +412,16 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   GPS run (fenix 2): running, 9008 m, 2832 s, 4 laps, start 2015-08-15; developer-fields file: running, 6754 m, 3424 s, 1 lap,
   start 2017-01-17; multisport (7 sessions: generic, transition, running, transition, running, transition, cycling):
   `multi_sport`, 69831 m, 24617 s, 7 laps. The run's chart data has heart rate, cadence, power, speed, elevation, ground
-  contact time, vertical oscillation and the GPS track. Not verified: Connect IQ developer fields do not appear among the
-  detail metrics (the sample's app is unknown to Connect, and the original was not uploaded as a control), and the charts were
-  compared as metric keys, not by eye. No rejection, so no worklist item. `time_shift` and `combine` results were not uploaded.
+  contact time, vertical oscillation and the GPS track. Control for the developer fields: I deleted the activity, uploaded the
+  original `developer-types-sample.fit`, and Connect's detail metric keys are identical to those of our export (neither shows
+  the sample's four Connect IQ fields, whose app is unknown to Connect), then re-uploaded our export. The charts were compared as
+  metric keys, not by eye. No rejection.
+  Edits (items 13 and 14), all accepted: `time_shift` +3 days of the run (Connect: 2015-08-18, 9008 m, 2832 s, 4 laps, as the
+  original); `remove_section` of minutes 5 to 15 of the run with the gap closed (9007 m, 2258 s, 4 laps); `combine` of two real
+  runs (one `multi_sport` activity, 2 sessions, 9165 m, 2933 s). **Worklist:** the removed section's distance is not taken out
+  of the later records' cumulative `distance`, so the run still shows 9007 m after losing ten minutes and the lap after the
+  gap reports 3746 m (the original lap 2979 m). Connect accepts it, but `remove_section` with `close_gap` should subtract the
+  removed distance from later records (SQL function and `ref_remove_section` together, R4 oracle between them). Not done.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted

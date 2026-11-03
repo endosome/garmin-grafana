@@ -9,6 +9,7 @@ from xml.etree import ElementTree as ET
 
 import pytest
 from garmin_fit_store import convert, decode, ir
+from garmin_fit_store.builder import build_fit
 from garmin_fit_store.__main__ import main
 
 from conftest import CORPUS
@@ -77,6 +78,52 @@ def test_csv_layout():
     record = next(r for r in rows if r[0] == 'Data' and r[2] == 'record')
     assert 'heart_rate' in record and record[record.index('speed') + 1] == '3.2'
     assert sum(r[0] == 'Definition' for r in rows) < sum(r[0] == 'Data' for r in rows)
+
+
+def csv_rows(data):
+    return list(csv.reader(io.StringIO(convert.to_csv(decode(data)))))
+
+
+def test_csv_follows_the_tool_for_sub_fields_and_invalid_values():
+    rows = csv_rows(build_fit([
+        ('file_id', {'type': 'activity', 'manufacturer': 'garmin', 'product': 2697, 'serial_number': 1}),
+        ('device_info', {'timestamp': 1100000000, 'device_index': 0, 'cum_operating_time': None, 'battery_voltage': 3.7}),
+        ('record', {'timestamp': 1100000001, 'speed': 3.2, 'altitude': 100.0}),
+    ]))
+    file_id = next(r for r in rows if r[:3] == ['Data', '0', 'file_id'])
+    assert 'garmin_product' in file_id and 'product' not in file_id
+    info = next(r for r in rows if r[2] == 'device_info' and r[0] == 'Data')
+    assert 'cum_operating_time' not in info  # an invalid value is left out of the data row
+    record = next(r for r in rows if r[2] == 'record' and r[0] == 'Data')
+    assert record[record.index('enhanced_speed') + 1] == '3.2' and record[record.index('enhanced_altitude') + 1] == '100.0'
+    assert all(cell == '' for row in rows if row[0] == 'Definition' for cell in row[5::3])  # definition units are blank
+
+
+def test_csv_float32_prints_the_shortest_form():
+    assert convert._float32(-0.2857142984867096) == '-0.2857143'
+    assert convert._float32(0.5) == '0.5'
+
+
+def test_csv_equals_the_official_tool(tmp_path):
+    """Set FIT_CSV_TOOL_JAR to the jar from Maven Central (com.garmin:fit; it holds com.garmin.fit.csv.CSVTool; not committed).
+    Compares every row after ignoring units, trailing empty cells and the tool's repeated Definition rows and local numbers."""
+    jar = os.getenv('FIT_CSV_TOOL_JAR')
+    if not jar or not shutil.which('java'):
+        pytest.skip('Set FIT_CSV_TOOL_JAR and install java')
+    path = CORPUS / 'activity.fit'
+    subprocess.run(['java', '-cp', jar, 'com.garmin.fit.csv.CSVTool', '-b', str(path), str(tmp_path / 'tool.csv')], check=True, capture_output=True)
+
+    def normal(rows):
+        out = []
+        for r in rows[1:]:
+            r = r + [''] * (-len(r) % 3)
+            out.append((r[0], r[2], tuple((r[i], r[i + 1]) for i in range(3, len(r), 3) if r[i] and (r[0] == 'Definition' or r[i + 1] != ''))))
+        return out
+
+    ours = normal(csv_rows(path.read_bytes()))
+    with open(tmp_path / 'tool.csv', encoding='utf-8-sig') as handle:
+        theirs = normal(list(csv.reader(handle)))
+    assert ours == theirs
 
 
 def test_csv_of_unknown_and_odd_values():

@@ -165,26 +165,53 @@ def to_csv(fit_file):
     """The layout of the official FIT CSV Tool: Type, Local Number, Message, then Field / Value / Units triples.
     Definition rows give the element count as the value; data rows give scaled values (enum fields their number)."""
     profile = Profile()
+    semantics = Semantics(profile)
     out = io.StringIO()
     writer = csv.writer(out, lineterminator='\n')
-    widest = 0
     rows = []
-    local, announced = {}, {}
+    announced = set()
     for message in fit_file.messages:
         definition = fit_file.definitions[message.def_id]
         name = profile.message_name(message.global_num) or f'unknown'
-        if announced.get(definition.id) is None or local.get(definition.global_num) != definition.id:
-            local[definition.global_num] = definition.id
-            announced[definition.id] = True
+        fields = [(number, profile.field(message.global_num, number)) for number, _, _ in definition.fields]
+        if definition.id not in announced:
+            announced.add(definition.id)
             cells = []
-            for number, size, base in definition.fields:
-                field = profile.field(message.global_num, number)
-                cells += [field['name'] if field else f'unknown', _count(size, base), _units(field)]
+            for (number, size, base), (_, field) in zip(definition.fields, fields):
+                cells += [field['name'] if field else f'unknown', _count(size, base), '']
             rows.append(['Definition', definition.id % 16, name, *cells])
+        wire = {n: base for n, _, base in definition.fields}
+        values = semantics.named(message.global_num, message.fields, wire=wire)
+        shown = set()
         cells = []
-        for number, size, base in definition.fields:
-            field = profile.field(message.global_num, number)
-            cells += [field['name'] if field else 'unknown', _csv_value(message.fields.get(number), field), _units(field)]
+        for number, field in fields:
+            fname, shown_field, raw = field['name'] if field else 'unknown', field, message.fields.get(number)
+            if raw is None:
+                shown.add(fname)
+                continue  # the tool leaves out a field whose value is invalid
+            shown.add(fname)
+            # A sub-field the reference selects replaces the field's name and units (product -> garmin_product).
+            for sub in (field['sub_fields'] if field else ()):
+                if sub['name'] in values:
+                    fname, shown_field = sub['name'], dict(field, **{k: sub[k] for k in ('units', 'scale', 'offset', 'type') if k in sub})
+                    break
+            text = _csv_value(raw, shown_field)
+            if field is None and wire.get(number, 0) & 0x1F == 8 and isinstance(raw, float):
+                text = _float32(raw)  # an unknown float32 field: the tool prints the 32-bit shortest form too
+            cells += [fname, text, _units(shown_field)]
+            shown.add(fname)
+        # Like the tool, components expanded from a field follow the message's own fields (enhanced_speed after speed).
+        by_name = {f['name']: f for f in (profile.message(message.global_num) or {'fields': {}})['fields'].values()}
+        by_number = {f['number']: f['name'] for f in by_name.values()}
+        order = [by_number[c] for _, field in fields if field for c in field['components'] if c in by_number]
+        order += [key for key in values if key not in order]
+        for key in order:
+            if key in values and key not in shown and key in by_name and not any(key == sub['name'] for f in by_name.values() for sub in f['sub_fields']):
+                target = by_name[key]
+                value = values[key]
+                if isinstance(value, int) and target['scale'][0] != 1:
+                    value = float(value)
+                cells += [key, _csv_value(value, None), _units(target)]
         rows.append(['Data', definition.id % 16, name, *cells])
     widest = max((len(r) - 3) // 3 for r in rows) if rows else 0
     writer.writerow(['Type', 'Local Number', 'Message'] + [x for i in range(1, widest + 1) for x in (f'Field {i}', f'Value {i}', f'Units {i}')])
@@ -215,7 +242,20 @@ def _csv_value(value, field):
         scale, offset = field['scale'][0], field['offset'][0]
         if scale != 1 or offset:
             return repr(value / scale - offset)
+        if field['base_type'] == 'float32':
+            return _float32(value)
     return value
+
+
+def _float32(value):
+    """The shortest decimal that reads back as the same 32-bit float (the tool prints -0.2857143, not the double's digits)."""
+    import struct
+    packed = struct.pack('<f', value)
+    for digits in range(1, 10):
+        text = f'{value:.{digits}g}'
+        if struct.pack('<f', float(text)) == packed:
+            return text
+    return repr(value)
 
 
 def convert(fit_file, target):
