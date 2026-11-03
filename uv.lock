@@ -192,7 +192,6 @@ version = "0.11.1"
 source = { editable = "." }
 dependencies = [
     { name = "dotenv" },
-    { name = "fitparse" },
     { name = "garmin-fit-store" },
     { name = "garminconnect" },
     { name = "psycopg", extra = ["binary"] },
@@ -210,7 +209,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "dotenv", specifier = "==0.9.9" },
-    { name = "fitparse", specifier = "==1.2.0" },
     { name = "garmin-fit-store", editable = "packages/garmin-fit-store" },
     { name = "garminconnect", specifier = "==0.3.7" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },

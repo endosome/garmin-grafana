@@ -39,7 +39,10 @@ def decode(data, check_crc=True):
             raise FitError('file CRC mismatch')
         if first:
             fit_file.protocol, fit_file.profile = protocol, profile
-        _decode_records(data[offset + size:end], fit_file)
+        try:
+            _decode_records(data[offset + size:end], fit_file)
+        except (struct.error, IndexError, ValueError, KeyError, OverflowError) as error:
+            raise FitError(f'malformed records: {error}') from error
         offset, first = end + 2, False
     if first:
         raise FitError('empty input')

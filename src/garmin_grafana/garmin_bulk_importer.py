@@ -17,7 +17,7 @@ import argparse
 from typing import List
 from pathlib import Path
 from datetime import datetime, timezone
-from fitparse import FitFile, FitParseError
+from garmin_fit_store.compat import FitFile, FitParseError
 from collections import namedtuple
 from io import BytesIO
 from unittest import mock

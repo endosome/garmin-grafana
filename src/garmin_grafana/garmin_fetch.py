@@ -4,7 +4,7 @@ import psycopg
 import traceback
 import re
 import base64, requests, time, pytz, logging, os, sys, dotenv, io, zipfile
-from fitparse import FitFile, FitParseError
+from garmin_fit_store.compat import FitFile, FitParseError
 from datetime import datetime, timedelta
 from garmin_grafana.domain import Record, RecordBatch
 from garmin_grafana.storage import PostgresStore

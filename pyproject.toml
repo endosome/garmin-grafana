@@ -7,7 +7,6 @@ requires-python = "==3.13.*"
 dependencies = [
     "garmin-fit-store",
     "dotenv==0.9.9",
-    "fitparse==1.2.0",
     "garminconnect==0.3.7",
     "psycopg[binary]>=3.2,<4",
     "pytz>=2025.2",
@@ -42,8 +41,6 @@ markers = ["grafana: needs the running Compose stack (GRAFANA_URL), see tests/te
 xfail_strict = true
 filterwarnings = [
     "error",
-    # third-party libraries still using deprecated datetime APIs
-    "ignore:datetime.datetime.utcfromtimestamp:DeprecationWarning:fitparse.*",
 ]
 
 [tool.coverage.run]

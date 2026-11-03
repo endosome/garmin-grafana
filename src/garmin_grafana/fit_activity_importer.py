@@ -9,7 +9,7 @@ import logging
 import hashlib
 import zipfile
 
-from fitparse import FitFile, FitParseError
+from garmin_fit_store.compat import FitFile, FitParseError
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from pathlib import Path

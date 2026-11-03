@@ -7,7 +7,7 @@ import zipfile
 from datetime import datetime, timedelta
 
 import pytest
-from fitparse import FitFile
+from garmin_fit_store.compat import FitFile
 
 import fit_activity_importer as importer
 from fit_builder import build_fit

@@ -69,7 +69,8 @@ class Semantics:
         for name, (field, raw, is_sub) in entries.items():
             result[name] = self._value(field, raw, is_sub, degrees, (wire or {}).get(field['number']))
         result.update({name: value for name, (field, value) in expanded.items()})
-        return result
+        order = [number if number in result else message['fields'][str(number)]['name'] for number in fields]
+        return {key: result[key] for key in order if key in result} | {key: value for key, value in result.items() if key not in order}
 
     def _sub_fields(self, field, entries, to_expand):
         raw = entries[field['name']][1]
