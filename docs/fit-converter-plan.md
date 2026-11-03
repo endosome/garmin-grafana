@@ -360,7 +360,7 @@ The current description lives in [architecture.md](architecture.md), [testing.md
 - Item 6: import/export/verify/roundtrip. **R9 amended:** `fit.definitions` holds each distinct definition once, not one
   row per definition message. Not done: a roundtrip on a real Wahoo/Zwift/Coros corpus (none available; only the five
   files above were run, zero differences).
-- Item 7: **not done**, it is a manual upload to a Garmin Connect account.
+- Item 7: done with the caveats under the real-files entry below (upload accepted, summaries equal).
 - Item 8: **amended:** the view SQL is generated at migrate time from the profile, not committed as `fit/002`, because it
   would be profile-derived data (A5). Views show NULL, not an error, where a file puts an array where the profile has a number.
 - Item 9 (365 one-hour 1 Hz activities, 1.31 M records): the first run missed the view target (41 to 76 ms for one activity),
@@ -389,7 +389,7 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   Not yet run on GitHub itself. `demo/` holds the browser page, its
   build step and `demo/check.mjs`, which opens it in headless Chromium, imports a corpus file, downloads the export and
   compares it (passes locally). That run found and fixed a Node-only `Buffer` in the codec.
-- Item 7 remains manual: it needs a Garmin Connect account. Checklist: `python -m garmin_fit_store export <id> out.fit` for a
+- Item 7 checklist (run; outcome below): `python -m garmin_fit_store export <id> out.fit` for a
   run with GPS, an indoor activity with developer fields, and a multisport activity (also try `time_shift` and `combine` results);
   upload each at Activities, Import; compare summary, laps, charts and Connect IQ fields with the original; record the outcome
   and any rejection (with the file's shape) here.
@@ -400,8 +400,14 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   number` at byte 7472, integrity check false). The GPS run and the multisport file export byte-identical; the developer-field
   file exports 36 bytes shorter (R4 holds, the official SDK's integrity check passes). Exports for the upload are in the session
   scratchpad (`up/gps_run.fit`, `up/indoor_devfields.fit`, `up/multisport.fit`).
-- Item 7 upload: the test account login reaches the MFA step (after Garmin's 429/Cloudflare blocks on the first strategies),
-  but no code arrived for the account owner, so nothing has been uploaded. Still open.
+- Item 7 (2026-11-03, the user's test account, MFA by OTP): `upload_activity` accepted all three exports with no failures
+  and Connect created three activities. Against the originals decoded by the official SDK, the summaries are equal:
+  GPS run (fenix 2): running, 9008 m, 2832 s, 4 laps, start 2015-08-15; developer-fields file: running, 6754 m, 3424 s, 1 lap,
+  start 2017-01-17; multisport (7 sessions: generic, transition, running, transition, running, transition, cycling):
+  `multi_sport`, 69831 m, 24617 s, 7 laps. The run's chart data has heart rate, cadence, power, speed, elevation, ground
+  contact time, vertical oscillation and the GPS track. Not verified: Connect IQ developer fields do not appear among the
+  detail metrics (the sample's app is unknown to Connect, and the original was not uploaded as a control), and the charts were
+  compared as metric keys, not by eye. No rejection, so no worklist item. `time_shift` and `combine` results were not uploaded.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted
