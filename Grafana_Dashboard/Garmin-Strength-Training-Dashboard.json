@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
@@ -1769,21 +1769,6 @@
         "options": []
       },
       {
-        "current": {
-          "text": "Garmin PostgreSQL",
-          "value": "garmin_postgres"
-        },
-        "includeAll": false,
-        "multi": false,
-        "name": "DS_GARMIN_STATS",
-        "label": "Data source",
-        "options": [],
-        "query": "grafana-postgresql-datasource",
-        "refresh": 1,
-        "regex": "",
-        "type": "datasource"
-      },
-      {
         "allowCustomValue": false,
         "current": {},
         "datasource": {
@@ -1844,5 +1829,6 @@
   "title": "Garmin Strength Training Dashboard",
   "uid": "garmin-strength-training",
   "version": 2,
-  "weekStart": ""
+  "weekStart": "monday",
+  "description": "Strength training: sets, reps, volume, personal records and estimated one-rep maxes, filtered by exercise category and label."
 }

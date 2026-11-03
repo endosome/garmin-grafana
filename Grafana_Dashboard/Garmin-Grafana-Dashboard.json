@@ -110,7 +110,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [
     {
@@ -8711,7 +8711,10 @@
   ],
   "refresh": "15m",
   "schemaVersion": 41,
-  "tags": ["garmin", "stats"],
+  "tags": [
+    "garmin",
+    "stats"
+  ],
   "templating": {
     "list": [
       {
@@ -9027,5 +9030,6 @@
   "title": "Garmin Stats",
   "uid": "feiibsx498gsgb",
   "version": 218,
-  "weekStart": ""
+  "weekStart": "monday",
+  "description": "Every Garmin detail: intraday heart rate, stress, steps and sleep, activities, GPS tracks and long-term trends. Choose the account with Source."
 }
