@@ -30,6 +30,9 @@ export function crc16(data: Uint8Array, crc = 0): number {
   return crc
 }
 
+const toHex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
+const fromHex = (text: string) => Uint8Array.from(text.match(/../g) ?? [], (h) => parseInt(h, 16))
+
 const kind = (base: number) => {
   const id = base & 0x1f
   if (!(id in TYPES)) throw new FitError(`unknown base type 0x${base.toString(16)}`)
@@ -57,7 +60,7 @@ function decodeValue(raw: Uint8Array, base: number, arch: number): Value | null 
       const parts = new TextDecoder('utf-8', { fatal: true }).decode(trimmed).split('\0')
       return parts.length === 1 ? parts[0] : parts
     } catch {
-      return { hex: Buffer.from(raw).toString('hex') }
+      return { hex: toHex(raw) }
     }
   }
   const { size, invalid } = TYPES[id]
@@ -96,8 +99,8 @@ function encodeValue(value: Value | undefined, base: number, size: number, arch:
   if (value === undefined || value === null) return filler(size)
   if (id === 7) {
     const bytes = typeof value === 'object' && !Array.isArray(value)
-      ? Buffer.from((value as { hex: string }).hex, 'hex')
-      : Buffer.concat([Buffer.from((Array.isArray(value) ? value : [value]).join('\0')), Buffer.from([0])])
+      ? fromHex((value as { hex: string }).hex)
+      : new TextEncoder().encode((Array.isArray(value) ? value : [value]).join('\0') + '\0')
     const out = new Uint8Array(Math.max(size, bytes.length))
     out.set(bytes)
     return out
@@ -139,7 +142,7 @@ export function decode(data: Uint8Array, checkCrc = true): FitFile {
     if (data.length - offset < 12) throw new FitError('truncated header')
     const size = data[offset]
     if (size !== 12 && size !== 14) throw new FitError(`bad header size ${size}`)
-    if (Buffer.from(data.subarray(offset + 8, offset + 12)).toString('latin1') !== '.FIT') throw new FitError('missing .FIT signature')
+    if (String.fromCharCode(...data.subarray(offset + 8, offset + 12)) !== '.FIT') throw new FitError('missing .FIT signature')
     const dataSize = view.getUint32(offset + 4, true)
     if (size === 14 && checkCrc) {
       const stored = view.getUint16(offset + 12, true)
@@ -288,7 +291,7 @@ export function encode(file: FitFile): Uint8Array {
   const header = new Uint8Array(14)
   const hv = new DataView(header.buffer)
   hv.setUint8(0, 14); hv.setUint8(1, file.protocol); hv.setUint16(2, file.profile, true); hv.setUint32(4, body.length, true)
-  header.set(Buffer.from('.FIT'), 8)
+  header.set([0x2e, 0x46, 0x49, 0x54], 8)
   hv.setUint16(12, crc16(header.subarray(0, 12)), true)
   const out = new Uint8Array(14 + body.length + 2)
   out.set(header); out.set(body, 14)

@@ -8,6 +8,7 @@
 <input id="file" type="file" accept=".fit">
 <p><a id="download" hidden>Download the exported file</a></p>
 <pre id="log">Loading the database…</pre>
+<script type="importmap">{"imports":{"@electric-sql/pglite":"./pglite/index.js"}}</script>
 <script type="module">
 // Serve this directory (after `node demo/build.mjs`) together with: ./pglite/ (the PGlite ESM build), ./timescaledb/ (the
 // fork's @electric-sql/pglite-timescaledb build) and ./migrations/ (packages/garmin-fit-store/src/garmin_fit_store/migrations).
