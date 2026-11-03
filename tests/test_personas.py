@@ -3,14 +3,15 @@ from datetime import date, datetime, timedelta, timezone
 import importlib.util
 import json
 import math
+import os
 from pathlib import Path
 import uuid
 from zoneinfo import ZoneInfo
 import pytest
+from garmin_grafana import migrate, storage
 from garmin_grafana.storage import PostgresStore
 from helpers import refresh_rollups
 from personas import NOW, PERSONAS, TODAY, TZ, gym_goer, healthy_lifestyle, legacy_cyclist, newcomer, public_fitbit_user, ski_tourer
-from test_storage import db  # noqa: F401  (a fixture)
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('queries', ROOT / 'scripts/validate_dashboard_queries.py')
@@ -39,22 +40,52 @@ def local_day(value, zone=TZ):
     return value.astimezone(zone).date()
 
 
-@pytest.fixture
-def load(db):  # noqa: F811
-    """Writes a persona under its own new account and returns a runner for dashboard queries on it."""
-    def load(persona):
-        store = PostgresStore(account=f'{persona.account}-{uuid.uuid4().hex}', connection=db.connection)
-        store.write(persona.records)
+@pytest.fixture(scope='session')
+def personas():
+    """Writes every persona once per session, each under its own new account, and returns {account: (sid, persona)}.
+
+    Opens its own connection and doesn't depend on `db`. Tests only read from the result
+    (see `load`), so what they see doesn't depend on which test ran first.
+    """
+    if os.getenv('TEST_DATABASE') != '1':
+        pytest.skip('Set TEST_DATABASE=1 with PG* pointing to a disposable TimescaleDB database')
+    suffix = uuid.uuid4().hex
+    with storage.connect() as connection:
+        migrate.migrate(connection)
+        with connection.transaction():
+            connection.execute("SELECT alter_job(job_id, scheduled => false) FROM timescaledb_information.jobs WHERE proc_name = 'policy_refresh_continuous_aggregate'")
+        loaded = {}
+        for factory in PERSONAS:
+            persona = factory()
+            store = PostgresStore(account=f'{persona.account}-{suffix}', connection=connection)
+            store.write(persona.records)
+            with connection.transaction(), connection.cursor() as cur:
+                loaded[persona.account] = store.source_id(cur)
         refresh_rollups()
-        with db.connection.transaction(), db.connection.cursor() as cur:
-            sid = store.source_id(cur)
+    return loaded
+
+
+@pytest.fixture(scope='session')
+def reader(personas):
+    """A read-only connection: a test that starts writing to the shared personas fails loudly."""
+    connection = storage.connect()
+    connection.read_only = True
+    yield connection
+    connection.close()
+
+
+@pytest.fixture
+def load(personas, reader):
+    """Returns a function giving a runner for dashboard queries on a persona's shared account."""
+    def load(persona):
+        sid = personas[persona.account]
 
         def run(dashboard, panel, start, end=NOW, ref='A', activity='__all', category='__all', sql=None, interval='5 minutes'):
             if sql is None:
                 ids = panels(dashboard)
                 sql = STATEMENTS[f'{dashboard}:{ids.get(panel, panel)}:{ref}']
             sql = queries.expand_query(sql, sid, start=iso(start), end=iso(end), timezone=persona.timezone, activity=activity, category=category, interval=interval)
-            with db.connection.transaction(), db.connection.cursor() as cur:
+            with reader.transaction(), reader.cursor() as cur:
                 cur.execute(sql)
                 return [dict(zip([c.name for c in cur.description], row)) for row in cur.fetchall()]
         run.sid = sid
@@ -276,7 +307,7 @@ def test_dashboards_show_a_real_fitbit_month(load):
 RAW_PANEL_QUERIES = json.loads((ROOT / 'tests/data/raw_panel_queries.json').read_text())['queries']
 
 
-def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, db):  # noqa: F811
+def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, reader):
     """Panels served by continuous aggregates must keep the rows the raw-sample SQL gave, at any range edge."""
     assert set(RAW_PANEL_QUERIES) <= set(STATEMENTS)
     def same(a, b):
@@ -294,7 +325,7 @@ def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, db): 
                     for label, raw in RAW_PANEL_QUERIES.items():
                         for interval in ('30 minutes', '1 hour', '12 hours', '1 day') if '__interval' in raw else ('1 hour',):
                             args = dict(start=iso(end - timedelta(days=days)), end=iso(end), timezone=zone, interval=interval)
-                            with db.connection.transaction(), db.connection.cursor() as cur:
+                            with reader.transaction(), reader.cursor() as cur:
                                 old = cur.execute(queries.expand_query(raw, sid, **args)).fetchall()
                                 new = cur.execute(queries.expand_query(STATEMENTS[label], sid, **args)).fetchall()
                             if 'ORDER BY' not in raw.upper():  # a set of cells: the plan decides its row order, so compare it sorted
