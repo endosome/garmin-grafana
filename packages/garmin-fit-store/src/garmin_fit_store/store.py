@@ -122,3 +122,30 @@ def verify(connection, file_id):
             continue
         differences += [f'{label}: message {i} differs' for i, (a, b) in enumerate(zip(original, other)) if a != b]
     return differences
+
+
+def record_pending(connection, data, source_id=None, garmin_activity_id=None, error=''):
+    """Remember a file that could not be stored; the same bytes for the same source are kept once."""
+    with connection.transaction():
+        connection.execute("""INSERT INTO fit.pending_imports(source_id, garmin_activity_id, data, error) VALUES (%s,%s,%s,%s)
+                              ON CONFLICT (COALESCE(source_id, 0), sha256(data)) DO UPDATE
+                              SET attempts = fit.pending_imports.attempts + 1, error = excluded.error, last_attempt_at = now()""",
+                           (source_id, garmin_activity_id, bytes(data), error[:500]))
+
+
+def retry_pending(connection, source_id=None):
+    """Import the pending files of a source again; returns (stored, still failing)."""
+    rows = connection.execute('SELECT id, garmin_activity_id, data FROM fit.pending_imports WHERE COALESCE(source_id, 0) = COALESCE(%s, 0) ORDER BY id',
+                              (source_id,)).fetchall()
+    stored = failing = 0
+    for pending_id, activity_id, data in rows:
+        try:
+            import_file(connection, bytes(data), source_id, activity_id, check_crc=False)
+        except Exception as error:
+            failing += 1
+            connection.execute('UPDATE fit.pending_imports SET attempts = attempts + 1, error = %s, last_attempt_at = now() WHERE id = %s',
+                               (str(error)[:500], pending_id))
+        else:
+            stored += 1
+            connection.execute('DELETE FROM fit.pending_imports WHERE id = %s', (pending_id,))
+    return stored, failing

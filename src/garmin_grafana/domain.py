@@ -12,6 +12,7 @@ class RecordBatch(list):
     def __init__(self, values=(), *, replacements=()):
         super().__init__(values)
         self.replacements = list(replacements)
+        self.fit_files = []  # (Garmin activity ID, FIT bytes) of the files these records were read from
 
 
 def canonical(value):

@@ -74,7 +74,7 @@ def main():
                 return statistics.median(runs)
             result['import_median_s'] = statistics.median(imports)
             result['export_median_s'] = statistics.median(exports)
-            result['view_one_activity_ms'] = timed('SELECT * FROM fit.v_record WHERE file_id = %s', (ids[len(ids) // 2],))
+            result['view_one_activity_ms'] = timed('SELECT time, heart_rate, speed, position_lat, position_long, altitude, power FROM fit.v_record WHERE file_id = %s ORDER BY seq', (ids[len(ids) // 2],))
             result['view_30_days_ms'] = timed("SELECT time_bucket('1 hour', time), avg(heart_rate) FROM fit.v_record WHERE time > %s GROUP BY 1", (END - timedelta(days=30),))
             result['view_year_ms'] = timed("SELECT date_trunc('day', time), avg(heart_rate), avg(speed) FROM fit.v_record GROUP BY 1")
             result['records'] = connection.execute('SELECT count(*) FROM fit.records').fetchone()[0]

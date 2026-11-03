@@ -55,6 +55,7 @@ FETCH_REQUEST_CHECK_SECONDS = int(os.getenv("FETCH_REQUEST_CHECK_SECONDS", 5)) #
 FETCH_SELECTION = os.getenv("FETCH_SELECTION", "daily_avg,sleep,steps,heartrate,stress,breathing,hrv,fitness_age,vo2,activity,race_prediction,body_composition,lifestyle") # additional available values are lactate_threshold,training_status,training_readiness,hill_score,endurance_score,blood_pressure,hydration,solar_intensity,cycling_dynamics which you can add to the list separated by , without any space
 ACTIVITY_TYPE_FILTER = [t.strip().lower() for t in os.getenv("ACTIVITY_TYPE_FILTER", "").split(",") if t.strip()] # optional, comma-separated list of activity typeKeys to import only specific activity types. Leave empty to import all. Known typeKeys: running,treadmill_running,indoor_running,cycling,indoor_cycling,road_biking,mountain_biking,walking,hiking,mountaineering,strength_training,hiit,indoor_cardio,elliptical,lap_swimming,open_water_swimming,rock_climbing,indoor_climbing,tennis_v2,kayaking_v2,boating_v2,multi_sport,other
 LACTATE_THRESHOLD_SPORTS = os.getenv("LACTATE_THRESHOLD_SPORTS", "RUNNING").upper().split(",") # Garmin currently implements RUNNING, but has provisions for CYCLING, and SWIMMING
+FIT_STORE_ENABLED = False if os.getenv("FIT_STORE_ENABLED") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, keeps every activity's FIT file in the fit schema (garmin_fit_store)
 KEEP_FIT_FILES = True if os.getenv("KEEP_FIT_FILES") in ['True', 'true', 'TRUE','t', 'T', 'yes', 'Yes', 'YES', '1'] else False # optional
 FIT_FILE_STORAGE_LOCATION = os.getenv("FIT_FILE_STORAGE_LOCATION", os.path.join(os.path.expanduser("~"), "fit_filestore"))
 ALWAYS_PROCESS_FIT_FILES = False if os.getenv("ALWAYS_PROCESS_FIT_FILES") in ['False','false','FALSE','f','F','no','No','NO','0'] else True # optional, will process all FIT files for all activities including indoor ones lacking GPS data
@@ -947,7 +948,7 @@ def _build_cycling_dynamics_point(all_records_list, all_sessions_list, activityI
 
 # %%
 def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back to TCX
-    points_list = []
+    points_list = RecordBatch()
     for activityID in activityIDdict.keys():
         activity_type = activityIDdict[activityID]
         if (activityID in PARSED_ACTIVITY_ID_LIST) and (not FORCE_REPROCESS_ACTIVITIES):
@@ -965,6 +966,7 @@ def fetch_activity_GPS(activityIDdict): # Uses FIT file by default, falls back t
                     raise FileNotFoundError(f"No FIT file found in the downloaded zip archive for Activity ID {activityID}")
                 else:
                     fit_data = zip_ref.read(fit_filename)
+                    points_list.fit_files.append((activityID, fit_data))  # stored by the caller, after the records are written
                     fit_file_buffer = io.BytesIO(fit_data)
                     fitfile = FitFile(fit_file_buffer)
                     fitfile.parse()
@@ -1551,6 +1553,43 @@ def request_intraday_refresh(date_str):
     return (response or {}).get("status", "Unknown")
 
 
+def store_fit_files(fit_files):
+    """Keep the downloaded FIT files in the fit schema, each in its own transaction. A failure is logged, counted and
+    remembered in fit.pending_imports for the next run; it never fails the activity's own processing."""
+    if not FIT_STORE_ENABLED:
+        return 0
+    from garmin_fit_store import store as fit_store
+    failed = 0
+    for activity_id, data in fit_files:
+        source = None
+        try:
+            with store.connection.transaction(), store.connection.cursor() as cur:
+                source = store.source_id(cur)
+            fit_store.import_file(store.connection, data, source_id=source, garmin_activity_id=int(activity_id), check_crc=False)
+        except Exception as err:
+            failed += 1
+            logging.error("FIT store: could not keep the file of activity %s (%s: %s); it will be retried", activity_id, type(err).__name__, err)
+            try:
+                fit_store.record_pending(store.connection, data, source, int(activity_id), f"{type(err).__name__}: {err}")
+            except Exception as pending_err:
+                logging.error("FIT store: could not record the pending file either (%s)", type(pending_err).__name__)
+    return failed
+
+
+def retry_pending_fit_files():
+    if not FIT_STORE_ENABLED:
+        return
+    try:
+        from garmin_fit_store import store as fit_store
+        with store.connection.transaction(), store.connection.cursor() as cur:
+            source = store.source_id(cur)
+        stored, failing = fit_store.retry_pending(store.connection, source)
+        if stored or failing:
+            logging.info("FIT store: retried pending files, %d stored, %d still failing", stored, failing)
+    except Exception as err:
+        logging.error("FIT store: retrying pending files failed (%s: %s)", type(err).__name__, err)
+
+
 def daily_fetch_write(date_str, *, skip_completed=False):
     today = datetime.now(ZoneInfo(USER_TIMEZONE or 'UTC')).date()
     completed = store.completed_datasets(date_str, USER_TIMEZONE or 'UTC') if skip_completed and datetime.strptime(date_str, '%Y-%m-%d').date() < today - timedelta(days=2) else set()
@@ -1590,8 +1629,11 @@ def daily_fetch_write(date_str, *, skip_completed=False):
         try:
             if dataset == 'activity':
                 summary, gps, strength = get_activity_summary(date_str)
+                retry_pending_fit_files()
                 points = RecordBatch(summary)
-                points.extend(fetch_activity_GPS(gps))
+                gps_points = fetch_activity_GPS(gps)
+                points.extend(gps_points)
+                points.fit_files = list(getattr(gps_points, 'fit_files', ()))
                 if strength:
                     sets = get_strength_training_data(strength)
                     points.extend(sets)
@@ -1599,6 +1641,7 @@ def daily_fetch_write(date_str, *, skip_completed=False):
             else:
                 points = getters[dataset](date_str)
             write_records(points if points is not None else [], checkpoint=(SYNC_NAMESPACE + dataset, date_str), day=date_str)
+            store_fit_files(getattr(points, 'fit_files', ()))
         except Exception as err:
             # Successful datasets commit independently; failed ones keep their ledger hole.
             logging.error("Dataset %s failed for %s (%s); checkpoint retained", dataset, date_str, type(err).__name__)
