@@ -358,6 +358,7 @@ both are inside the 25 s and 23 s targets, and the `pytest` and `dashboards` job
 
 The release workflow has a manual dry run (`workflow_dispatch`: builds both platforms, pushes nothing). Run 41663452177:
 amd64 37 s on `ubuntu-26.04` and arm64 31 s on `ubuntu-26.04-arm`, in parallel, against 2 m 15 s before (target 1 m 15 s),
-with a cold layer cache. Not exercised, because it needs a real tag and writes to GHCR: the push by digest and the
-merge job (`imagetools create`). The first tag shows that; the concurrency group of the called `Tests` run contains the
-caller's workflow name and the tag ref, so a branch push does not cancel it.
+with a cold layer cache. Then a rehearsal tag, `v0.0.0-ci-rehearsal` (run 41664860657, green, 9 m 27 s: the called `Tests` 8 m 5 s, the two native
+builds 46 s and 55 s in parallel, and the merge job 16 s). The push by digest and `imagetools create` work, and the
+manifest lists linux/amd64 and linux/arm64 (plus the two attestation entries). Release build 55 s against the 1 m 15 s
+target, from 2 m 15 s. The tag was removed from git afterwards; the image version of that tag is left in GHCR.
