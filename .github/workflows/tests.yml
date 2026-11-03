@@ -12,7 +12,8 @@ concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  # Three jobs in parallel: the Python suite with coverage, the dashboard tests (own database, no coverage) and the image with the Compose stack.
+  # Jobs in parallel: the Python suite with coverage, the dashboard tests (own database, no coverage), the image with the Compose stack and the upgrade rehearsal.
+  # The browser tests are their own workflow, browser.yml, which also runs on every push and is required for a release.
   pytest:
     runs-on: ubuntu-26.04
     services:
@@ -100,16 +101,8 @@ jobs:
           uv run --locked python scripts/load_personas.py
           GRAFANA_URL=http://localhost:3000 KIOSK_URL=http://localhost:3001 GRAFANA_ALLOW_WRITES=1 \
             uv run --locked pytest -m grafana tests/test_grafana_stack.py --durations=5
-      - name: Rehearse the upgrade from the Alpine image
-        run: scripts/smoke_upgrade.sh
-  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4), in eight shards that each start their own stack.
-  # They run beside the stack job; the image comes from the layer cache the stack job leaves behind.
-  e2e:
-    name: e2e (shard ${{ matrix.shard }})
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: ['1/8', '2/8', '3/8', '4/8', '5/8', '6/8', '7/8', '8/8']
+  # The upgrade rehearsal builds nothing of its own besides the image, so it runs beside the stack checks instead of after them.
+  upgrade:
     runs-on: ubuntu-26.04
     env:
       PGDATABASE: garmin
@@ -119,9 +112,6 @@ jobs:
       GRAFANA_DB_PASSWORD: test-reader-password
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
       - uses: docker/setup-buildx-action@v4
       - name: Build the runtime image
         uses: docker/build-push-action@v7
@@ -130,22 +120,5 @@ jobs:
           load: true
           tags: garmin-grafana:timescale
           cache-from: type=gha,scope=stack
-      - name: Start the stack with the personas
-        run: |
-          docker compose -f compose-example.yml --profile kiosk up -d --no-build --wait postgres migrate grafana grafana-kiosk kiosk
-          export PGHOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose -f compose-example.yml ps -q postgres)")
-          uv run --locked python scripts/load_personas.py
-      - name: Browser tests
-        env:
-          GRAFANA_URL: http://localhost:3000
-          KIOSK_URL: http://localhost:3001
-          GRAFANA_ALLOW_WRITES: "1"
-          CI: "true"
-        run: e2e/run.sh --shard=${{ matrix.shard }}
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: playwright-report-${{ strategy.job-index }}
-          path: |
-            e2e/playwright-report
-            e2e/test-results
+      - name: Rehearse the upgrade from the Alpine image
+        run: scripts/smoke_upgrade.sh

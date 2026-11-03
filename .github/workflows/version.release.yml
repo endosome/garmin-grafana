@@ -17,10 +17,14 @@ jobs:
 
   # Each platform builds natively on its own runner (no QEMU) and pushes by digest; the merge job joins them under the tag.
   # Both runners are 26.04; the arm64 one is labelled ubuntu-26.04-arm.
+  browser:
+    if: ${{ github.repository == 'endosome/garmin-grafana' && github.event_name == 'push' }}
+    uses: ./.github/workflows/browser.yml
+
   build:
     name: Build ${{ matrix.platform }}
-    needs: tests
-    if: ${{ !cancelled() && github.repository == 'endosome/garmin-grafana' && (needs.tests.result == 'success' || needs.tests.result == 'skipped') }}
+    needs: [tests, browser]
+    if: ${{ !cancelled() && github.repository == 'endosome/garmin-grafana' && contains(fromJSON('["success", "skipped"]'), needs.tests.result) && contains(fromJSON('["success", "skipped"]'), needs.browser.result) }}
     strategy:
       matrix:
         include:

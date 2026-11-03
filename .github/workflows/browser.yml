@@ -1,0 +1,62 @@
+name: Browser tests
+# Layer L4 of docs/dashboard-testing-plan.md, in its own workflow so that the Tests workflow reports in under two minutes.
+# Runs on every push like Tests, and the release workflow requires both.
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['docs/**', '**/*.md', '**/*.png']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: browser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # Eight shards, each starting its own stack; the image comes from the layer cache the stack job of Tests leaves behind.
+  e2e:
+    name: e2e (shard ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/8', '2/8', '3/8', '4/8', '5/8', '6/8', '7/8', '8/8']
+    runs-on: ubuntu-26.04
+    env:
+      PGDATABASE: garmin
+      PGUSER: garmin
+      PGPASSWORD: test-only-password
+      GRAFANA_PASSWORD: test-admin-password
+      GRAFANA_DB_PASSWORD: test-reader-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the runtime image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: garmin-grafana:timescale
+          cache-from: type=gha,scope=stack
+      - name: Start the stack with the personas
+        run: |
+          docker compose -f compose-example.yml --profile kiosk up -d --no-build --wait postgres migrate grafana grafana-kiosk kiosk
+          export PGHOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose -f compose-example.yml ps -q postgres)")
+          uv run --locked python scripts/load_personas.py
+      - name: Browser tests
+        env:
+          GRAFANA_URL: http://localhost:3000
+          KIOSK_URL: http://localhost:3001
+          GRAFANA_ALLOW_WRITES: "1"
+          CI: "true"
+        run: e2e/run.sh --shard=${{ matrix.shard }}
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report-${{ strategy.job-index }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
