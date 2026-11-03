@@ -14,7 +14,7 @@ data. Existing user services/databases and historical volumes were not modified.
 | Current full suite: PostgreSQL integration and command regressions | 439 passed; zero skips; 100% line and branch coverage; unchanged 98% gate |
 | Current unit run without PostgreSQL integration settings | 412 passed, 27 integration tests skipped |
 | `python scripts/validate_dashboard_queries.py` | All 169 panel/variable queries executed successfully in PostgreSQL |
-| `python scripts/smoke_grafana.py` | Both dashboards provisioned, datasource healthy; all 169 queries passed through Grafana |
+| `pytest tests/test_grafana_stack.py` (with `GRAFANA_URL`) | All dashboards provisioned, datasource healthy; every query passed through Grafana as the frontend sends it |
 | `docker build -t garmin-grafana:timescale .` | Passed; non-root runtime image built from current source |
 | `docker compose ... config --quiet` | Passed |
 | Compose PostgreSQL + migration + Grafana startup | Passed; database healthy, migration container exited successfully |

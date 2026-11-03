@@ -30,6 +30,7 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["src", "src/garmin_grafana"]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
+markers = ["grafana: needs the running Compose stack (GRAFANA_URL), see tests/test_grafana_stack.py"]
 xfail_strict = true
 filterwarnings = [
     "error",

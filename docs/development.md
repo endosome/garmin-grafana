@@ -108,11 +108,12 @@ To exercise the actual Grafana datasource and provisioning after startup:
 
 ```bash
 GRAFANA_URL=http://localhost:3000 GRAFANA_PASSWORD=your-local-admin-password \
-uv run python scripts/smoke_grafana.py
+uv run --locked pytest tests/test_grafana_stack.py
+# add KIOSK_URL=http://localhost:3001 to check the kiosk too
 ```
 
 Use a protected environment or prompt rather than putting real passwords in
-shell history. This command makes read-only queries using the provisioned reader
+shell history. These tests make read-only queries using the provisioned reader
 role; it does not authenticate to Garmin or alter health data.
 
 `scripts/smoke_upgrade.sh` rehearses the move from the Alpine

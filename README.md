@@ -156,8 +156,8 @@ choices so the screen stays on one person, and `idle=60` changes the timeout.
 Anyone who can reach `KIOSK_BIND:KIOSK_PORT` sees that health data without a
 password. It binds to this machine only by default; to use a separate tablet, set
 `KIOSK_BIND` to the address of the network interface the tablet uses, on a network
-you trust, never to a public address. `scripts/smoke_kiosk.py` checks a running
-kiosk.
+you trust, never to a public address. `tests/test_grafana_stack.py` checks a running
+kiosk (set `KIOSK_URL`).
 
 ## Backfills and manual imports
 
