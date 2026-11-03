@@ -393,6 +393,15 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   run with GPS, an indoor activity with developer fields, and a multisport activity (also try `time_shift` and `combine` results);
   upload each at Activities, Import; compare summary, laps, charts and Connect IQ fields with the original; record the outcome
   and any rejection (with the file's shape) here.
+- Real multi-vendor files (downloaded from python-fitparse's `tests/files`, 2026-11-03, not committed): 8 of 9 pass the R4
+  oracle through the database (`roundtrip`): Garmin fenix 2 run and multisport (1 MB, 7 sessions), fenix 5 run, Edge 820,
+  an indoor-trainer activity, the developer-types sample, a Wahoo ELEMNT file and a COROS Pace 2 file with misaligned
+  fields. The ninth (a Strava app export) is rejected by us as "truncated" and by the official SDK too (`Invalid local message
+  number` at byte 7472, integrity check false). The GPS run and the multisport file export byte-identical; the developer-field
+  file exports 36 bytes shorter (R4 holds, the official SDK's integrity check passes). Exports for the upload are in the session
+  scratchpad (`up/gps_run.fit`, `up/indoor_devfields.fit`, `up/multisport.fit`).
+- Item 7 upload: the test account login reaches the MFA step (after Garmin's 429/Cloudflare blocks on the first strategies),
+  but no code arrived for the account owner, so nothing has been uploaded. Still open.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted
