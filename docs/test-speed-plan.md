@@ -325,11 +325,14 @@ Don't use xdist for the unit tests: they finish in 3.7 s.
 
 ## Status (2026-11-03)
 
-Done: items 1, 2, 3, 4, 5, 6, 8, 9. Measured locally after item 1: full DB suite 54–61 s
-(was 82 s), `test_personas.py` 35 s (was ~70 s). Without `test_personas.py` the coverage
-gate holds at 100 %, so CI runs those tests in a second pytest command without coverage
-(item 8). Container image: uv bumped to 0.9.30, the newest `python3.13-bookworm-slim`
-tag published; the arm64 build is verified by the next release run only.
+Done: items 1, 2, 3, 4, 5, 6, 8, 9. Measured locally at the end, with the dashboard contract tests
+from the [dashboard testing plan](dashboard-testing-plan.md) included: coverage run (everything except
+the persona and contract tests, gate 100 %) 20 s, then the persona and contract tests without
+coverage 51 s, 72 s in all. The full suite with coverage took 122 s before, and 82 s without. The
+persona tests alone took about 70 s before and 35 s after item 1, but they now share one persona load
+with the contract tests. Container image: uv bumped to 0.9.30, the newest `python3.13-bookworm-slim`
+tag published; the arm64 build is verified by the next release run only. CI numbers: see the
+first run after this commit.
 
 Not done, on purpose: item 7 (native arm64 runner) waits for a measured release build with
 the apt layer gone and the layer cache warm; item 10 (xdist) waits for a CI timing of the

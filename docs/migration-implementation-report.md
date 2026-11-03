@@ -33,7 +33,7 @@ migration was performed, and no existing user database or volume was removed.
 | Portable export | `src/garmin_grafana/export.py` | Account-scoped streaming JSONL ZIP with native types/provenance and nanoseconds; refuses to overwrite an existing archive |
 | Grafana datasource | `Grafana_Datasource/postgres.yaml` | Provisioned PostgreSQL datasource, fixed `garmin_postgres` UID, separate SELECT-only login in the deployment examples |
 | Grafana dashboards | Both JSON files in `Grafana_Dashboard/` | SQL panel/variable queries, account selection, strength and GPS views, proper query formats/field names, calendar-aware grouping and null/zero gap filling |
-| Query checks | `scripts/validate_dashboard_queries.py`, `scripts/smoke_grafana.py` | Database execution and actual Grafana datasource/provisioning smoke checks |
+| Query checks | `scripts/validate_dashboard_queries.py`, `tests/test_grafana_stack.py` | Database execution and actual Grafana datasource/provisioning smoke checks |
 | Compose / container | `compose-example.yml`, `Dockerfile`, `.dockerignore`, `.env.example` | Pinned database/Grafana/plugin versions, health dependencies, explicit migration service, persistent storage/tokens, non-root app and private database networking |
 | Installer | `easy-install.sh` | Random initial secrets, interactive authentication/backfill, no world-writable token directory or automatic teardown of an existing stack |
 | Packaging | `pyproject.toml`, `uv.lock` | psycopg replaces Influx clients; explicit runtime dependencies; installable entry point and distribution containing SQL migrations |
