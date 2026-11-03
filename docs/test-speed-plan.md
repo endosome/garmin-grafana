@@ -234,8 +234,8 @@ minute:
   `docker buildx imagetools create`. Check which arm64 label exists for 26.04
   (`ubuntu-26.04-arm` or similar); otherwise use `ubuntu-24.04-arm`, since the build
   happens inside the image and doesn't depend on the host OS.
-- Later, test the image that gets shipped: push the image the `stack` job tested
-  (by digest) instead of rebuilding it after the tests.
+- Test the image that gets shipped: push by digest first, run the stack tests against
+  that image, tag it afterwards (done, see Status).
 
 ### 8. Coverage only where it is needed
 
@@ -346,8 +346,10 @@ rollup equivalence test, inside the "out of scope" rule.
 Item 7 is in: `version.release.yml` builds amd64 on `ubuntu-26.04` and arm64 on `ubuntu-26.04-arm` (no QEMU),
 each pushing by digest with its own cache scope, and a merge job runs `docker buildx imagetools create`.
 Not run: there is no way to run it without a tag and the package registry, so the first release shows
-whether the target of 1 m 15 s holds. Pushing the image the `stack` job tested, instead of rebuilding it,
-stays a later step.
+whether the target of 1 m 15 s holds. Item 7's second part is in as well: the release builds each platform by digest first, runs the stack, upgrade and browser
+tests against the pulled amd64 image (`.github/actions/runtime-image`, `image` input of the two called workflows) and tags
+both only after they pass. Rehearsal tag 3 (run 41674690208, green, 4 m 17 s): builds 50 s, tests on the pulled image,
+merge 15 s; tag and image deleted afterwards. Untagged digests of a failed release stay in GHCR.
 
 ### Second CI run and the release dry run (2026-11-03)
 
