@@ -17,7 +17,7 @@ dependencies = [
 garmin-fetch = "garmin_grafana:main"
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["packages/garmin-fit-store"]
 
 [tool.uv.sources]
 garmin-fit-store = { workspace = true }
