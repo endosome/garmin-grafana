@@ -82,7 +82,7 @@ NO_VALUES = {
     'Garmin-Health-Overview.json:41': 'the version of the application: not a health value',
 }
 
-# Chart panels whose rendered values are asserted by a reviewed screenshot baseline (e2e/tests/__screenshots__/screenshots.spec.ts/),
+# Chart panels whose written reason for having no value test is that a reviewed screenshot baseline asserts what they draw (e2e/tests/__screenshots__/screenshots.spec.ts/),
 # taken on one persona over one range. A change to what the panel draws is a diff someone has to accept.
 SCREENSHOT = {
     'Garmin-Grafana-Dashboard.json:10': 'stats-10.png',

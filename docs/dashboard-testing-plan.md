@@ -411,7 +411,7 @@ because without it every query read the raw samples and the budgets failed 10 to
 - Every panel is in the registry with value tests (64), a reviewed screenshot baseline (63) or a written reason (6):
   `test_every_panel_is_in_the_registry` fails for a panel that is in none of them.
 - A broken query, unit, override, layout, link, isolation or kiosk behaviour fails a CI job (`dashboards`, `stack`,
-  `e2e`); the release workflow calls `Tests` and `Browser tests` before it builds the image.
+  `e2e`); the release workflow calls `Tests` and `Browser tests` before it builds the image (checked on a second rehearsal tag, run 41672198501: both called workflows passed, then the two native builds and the merge ran; the tag and its image were deleted afterwards).
 - Screenshot baselines change only through `e2e/update-baselines.sh`; the budget file only with `--update`, both as diffs.
 - The browser suite runs on genesis in the memory limit with two workers: 29 of 29 in 7.0 minutes.
 - Timing target: `e2e` under 3 minutes and the whole push under about 4 minutes. Eight shards, each 2 m 02 s to
