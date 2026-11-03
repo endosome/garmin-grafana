@@ -39,6 +39,8 @@ class FitFile:
     profile: int = DEFAULT_PROFILE
     definitions: list = field(default_factory=list)
     messages: list = field(default_factory=list)
+    # ids of definitions the decoder extended with a compressed header's timestamp (not stored; the CSV converter lists that timestamp first)
+    compressed: set = field(default_factory=set, compare=False, repr=False)
 
     def add_definition(self, global_num, fields, dev_fields=(), arch=0):
         """The definition with these layouts, created if the file has none yet."""

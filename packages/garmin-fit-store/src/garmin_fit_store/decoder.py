@@ -68,6 +68,7 @@ def _decode_records(body, fit_file):
             if definition.id not in with_timestamp:
                 fields = tuple(f for f in definition.fields if f[0] != TIMESTAMP_FIELD) + ((TIMESTAMP_FIELD, 4, UINT32),)
                 with_timestamp[definition.id] = fit_file.add_definition(definition.global_num, fields, definition.dev_fields, definition.arch)
+                fit_file.compressed.add(with_timestamp[definition.id].id)
             message = _data(reader, with_timestamp[definition.id], fit_file, dev_types, skip_timestamp=True)
             message.fields[TIMESTAMP_FIELD] = last_timestamp
         elif header & 0x40:

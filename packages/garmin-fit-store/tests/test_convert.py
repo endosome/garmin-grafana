@@ -110,6 +110,14 @@ def test_csv_developer_fields_and_array_sentinels():
     assert any('65535' in cell for row in odd for cell in row)  # an invalid array element is the raw sentinel, unscaled
 
 
+def test_csv_lists_a_compressed_timestamp_first():
+    rows = csv_rows((CORPUS / 'compressed_timestamps.fit').read_bytes())
+    definition = [r for r in rows if r[0] == 'Definition' and r[2] == 'record'][1]
+    assert 'timestamp' not in definition  # the definition did not carry it
+    data = [r for r in rows if r[0] == 'Data' and r[2] == 'record'][1]
+    assert data[3] == 'timestamp' and data[4] == '1100000003'
+
+
 def test_csv_value_forms():
     assert convert._csv_value(None, None) == ''
     assert convert._csv_value([1, None], None) == '1|'
@@ -131,7 +139,7 @@ def test_csv_equals_the_official_tool(tmp_path):
     def data_rows(rows):  # the tool's local numbers are the wire's; the IR renumbers, so compare the rows without them
         return [[c for c in r[2:] if c] for r in rows if r and r[0] == 'Data']
 
-    for path in [CORPUS / 'activity.fit', CORPUS / 'developer_fields.fit', CORPUS / 'big_endian.fit', CORPUS / 'chained.fit', CORPUS / 'zero_header_crc.fit']:
+    for path in [CORPUS / 'activity.fit', CORPUS / 'developer_fields.fit', CORPUS / 'big_endian.fit', CORPUS / 'chained.fit', CORPUS / 'zero_header_crc.fit', CORPUS / 'compressed_timestamps.fit']:
         subprocess.run(['java', '-cp', jar, 'com.garmin.fit.csv.CSVTool', '-b', str(path), str(tmp_path / 'tool.csv')], check=True, capture_output=True)
         with open(tmp_path / 'tool.csv', encoding='utf-8-sig') as handle:
             theirs = data_rows(list(csv.reader(handle)))

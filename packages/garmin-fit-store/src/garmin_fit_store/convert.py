@@ -177,10 +177,13 @@ def to_csv(fit_file):
         definition = fit_file.definitions[message.def_id]
         name = profile.message_name(message.global_num) or f'unknown'
         fields = [(number, profile.field(message.global_num, number)) for number, _, _ in definition.fields]
+        compressed = definition.id in fit_file.compressed
+        if compressed:
+            fields = fields[-1:] + fields[:-1]  # the tool lists a compressed header's timestamp first, and leaves it out of the definition
         if definition.id not in announced:
             announced.add(definition.id)
             cells = []
-            for (number, size, base), (_, field) in zip(definition.fields, fields):
+            for (number, size, base), (_, field) in list(zip(definition.fields, fields[1:] + fields[:1] if compressed else fields))[:len(definition.fields) - compressed]:
                 cells += [field['name'] if field else f'unknown', _count(size, base), '']
             for number, size, index in definition.dev_fields:
                 described = descriptions.get((index, number), {})

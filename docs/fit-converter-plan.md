@@ -375,16 +375,16 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   `com.garmin.fit.csv.CSVTool`): 0 differing rows for the committed activity file and for three real files (a fenix 2 run,
   an indoor-trainer activity and the 24,274-row multisport file), after fixing sub-field names (`garmin_product`), omitted
   invalid fields, blank Definition units, expanded components (`enhanced_speed`) and 32-bit float text. Remaining documented
-  differences: local message numbers (the IR renumbers definitions; the tool prints the wire's), the compressed-timestamp
-  definition, and fields defined narrower than their base type.
-  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 11
-  (including both developer-field files, the ELEMNT, the Edge 820, the multisport and `big_endian`, after developer-field
-  columns, unscaled array sentinels and 32-bit float text were added). The other 4 differ in two documented ways: the
-  compressed-timestamp file (the tool lists the timestamp from the compressed header first; the IR can't tell it from a
-  definition that really puts the timestamp last, as Wahoo's do), and three files with a field defined narrower than its
-  base type (`unknown_things`, the fenix 5 file's one unknown message, and COROS's `event.data`), where the tool reads past
-  the field and we keep the bytes. The test `test_csv_equals_the_official_tool` runs the comparison on five committed files
-  when `FIT_CSV_TOOL_JAR` is set.
+  differences: local message numbers (the IR renumbers definitions; the tool prints the wire's) and fields defined narrower
+  than their base type.
+  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 12
+  (including both developer-field files, the compressed-timestamp file, the ELEMNT, the Edge 820, the multisport and
+  `big_endian`, after developer-field columns, unscaled array sentinels, 32-bit float text and the compressed header's
+  timestamp-first order were added; `FitFile.compressed` carries that last fact from the decoder). The other 3 are files
+  with a field defined narrower than its base type (`unknown_things`, the fenix 5 file's one unknown message, and COROS's
+  `event.data`): the tool reads past the field into the next bytes (a 3-byte field of base type uint16 prints as `513|768`),
+  we keep the 3 bytes. The test `test_csv_equals_the_official_tool` runs the comparison on six committed files when
+  `FIT_CSV_TOOL_JAR` is set.
 - Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
   package as a differential oracle.
 - Items 13 and 14: SQL functions and Python references agree on the R4 oracle; originals unchanged; SDK decodes the output.
