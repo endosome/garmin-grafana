@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/tests.yml
 
   # Each platform builds natively on its own runner (no QEMU) and pushes by digest; the merge job joins them under the tag.
-  # The arm64 runner label is the 24.04 one: the build happens inside the image, so the host OS does not matter.
+  # Both runners are 26.04; the arm64 one is labelled ubuntu-26.04-arm.
   build:
     name: Build ${{ matrix.platform }}
     needs: tests
@@ -26,7 +26,7 @@ jobs:
           - platform: linux/amd64
             runner: ubuntu-26.04
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read

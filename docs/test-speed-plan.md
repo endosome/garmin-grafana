@@ -335,16 +335,16 @@ tag published; the arm64 build is verified by the next release run only. CI numb
 first run after this commit. The `pytest` job also ran under `act` from the workflow file (504 passed in
 31 s, then 27 passed in 39 s, about 80 s with setup; command in `development.md`).
 
-Item 10 (xdist) is in, in a smaller form than planned: the persona and contract tests run on two
-workers (`-n 2 --dist loadgroup`), with the 11 s rollup equivalence test in its own group so it sits alone
-on one worker. No template databases: the workers share the database, since the personas are written under
-their own random accounts, and the rollup refresh takes an advisory lock because two refreshes at once fail
-with "concurrent refresh". Measured locally: 40 s without xdist, 30–36 s with it. The saving is small
-because both workers load the personas at once (10 s alone, 15–17 s with the other worker writing), so the
-"persona tests alone under 23 s" target is not met; what is left is that load and the rollup test, both
-inside the "out of scope" rule. CI will show whether four vCPUs shared with the Postgres service do better.
+Item 10 (xdist) was tried and taken out. Two workers on the shared database, with the 11 s rollup
+test alone in its own group and an advisory lock around the rollup refresh, took 30–36 s locally against
+40 s serial, because both workers load the personas at once (15–17 s instead of 10 s). On the GitHub
+runner it failed with `DeadlockDetected` between a worker's migration or write and the other's rollup
+refresh. The plan's one-database-per-worker design would avoid that, but for a saving of 5–10 s on a
+step that takes 20–40 s it is not worth the complexity, so the persona and contract tests stay serial and the
+"persona tests alone under 23 s" target is not met: what remains is the 10 s persona load and the 11 s
+rollup equivalence test, inside the "out of scope" rule.
 
-Item 7 is in: `version.release.yml` builds amd64 on `ubuntu-26.04` and arm64 on `ubuntu-24.04-arm` (no QEMU),
+Item 7 is in: `version.release.yml` builds amd64 on `ubuntu-26.04` and arm64 on `ubuntu-26.04-arm` (no QEMU),
 each pushing by digest with its own cache scope, and a merge job runs `docker buildx imagetools create`.
 Not run: there is no way to run it without a tag and the package registry, so the first release shows
 whether the target of 1 m 15 s holds. Pushing the image the `stack` job tested, instead of rebuilding it,

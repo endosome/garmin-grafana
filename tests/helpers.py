@@ -74,6 +74,5 @@ def refresh_rollups():
     """Materializes the rollups, so they include samples a test wrote into hours an earlier refresh already covered."""
     with storage.connect() as connection:
         connection.autocommit = True
-        connection.execute('SELECT pg_advisory_lock(7003)')  # pytest-xdist workers share the database; a concurrent refresh fails
         for view in ('samples_hourly', 'gps_cells_daily', 'hourly_medians', 'wear_hourly'):
             connection.execute(f"CALL refresh_continuous_aggregate('{view}', NULL, NULL)")

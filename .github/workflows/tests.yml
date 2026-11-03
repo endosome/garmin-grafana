@@ -41,7 +41,7 @@ jobs:
       # The persona and contract tests check dashboard SQL, not Python branches: the coverage gate holds without them, and tracing
       # them costs about half again as much time. Run together, they load the personas once.
       - run: uv run --locked pytest --cov --cov-report=term-missing --durations=15 --ignore=tests/test_personas.py --ignore=tests/test_dashboard_contracts.py
-      - run: uv run --locked pytest -n 2 --dist loadgroup --durations=5 tests/test_personas.py tests/test_dashboard_contracts.py
+      - run: uv run --locked pytest --durations=5 tests/test_personas.py tests/test_dashboard_contracts.py
       - run: uv run --locked python scripts/validate_dashboard_queries.py
   stack:
     runs-on: ubuntu-26.04

@@ -230,7 +230,6 @@ def test_dashboards_show_a_real_fitbit_month(load):
 RAW_PANEL_QUERIES = json.loads((Path(__file__).parent / 'data/raw_panel_queries.json').read_text())['queries']
 
 
-@pytest.mark.xdist_group("rollups")  # alone on a worker with -n 2 --dist loadgroup: it takes as long as all the other persona and contract tests
 def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, reader):
     """Panels served by continuous aggregates must keep the rows the raw-sample SQL gave, at any range edge."""
     assert set(RAW_PANEL_QUERIES) <= set(STATEMENTS)
