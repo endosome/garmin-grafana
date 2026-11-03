@@ -8639,7 +8639,7 @@
   ],
   "refresh": "15m",
   "schemaVersion": 41,
-  "tags": [],
+  "tags": ["garmin", "stats"],
   "templating": {
     "list": [
       {
