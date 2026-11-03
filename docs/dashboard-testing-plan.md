@@ -396,3 +396,12 @@ Not done: the clock is frozen with `setFixedTime`, but the kiosk idle test waits
 20 seconds instead of fast-forwarding, because a fake clock stalls Grafana's own timers; the accessibility
 check covers the kiosk page only, as planned; Gatus monitoring of the deployment is outside this
 repository.
+
+Run end to end on 2026-11-03 on one machine, against the Compose stack built as in `tests.yml`: the L3 tests
+11 of 11, the whole `e2e/` suite 29 of 29 (7.0 min with two workers; the one kiosk retry that run needed was
+the "Data does not have a time field" wording above, now allowed there too, then 18 of 18 over three
+repeats), the upgrade rehearsal, the nightly matrix (`DASHBOARD_MATRIX=full`, 40 passed) and the nightly
+budget job (330 measurements within budget). Two things only the nightly commands showed: the persona fixture
+now records the application version as `migrate` does, and `bench_dashboards.py seed` refreshes the rollups,
+because without it every query read the raw samples and the budgets failed 10 to 50 times over. The runs on
+GitHub are still to come: baselines on the runner, and `cancel-in-progress` on a release.

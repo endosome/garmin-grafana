@@ -81,6 +81,14 @@ To time every dashboard query on a year of synthetic data, use another disposabl
 database: `uv run --locked python scripts/bench_dashboards.py seed`, then
 `... bench_dashboards.py run` (30 days and 1 year; `--json` saves per-query times).
 
+To run the CI `pytest` job locally from the workflow file, install [act](https://github.com/nektos/act) and map the runner label to its
+image (the `stack` and `e2e` jobs use the host Docker daemon and ports, the `gha` cache and `upload-artifact`, so run those commands by hand as above and in `e2e/run.sh`):
+
+```bash
+systemd-run --user --scope -p MemoryMax=6G -p MemoryHigh=5G -- \
+  act push -j pytest -P ubuntu-26.04=catthehacker/ubuntu:act-24.04 --pull=false
+```
+
 `docker compose -f compose-example.yml config --quiet`, `docker build .`, and
 `uv build` validate configuration, runtime image and package distribution.
 

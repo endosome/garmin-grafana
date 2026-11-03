@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import personas  # noqa: E402
 from garmin_grafana.storage import PostgresStore, connect  # noqa: E402
+from load_personas import ROLLUPS  # noqa: E402
 from validate_dashboard_queries import expand_query, interval, seconds  # noqa: E402
 
 ACCOUNT = 'bench-year'
@@ -51,6 +52,8 @@ def seed():
         store.close()
     with connect() as connection:
         connection.autocommit = True
+        for view in ROLLUPS:  # as the refresh policies do in a running stack; without it the queries read the raw samples
+            connection.execute(f"CALL refresh_continuous_aggregate('{view}', NULL, NULL)")
         connection.execute('VACUUM ANALYZE')
 
 

@@ -332,7 +332,8 @@ coverage 51 s, 72 s in all. The full suite with coverage took 122 s before, and 
 persona tests alone took about 70 s before and 35 s after item 1, but they now share one persona load
 with the contract tests. Container image: uv bumped to 0.9.30, the newest `python3.13-bookworm-slim`
 tag published; the arm64 build is verified by the next release run only. CI numbers: see the
-first run after this commit.
+first run after this commit. The `pytest` job also ran under `act` from the workflow file (504 passed in
+31 s, then 27 passed in 39 s, about 80 s with setup; command in `development.md`).
 
 Not done, on purpose: item 7 (native arm64 runner) waits for a measured release build with
 the apt layer gone and the layer cache warm; item 10 (xdist) waits for a CI timing of the

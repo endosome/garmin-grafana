@@ -144,6 +144,7 @@ def personas():
     suffix = uuid.uuid4().hex
     with storage.connect() as connection:
         migrate.migrate(connection)
+        migrate.record_version(connection)  # the CLI does this after migrating; a dashboard stat shows it
         with connection.transaction():
             connection.execute("SELECT alter_job(job_id, scheduled => false) FROM timescaledb_information.jobs WHERE proc_name = 'policy_refresh_continuous_aggregate'")
         loaded = {}

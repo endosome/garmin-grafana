@@ -17,7 +17,8 @@ async function openKiosk(page: import('@playwright/test').Page, playwright: impo
 
 test('the dashboard shows without errors and the Fetch now panel is not visible', async ({ page, playwright }) => {
   const { frame } = await openKiosk(page, playwright);
-  await expect(frame.getByTestId('data-testid Panel data error message').filter({ hasNotText: 'No data' })).toHaveCount(0);
+  // An empty state timeline says "Data does not have a time field" instead of "No data" (see KNOWN in fixtures.ts).
+  await expect(frame.getByTestId('data-testid Panel data error message').filter({ hasNotText: /No data|Data does not have a time field/ })).toHaveCount(0);
   await expect(frame.locator('[data-viz-panel-key="panel-70"]')).toHaveCount(0);
   await expect(frame.locator('[data-griditem-key="grid-item-70"]:visible')).toHaveCount(0);
 });
