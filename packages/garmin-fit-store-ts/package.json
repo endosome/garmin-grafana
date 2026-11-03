@@ -1,0 +1,12 @@
+{
+  "name": "garmin-fit-store-ts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript FIT decoder and encoder over the same raw IR as the Python package; accepted against its conformance corpus",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test test/*.test.ts"
+  }
+}

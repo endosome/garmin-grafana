@@ -146,3 +146,25 @@ from falling outside a selected local day. The legacy adapter recovers calendar
 dates for known Garmin date-only dataset definitions; unknown timestamps remain
 absolute UTC observations. Gap filling uses PostgreSQL generate_series, including
 local-day DST boundaries, and requires no Timescale-licensed function.
+
+## FIT store (`packages/garmin-fit-store`)
+
+A second package, a uv workspace member, keeps activity FIT files losslessly in a separate `fit` schema and converts
+both ways. Decisions that hold today (the history is in [fit-converter-plan.md](fit-converter-plan.md)):
+
+- Round trip is semantic: decoding the original and decoding `encode(decode(original))` give the same sequence of
+  (message number, field number, raw value), developer fields keyed by (developer data index, field number). A field
+  holding its base type's invalid value is absent from the row; the encoder writes the sentinel for what a definition
+  lists and a row omits. Unknown messages and fields and Connect IQ developer fields are kept as raw values.
+- The truth is raw. `fit.messages` and the `fit.records` hypertable hold JSONB keyed by field number, `seq` gives the
+  file order, `time` is the decoded timestamp. `fit.definitions` holds each distinct definition once per file (the plan
+  said one per definition message). The typed `fit.v_*` views and `fit.profile_*` tables are generated at migrate time
+  from the profile of the installed `garmin-fit-sdk`; no Garmin-derived data is committed (FIT Protocol License).
+- Identity is a surrogate key plus SHA-256 per source; originals are immutable, an edit is a new row with `parent_id`
+  and an `operation`. `source_id` has no foreign key, so the migrations apply on a database with nothing else in it
+  (PGlite). Migrations run namespaced as `fit/NNN_*.sql` in `schema_migrations`.
+- Edit primitives are SQL functions (`fit.time_shift`, `change_device`, `remove_section`, `merge_fields`, `combine`),
+  checked against Python reference implementations on the IR. They run under PGlite with the TimescaleDB fork.
+- The collector keeps each downloaded FIT file after its records are written (`FIT_STORE_ENABLED`, default on); a
+  failure is logged and queued in `fit.pending_imports`, never failing the activity.
+- `fitparse` is gone from the collector: `garmin_fit_store.compat.FitFile` reads through the semantics layer.

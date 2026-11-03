@@ -50,3 +50,20 @@ Exports omit online strength exercise snapshots; existing sets remain intact.
 were skipped. Rerun the same range after fixing the error. File indexing uses a
 cache alongside the export directory, so a read-only mount can cause cache-write
 warnings; indexing still works without that cache. No source files are deleted.
+
+## FIT store commands
+
+`python -m garmin_fit_store` (uses the `PG*` variables; `garmin-fit-store` is the same command) works on the `fit` schema
+that `python -m garmin_grafana.migrate` creates:
+
+```bash
+python -m garmin_fit_store import --source-id 1 --garmin-activity-id 123 activity.fit   # directories work too
+python -m garmin_fit_store export 42 fixed.fit
+python -m garmin_fit_store verify            # every stored file against its original bytes
+python -m garmin_fit_store roundtrip ~/fit   # import, export and compare in a rolled-back transaction
+python -m garmin_fit_store convert --to gpx activity.fit activity.gpx   # gpx, tcx, json, csv, jsonl; no database
+python -m garmin_fit_store profile-sql > profile.sql   # profile rows and typed views for PGlite
+```
+
+`convert --to csv` follows the layout of the official FIT CSV Tool (not checked against the tool itself). A file with
+a bad checksum needs `--ignore-crc`.

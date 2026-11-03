@@ -6,7 +6,7 @@ from .ir import TIMESTAMP_FIELD, UINT32, FitFile, Message
 from .protocol import FitError, base_type_id, crc16, element_size, unpack_header
 
 FIELD_DESCRIPTION = 206
-UINT8_BYTE = 0x02
+BYTE = 0x0D
 
 
 class _Reader:
@@ -118,9 +118,7 @@ def _data(reader, definition, fit_file, dev_types, skip_timestamp=False):
         if value is not None:
             message.fields[number] = value
     for number, size, index in definition.dev_fields:
-        base = dev_types.get((index, number), UINT8_BYTE)
-        if (index, number) not in dev_types:
-            base = 0x0D  # byte: the description has not been seen, so the value stays raw bytes
+        base = dev_types.get((index, number), BYTE)  # without a description the value stays raw bytes
         value = values.decode(reader.take(size), base, definition.arch)
         if value is not None:
             message.dev[(index, number)] = value

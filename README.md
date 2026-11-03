@@ -241,3 +241,10 @@ uv run python -m garmin_grafana.export --account default \
 Date-only end values include the whole UTC day; `--last-n-days 30` overrides the
 date range. This portable export is account-scoped and contains health data;
 protect it accordingly. Use pg_dump for a complete restorable database backup.
+
+## FIT files and licence
+
+`packages/garmin-fit-store` keeps activity FIT files in a `fit` schema and converts them (see
+[docs/manual-import-instructions.md](docs/manual-import-instructions.md)). It depends on Garmin's `garmin-fit-sdk`, and builds
+the FIT profile from that package at run time; both are under Garmin's FIT Protocol License, which is why no profile data is
+committed to this BSD-3-Clause repository.

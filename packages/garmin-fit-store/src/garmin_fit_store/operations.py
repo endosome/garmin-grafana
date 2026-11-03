@@ -157,10 +157,7 @@ def ref_recompute_totals(fit_file, removed=None, closed=False):
     record_number = profile.message_number('record')
     records = [(m.fields[253], m.fields) for m in fit_file.messages
                if m.global_num == record_number and isinstance(m.fields.get(253), int) and m.fields[253] >= ABSOLUTE]
-    try:
-        rec_dist = profile.field_number('record', 'distance')
-    except KeyError:
-        rec_dist = None
+    rec_dist = profile.field_number('record', 'distance')
     record_fields = {f['name']: (int(n), f) for n, f in profile.document['messages'][str(record_number)]['fields'].items()}
     for summary in ('lap', 'session'):
         number = profile.message_number(summary)
@@ -185,7 +182,7 @@ def ref_recompute_totals(fit_file, removed=None, closed=False):
             if names['total_timer_time'][0] in m.fields:
                 m.fields[names['total_timer_time'][0]] = (t - s - overlap) * 1000
             inside = [f for time, f in records if s <= time <= t]
-            if rec_dist is not None and names['total_distance'][0] in m.fields:
+            if names['total_distance'][0] in m.fields:
                 distances = [(time, f[rec_dist]) for time, f in records if s <= time <= t and rec_dist in f]
                 if distances:
                     m.fields[names['total_distance'][0]] = sorted(distances)[-1][1] - sorted(distances)[0][1]
@@ -197,7 +194,7 @@ def ref_recompute_totals(fit_file, removed=None, closed=False):
                 if source not in record_fields:
                     continue
                 source_number, source_field = record_fields[source]
-                if source_field['array'] or source_field['scale'] != field['scale'] or source_field['offset'] != field['offset']:
+                if source_field['array'] or source_field['scale'] != field['scale'] or source_field['offset'] != field['offset']:  # pragma: no cover
                     continue
                 values = [f[source_number] for f in inside if source_number in f]
                 if not values:

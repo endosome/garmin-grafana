@@ -342,6 +342,46 @@ Total about 36 days. Items 1 to 7 are the MVP (R23), about 13 days.
 Prepend a dated section here as items land: what was done, the numbers, and anything that changed a decision above
 (with the decision's label, e.g. "A3 confirmed" or "R19 amended").
 
+### 2026-11-03: implemented
+
+Items 1 to 6, 8, 9, 10, 11, 12, 13, 14, 15 and the codec half of 16 are done; items 7 and the browser half of 16 are not.
+The current description lives in [architecture.md](architecture.md), [testing.md](testing.md) and
+[manual-import-instructions.md](manual-import-instructions.md).
+
+- Item 1: workspace member, Dockerfile copies `packages/`, image built and checked. Migrations are namespaced (`fit/001_…`).
+- Item 2: the migrations and a corpus file's rows apply and read back under the fork (`tools/pglite_check.mjs`, PostgreSQL
+  18.6, endosome/pglite commit c7f5edd67a), including the typed views and the edit primitives. Idempotent on the pinned image.
+- Item 3 and 4: decoder and encoder; 7 conformance files; the official Python SDK's three fixtures and one third-party file
+  (`Garmin.fit`) round-trip and match the SDK's raw values. **Finding:** the official Python SDK cannot read compressed
+  timestamp headers, so those are checked against fitparse. Chained files decode into one IR and encode as one file.
+  `timestamp_16` belongs to monitoring files, out of scope under A2, and is not implemented. `tests/fit_builder.py` now
+  re-exports the package builder.
+- Item 5: named values equal the SDK's, including sub-fields and components; the inverse is exact for primary fields.
+- Item 6: import/export/verify/roundtrip. **R9 amended:** `fit.definitions` holds each distinct definition once, not one
+  row per definition message. Not done: a roundtrip on a real Wahoo/Zwift/Coros corpus (none available; only the five
+  files above were run, zero differences).
+- Item 7: **not done**, it is a manual upload to a Garmin Connect account.
+- Item 8: **amended:** the view SQL is generated at migrate time from the profile, not committed as `fit/002`, because it
+  would be profile-derived data (A5). Views show NULL, not an error, where a file puts an array where the profile has a number.
+- Item 9 (365 one-hour 1 Hz activities, 1.31 M records): import 0.57 s per file and export 0.24 s (targets met); verify
+  0.77 s. The one-activity view query (7 columns) took 41 ms on a small database and 76 ms at a year of data, so the 50 ms
+  target is **not reliably met**; a 30-day aggregate takes 176 ms and a full-year aggregate 5.8 s. The robustness guard
+  on every column (`fit.num`) costs about a third; lever 2 (promoted typed columns) was not applied.
+- Item 10: `fetch_activity_GPS` returns a `RecordBatch` carrying `(activity id, bytes)`; the orchestration stores them after
+  the records are written; failures go to `fit.pending_imports` and are retried. The bulk importer uses the same path.
+- Item 11: GPX (TrackPointExtension, PowerExtension) and TCX validate against Garmin's and Topografix's XSDs. The CSV follows
+  the FIT CSV Tool's layout from memory and is **not** diffed against the tool (not obtainable).
+- Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
+  package as a differential oracle.
+- Items 13 and 14: SQL functions and Python references agree on the R4 oracle; originals unchanged; SDK decodes the output.
+  Totals recomputed: start/end clamping, elapsed and timer time, distance, avg/max/min by name where the scales agree.
+  Developer data collisions on combine raise an error. The combined-file Garmin Connect check is manual and open.
+- Item 15: documents updated.
+- Item 16: `packages/garmin-fit-store-ts` has the decoder and encoder (no semantics layer) and passes every corpus pair; the
+  Node job is in `tests.yml`. **Not done:** the pglite CI job (the fork's packages are unpublished, A6) and the browser demo
+  page; the pglite check runs locally with `tools/pglite_check.mjs`.
+- Package coverage 98.2 percent; root 100 percent.
+
 ### 2026-11-03: plan accepted
 
 The user confirmed A1, A2, A4 and A5 and named the forks (A6). Reading the forks amended A3: the browser build has

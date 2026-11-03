@@ -239,3 +239,38 @@ def test_file_combiner_refuses_colliding_developer_data(connection):
     with pytest.raises(psycopg.errors.RaiseException, match='developer data index'):
         operations.combine(connection, files)
     connection.rollback()
+
+
+def test_section_ending_inside_a_lap_and_unmapped_summary_fields(connection):
+    from garmin_fit_store import builder
+    start = T0.replace(tzinfo=None)
+    messages = [("file_id", {"type": "activity", "manufacturer": "garmin", "serial_number": 1, "time_created": start})]
+    for i in range(30):
+        messages.append(("record", {"timestamp": start + timedelta(seconds=i), "distance": float(i), "heart_rate": 100 + i, "cadence": 80, "speed": 3.0}))
+    end = start + timedelta(seconds=29)
+    summary = {"timestamp": end, "start_time": start, "total_elapsed_time": 29.0, "total_timer_time": 29.0, "total_distance": 29.0,
+               "avg_heart_rate": 110, "max_heart_rate": 129, "min_heart_rate": 100, "avg_cadence": 80, "max_neg_grade": 5,
+               "avg_left_power_phase": [1, 2], "message_index": 0}
+    messages += [("lap", dict(summary)), ("session", dict(summary, sport="running")),
+                 ("activity", {"timestamp": end, "num_sessions": 1, "type": "manual"})]
+    fit = builder.build_ir(messages)
+    file_id = stored(connection, fit, 8400)
+    for close_gap in (True, False):
+        s, e = T0 + timedelta(seconds=20), T0 + timedelta(seconds=40)  # ends after the activity: lap end falls inside the section
+        new_id = operations.remove_section(connection, file_id, s, e, close_gap)
+        check(connection, file_id, new_id, operations.ref_remove_section(fit, fit_seconds(s), fit_seconds(e), close_gap))
+        lap = next(m for m in decode(store.export_file(connection, new_id)).messages if m.global_num == 19)
+        from garmin_fit_store.profile import Profile
+        avg = Profile().field_number('lap', 'avg_heart_rate')
+        assert lap.fields[7] == 20_000 and lap.fields[avg] == 110  # elapsed 20 s; the average of 100..119 is 109.5, rounded half up
+
+
+def test_combine_dedups_identical_developer_data(connection):
+    from garmin_fit_store import ir as irmod
+    data = (CORPUS / 'developer_fields.fit').read_bytes()
+    one, two = decode(data), decode(data)
+    ids = [store.import_file(connection, data, source_id=8500), store.import_file(connection, data, source_id=8501)]
+    new_id = operations.combine(connection, ids)
+    check(connection, ids[0], new_id, operations.ref_combine([one, two]))
+    kinds = [m.global_num for m in decode(store.export_file(connection, new_id)).messages]
+    assert kinds.count(207) == 1 and kinds.count(206) == 2

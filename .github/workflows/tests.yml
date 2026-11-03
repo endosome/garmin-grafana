@@ -50,6 +50,15 @@ jobs:
       - run: uv run --locked pytest --cov --cov-report=term-missing --durations=15 --ignore=tests/test_personas.py --ignore=tests/test_dashboard_contracts.py
       # The FIT store package has its own suite, coverage gate and conformance corpus (invoked separately: both have a conftest.py).
       - run: uv run --locked --package garmin-fit-store --directory packages/garmin-fit-store pytest --cov --cov-report=term-missing
+  fit-ts:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      # The TypeScript codec is accepted against the Python package's committed conformance corpus (no dependencies).
+      - run: node --test packages/garmin-fit-store-ts/test/*.test.ts
   dashboards:
     runs-on: ubuntu-26.04
     services:
