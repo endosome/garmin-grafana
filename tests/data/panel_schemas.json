@@ -1,0 +1,2190 @@
+{
+ "Garmin-Grafana-Dashboard.json:10:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Activity Calories",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:10:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "BMR Calories",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:11:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg HRV",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:11:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg SpO2",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:11:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg Resting HR",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:12:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleep Score",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:13:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Light Sleep",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:13:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep Sleep",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:13:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "REM Sleep",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:13:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:15:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Heart Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:16:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Intraday Steps",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:17:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Active",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:17:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Highly Active",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:17:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sedentary",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:17:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleeping",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:18:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Low Stress duration",
+   "float8"
+  ],
+  [
+   "Rest stress duration",
+   "float8"
+  ],
+  [
+   "Medium stress duration",
+   "float8"
+  ],
+  [
+   "Uncategorized stress duration",
+   "float8"
+  ],
+  [
+   "High stress duration",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:19:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Drained",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:19:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Charged",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:1:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Steps",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:20:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Hourly Steps",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:21:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Heart rate histogram",
+   "float8"
+  ],
+  [
+   "Heart rate histogram > 96",
+   "float8"
+  ],
+  [
+   "Heart rate histogram < 60",
+   "float8"
+  ],
+  [
+   "Heart rate histogram > 110",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:22:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep",
+   "float8"
+  ],
+  [
+   "Light",
+   "float8"
+  ],
+  [
+   "REM",
+   "float8"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:23:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sedentary",
+   "float8"
+  ],
+  [
+   "Intense Activity",
+   "float8"
+  ],
+  [
+   "Fair Activity",
+   "float8"
+  ],
+  [
+   "Sleeping",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:26:A": [
+  [
+   "time",
+   "timestamptz"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:27:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleep Regularity",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:28:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "restingHeartRate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:29:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stress Level",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:29:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Body Battery",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:30:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "totalSteps",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:31:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "averageSpo2",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:32:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Total Asleep",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:33:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stress",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:34:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Weight in KG",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:35:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sedentary",
+   "float8"
+  ],
+  [
+   "Intense Activity",
+   "float8"
+  ],
+  [
+   "Moderate Activity",
+   "float8"
+  ],
+  [
+   "Sleeping",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:36:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep",
+   "float8"
+  ],
+  [
+   "Light",
+   "float8"
+  ],
+  [
+   "REM",
+   "float8"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:37:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "bb_low",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:37:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "bb_high",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:38:B": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Activity Type",
+   "text"
+  ],
+  [
+   "Duration",
+   "float8"
+  ],
+  [
+   "Max HR",
+   "float8"
+  ],
+  [
+   "Max Speed",
+   "float8"
+  ],
+  [
+   "Distance",
+   "float8"
+  ],
+  [
+   "Location",
+   "text"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:3:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Distance Covered",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:41:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Activity Timeline",
+   "text"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:43:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Zone 1",
+   "float8"
+  ],
+  [
+   "Zone 2",
+   "float8"
+  ],
+  [
+   "Zone 3",
+   "float8"
+  ],
+  [
+   "Zone 4",
+   "float8"
+  ],
+  [
+   "Zone 5",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:44:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "calories",
+   "float8"
+  ],
+  [
+   "BMR calories",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:45:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "HR",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:46:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Altitude",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:47:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "time/km",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:48:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "avgHR",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:48:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "maxHR",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:49:I": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "lat",
+   "float8"
+  ],
+  [
+   "lon",
+   "float8"
+  ],
+  [
+   "HR",
+   "float8"
+  ],
+  [
+   "speed",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:4:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Moderate Intensity",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:4:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Vigorous Intensity",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:50:I": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "lat",
+   "float8"
+  ],
+  [
+   "lon",
+   "float8"
+  ],
+  [
+   "HR",
+   "float8"
+  ],
+  [
+   "speed (Km/h)",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:51:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg Stress",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:51:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg Sleeping Stress",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:51:E": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Avg Breathing Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:52:E": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleeping Movement Activity",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:53:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Distance",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:54:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Duration",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:55:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Speed (Km/h)",
+   "float8"
+  ],
+  [
+   "Heart Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:57:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Heart Rate",
+   "float8"
+  ],
+  [
+   "Pace",
+   "float8"
+  ],
+  [
+   "Duration",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:58:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "hr_low",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:58:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "hr_high",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:59:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Distance Covered",
+   "float8"
+  ],
+  [
+   "Steps",
+   "float8"
+  ],
+  [
+   "Total Sleep",
+   "float8"
+  ],
+  [
+   "High Stress Duration",
+   "float8"
+  ],
+  [
+   "High Activity Duration",
+   "float8"
+  ],
+  [
+   "Resting Heart Rate",
+   "float8"
+  ],
+  [
+   "Avg SpO2",
+   "float8"
+  ],
+  [
+   "Body Battery Change",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:60:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Device Battery Level",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:61:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Cadence",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:62:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Breathing Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:63:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Time 10K",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:63:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Time 5K",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:63:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Half Marathon",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:63:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Full Marathon",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:64:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "VO2 Max",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:65:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Heart Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:66:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Resting HR",
+   "float8"
+  ],
+  [
+   "High Stress Duration",
+   "float8"
+  ],
+  [
+   "Active time",
+   "float8"
+  ],
+  [
+   "Body Battery (Highest)",
+   "float8"
+  ],
+  [
+   "Total Steps",
+   "float8"
+  ],
+  [
+   "SpO2",
+   "float8"
+  ],
+  [
+   "Sleep Score",
+   "float8"
+  ],
+  [
+   "Total Sleep",
+   "float8"
+  ],
+  [
+   "HRV",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:67:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Body Battery",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:67:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stress Level",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:67:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Steps Taken",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:67:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Band Wearing",
+   "int4"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:67:E": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "HR Zones",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:68:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Hourly Steps",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:69:I": [
+  [
+   "lat",
+   "float8"
+  ],
+  [
+   "lon",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:6:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:6:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Light",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:6:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "REM",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:6:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:71:A": [
+  [
+   "time",
+   "timestamptz"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:7:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "HRV",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:7:C": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleeping Heart Rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:7:D": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "SpO2",
+   "float8"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:ActivityGPS": [
+  [
+   "value",
+   "text"
+  ]
+ ],
+ "Garmin-Grafana-Dashboard.json:Source": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "int8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:10:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stage",
+   "text"
+  ]
+ ],
+ "Garmin-Health-Overview.json:11:A": [
+  [
+   "Deep",
+   "float8"
+  ],
+  [
+   "Light",
+   "float8"
+  ],
+  [
+   "REM",
+   "float8"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:13:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Overnight HRV",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:14:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Resting HR",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:15:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Highest",
+   "float8"
+  ],
+  [
+   "Lowest",
+   "float8"
+  ],
+  [
+   "At wake",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:16:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Average stress",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:18:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep",
+   "float8"
+  ],
+  [
+   "Light",
+   "float8"
+  ],
+  [
+   "REM",
+   "float8"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:19:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleep score",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:1:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleep score",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:21:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Breathing rate",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:22:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Average SpO2",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:23:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Skin temperature change",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:25:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Steps",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:26:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Moderate",
+   "float8"
+  ],
+  [
+   "Vigorous (counted twice)",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:27:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:28:A": [
+  [
+   "Activity",
+   "text"
+  ],
+  [
+   "Sessions",
+   "int8"
+  ],
+  [
+   "Duration",
+   "float8"
+  ],
+  [
+   "Distance",
+   "float8"
+  ],
+  [
+   "Avg HR",
+   "float8"
+  ],
+  [
+   "Training load",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:29:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Running",
+   "float8"
+  ],
+  [
+   "Cycling",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:2:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Sleep",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:30:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Fitness age",
+   "float8"
+  ],
+  [
+   "Actual age",
+   "float8"
+  ],
+  [
+   "Achievable",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:31:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Weight",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:33:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Acute load",
+   "float8"
+  ],
+  [
+   "Chronic load",
+   "float8"
+  ],
+  [
+   "Range high",
+   "float8"
+  ],
+  [
+   "Range low",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:34:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Morning readiness",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:36:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:38:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Heart rate",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:39:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stress",
+   "float8"
+  ],
+  [
+   "Body Battery",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:3:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "HRV",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:41:A": [
+  [
+   "version",
+   "text"
+  ]
+ ],
+ "Garmin-Health-Overview.json:42:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "VO2 max",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:43:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Deep",
+   "float8"
+  ],
+  [
+   "Light",
+   "float8"
+  ],
+  [
+   "REM",
+   "float8"
+  ],
+  [
+   "Awake",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:4:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Resting HR",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:5:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Battery at wake",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:6:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Stress today",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:7:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Steps today",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:8:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Intensity minutes (7 days)",
+   "float8"
+  ]
+ ],
+ "Garmin-Health-Overview.json:9:A": [
+  [
+   "Metric",
+   "text"
+  ],
+  [
+   "Latest",
+   "text"
+  ],
+  [
+   "Recorded",
+   "text"
+  ],
+  [
+   "7-day avg",
+   "text"
+  ],
+  [
+   "Usual range",
+   "text"
+  ],
+  [
+   "Status",
+   "text"
+  ]
+ ],
+ "Garmin-Health-Overview.json:Source": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "int8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:10:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:10:B": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Weekly goal",
+   "numeric"
+  ]
+ ],
+ "Garmin-Ski-Season.json:11:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:12:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:13:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Zone 1 (warm up)",
+   "float8"
+  ],
+  [
+   "Zone 2 (easy)",
+   "float8"
+  ],
+  [
+   "Zone 3 (aerobic)",
+   "float8"
+  ],
+  [
+   "Zone 4 (threshold)",
+   "float8"
+  ],
+  [
+   "Zone 5 (maximum)",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:15:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "metric",
+   "text"
+  ],
+  [
+   "value",
+   "int8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:16:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Weekly load",
+   "float8"
+  ],
+  [
+   "4-week average",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:17:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Overnight HRV",
+   "float8"
+  ],
+  [
+   "7-day average",
+   "float8"
+  ],
+  [
+   "Usual range",
+   "float8"
+  ],
+  [
+   "Usual low",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:19:A": [
+  [
+   "Sport",
+   "text"
+  ],
+  [
+   "Days",
+   "int8"
+  ],
+  [
+   "Sessions",
+   "int8"
+  ],
+  [
+   "Duration",
+   "float8"
+  ],
+  [
+   "Vertical up",
+   "float8"
+  ],
+  [
+   "Vertical down",
+   "float8"
+  ],
+  [
+   "Distance",
+   "float8"
+  ],
+  [
+   "Max speed",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:1:A": [
+  [
+   "Ski season",
+   "text"
+  ]
+ ],
+ "Garmin-Ski-Season.json:20:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Name",
+   "text"
+  ],
+  [
+   "Sport",
+   "text"
+  ],
+  [
+   "Location",
+   "text"
+  ],
+  [
+   "Duration",
+   "float8"
+  ],
+  [
+   "Vertical up",
+   "float8"
+  ],
+  [
+   "Vertical down",
+   "float8"
+  ],
+  [
+   "Distance",
+   "float8"
+  ],
+  [
+   "Max speed",
+   "float8"
+  ],
+  [
+   "Avg HR",
+   "float8"
+  ],
+  [
+   "Training load",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:21:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Climbed",
+   "float8"
+  ],
+  [
+   "Descended",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:23:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Acute load",
+   "float8"
+  ],
+  [
+   "Chronic load",
+   "float8"
+  ],
+  [
+   "Range high",
+   "float8"
+  ],
+  [
+   "Range low",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:24:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "Morning readiness",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:2:A": [
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:3:A": [
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:4:A": [
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:5:A": [
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:6:A": [
+  [
+   "value",
+   "int8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:7:A": [
+  [
+   "value",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:8:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "VO2 max",
+   "float8"
+  ]
+ ],
+ "Garmin-Ski-Season.json:Source": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1002:A": [
+  [
+   "total_volume",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1003:A": [
+  [
+   "total_sets",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1004:A": [
+  [
+   "total_reps",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1005:A": [
+  [
+   "workouts",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1006:A": [
+  [
+   "avg_volume",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1008:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "e1rm",
+   "float8"
+  ],
+  [
+   "metric",
+   "text"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1009:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Volume",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1010:A": [
+  [
+   "Exercise",
+   "text"
+  ],
+  [
+   "Max Weight (kg)",
+   "float8"
+  ],
+  [
+   "Best Est. 1RM (kg)",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1012:A": [
+  [
+   "ExerciseCategory",
+   "text"
+  ],
+  [
+   "Volume",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1013:A": [
+  [
+   "ExerciseCategory",
+   "text"
+  ],
+  [
+   "Sets",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1014:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Exercise",
+   "text"
+  ],
+  [
+   "Reps",
+   "float8"
+  ],
+  [
+   "Weight (kg)",
+   "float8"
+  ],
+  [
+   "Volume (kg)",
+   "float8"
+  ],
+  [
+   "Set #",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1015:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Sets",
+   "int8"
+  ],
+  [
+   "Reps",
+   "float8"
+  ],
+  [
+   "Volume (kg)",
+   "float8"
+  ],
+  [
+   "Time Under Tension (s)",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1017:A": [
+  [
+   "Zone 1",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1017:B": [
+  [
+   "Zone 2",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1017:C": [
+  [
+   "Zone 3",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1017:D": [
+  [
+   "Zone 4",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1017:E": [
+  [
+   "Zone 5",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1018:A": [
+  [
+   "Exercise",
+   "text"
+  ],
+  [
+   "Total Time Under Tension (s)",
+   "float8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1020:A": [
+  [
+   "Time",
+   "timestamptz"
+  ],
+  [
+   "Workouts",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1021:A": [
+  [
+   "time",
+   "timestamptz"
+  ],
+  [
+   "sets",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:1022:A": [
+  [
+   "unknown_sets",
+   "int8"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:ExerciseCategory": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "text"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:ExerciseLabel": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "text"
+  ]
+ ],
+ "Garmin-Strength-Training-Dashboard.json:Source": [
+  [
+   "__text",
+   "text"
+  ],
+  [
+   "__value",
+   "int8"
+  ]
+ ]
+}

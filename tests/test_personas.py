@@ -1,96 +1,16 @@
 """Dashboard panels against realistic synthetic athletes (tests/personas.py). Needs TEST_DATABASE=1."""
 from datetime import date, datetime, timedelta, timezone
-import importlib.util
 import json
 import math
-import os
 from pathlib import Path
-import uuid
 from zoneinfo import ZoneInfo
 import pytest
-from garmin_grafana import migrate, storage
-from garmin_grafana.storage import PostgresStore
-from helpers import refresh_rollups
+from panel_queries import STATEMENTS, iso, panels, queries
 from personas import NOW, PERSONAS, TODAY, TZ, gym_goer, healthy_lifestyle, legacy_cyclist, newcomer, public_fitbit_user, ski_tourer
-
-ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('queries', ROOT / 'scripts/validate_dashboard_queries.py')
-queries = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(queries)
-STATEMENTS = {label: sql for label, sql, fmt in queries.dashboard_queries()}
-
-
-def panels(name):
-    def walk(items):
-        for panel in items:
-            yield panel
-            yield from walk(panel.get('panels', []))
-    found = {}
-    for panel in (p for p in walk(json.loads((ROOT / 'Grafana_Dashboard' / name).read_text())['panels']) if p['type'] != 'row'):
-        # Tiles have no title, only a display name; they come first, so a chart with the same title does not replace them.
-        found.setdefault(panel.get('title') or panel.get('fieldConfig', {}).get('defaults', {}).get('displayName'), panel['id'])
-    return found
-
-
-def iso(moment):
-    return moment.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def local_day(value, zone=TZ):
     return value.astimezone(zone).date()
-
-
-@pytest.fixture(scope='session')
-def personas():
-    """Writes every persona once per session, each under its own new account, and returns {account: (sid, persona)}.
-
-    Opens its own connection and doesn't depend on `db`. Tests only read from the result
-    (see `load`), so what they see doesn't depend on which test ran first.
-    """
-    if os.getenv('TEST_DATABASE') != '1':
-        pytest.skip('Set TEST_DATABASE=1 with PG* pointing to a disposable TimescaleDB database')
-    suffix = uuid.uuid4().hex
-    with storage.connect() as connection:
-        migrate.migrate(connection)
-        with connection.transaction():
-            connection.execute("SELECT alter_job(job_id, scheduled => false) FROM timescaledb_information.jobs WHERE proc_name = 'policy_refresh_continuous_aggregate'")
-        loaded = {}
-        for factory in PERSONAS:
-            persona = factory()
-            store = PostgresStore(account=f'{persona.account}-{suffix}', connection=connection)
-            store.write(persona.records)
-            with connection.transaction(), connection.cursor() as cur:
-                loaded[persona.account] = store.source_id(cur)
-        refresh_rollups()
-    return loaded
-
-
-@pytest.fixture(scope='session')
-def reader(personas):
-    """A read-only connection: a test that starts writing to the shared personas fails loudly."""
-    connection = storage.connect()
-    connection.read_only = True
-    yield connection
-    connection.close()
-
-
-@pytest.fixture
-def load(personas, reader):
-    """Returns a function giving a runner for dashboard queries on a persona's shared account."""
-    def load(persona):
-        sid = personas[persona.account]
-
-        def run(dashboard, panel, start, end=NOW, ref='A', activity='__all', category='__all', sql=None, interval='5 minutes'):
-            if sql is None:
-                ids = panels(dashboard)
-                sql = STATEMENTS[f'{dashboard}:{ids.get(panel, panel)}:{ref}']
-            sql = queries.expand_query(sql, sid, start=iso(start), end=iso(end), timezone=persona.timezone, activity=activity, category=category, interval=interval)
-            with reader.transaction(), reader.cursor() as cur:
-                cur.execute(sql)
-                return [dict(zip([c.name for c in cur.description], row)) for row in cur.fetchall()]
-        run.sid = sid
-        return run
-    return load
 
 
 @pytest.mark.parametrize('factory', PERSONAS, ids=lambda f: f.__name__)
@@ -307,7 +227,7 @@ def test_dashboards_show_a_real_fitbit_month(load):
         assert all(list(r.values())[-1] is None for r in run('Garmin-Health-Overview.json', tile, end - timedelta(days=14), end)), tile
 
 
-RAW_PANEL_QUERIES = json.loads((ROOT / 'tests/data/raw_panel_queries.json').read_text())['queries']
+RAW_PANEL_QUERIES = json.loads((Path(__file__).parent / 'data/raw_panel_queries.json').read_text())['queries']
 
 
 def test_rollup_panels_return_what_their_raw_sample_queries_returned(load, reader):

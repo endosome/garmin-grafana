@@ -268,3 +268,18 @@ def test_dashboard_colours_are_grafana_colours():
     for path in (ROOT / 'Grafana_Dashboard').glob('*.json'):
         for colour in re.findall(r'"(?:fixedColor|color)": "([^"]*)"', path.read_text()):
             assert valid.match(colour), (path.name, colour)
+
+
+# Registry (tests/panel_registry.py)
+
+def test_every_panel_is_in_the_registry():
+    import panel_registry as registry
+    panels = {label(n, p) for n, _, p in PANELS if p['type'] != 'row'}
+    listed = [set(registry.VALUE_TESTS), set(registry.NO_VALUES), set(registry.NOT_YET)]
+    assert sum(len(part) for part in listed) == len(set().union(*listed)), 'a panel is listed twice'
+    assert set().union(*listed) == panels, (f'not in the registry: {sorted(panels - set().union(*listed))}; '
+                                            f'no longer a panel: {sorted(set().union(*listed) - panels)}')
+    named = {test for tests in registry.VALUE_TESTS.values() for test in tests}
+    for test in named:  # a renamed or removed test must be renamed here too
+        path, function = test.split('::')
+        assert re.search(rf'^def {function}\b', (ROOT / 'tests' / path).read_text(), re.M), test

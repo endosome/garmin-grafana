@@ -2,16 +2,30 @@ import logging
 import os
 import re
 import runpy
+import uuid
 from unittest import mock
 
 import dotenv
-from garmin_grafana import storage
+from garmin_grafana import migrate, storage
+from garmin_grafana.storage import PostgresStore
 import pytest
 
-from helpers import GARMIN_FETCH, zip_bytes
+import personas as persona_data
+from helpers import GARMIN_FETCH, refresh_rollups, zip_bytes
+from panel_queries import STATEMENTS, iso, panels, queries
 
 # Every environment variable garmin_fetch reads is cleared, apart from these pinned
 # values, so a developer's shell environment can't change what the tests exercise.
+def pytest_addoption(parser):
+    parser.addoption('--update-schemas', action='store_true', help='rewrite tests/data/panel_schemas.json from the current queries')
+
+
+def pytest_terminal_summary(terminalreporter):
+    import panel_registry
+    covered, total = len(panel_registry.VALUE_TESTS), len(panel_registry.VALUE_TESTS) + len(panel_registry.NOT_YET)
+    terminalreporter.write_line(f'dashboard panels with value assertions: {covered} of {total} ({covered * 100 // total} %)')
+
+
 TEST_ENV = {
     "RATE_LIMIT_CALLS_SECONDS": "0",
 }
@@ -116,3 +130,65 @@ def fake_fit(gf, monkeypatch):
         return zip_bytes({f"{key}.fit": key.encode()})
 
     return make_fit_zip
+
+
+@pytest.fixture(scope='session')
+def personas():
+    """Writes every persona once per session, each under its own new account, and returns {account: (sid, persona)}.
+
+    Opens its own connection and doesn't depend on `db`. Tests only read from the result
+    (see `load`), so what they see doesn't depend on which test ran first.
+    """
+    if os.getenv('TEST_DATABASE') != '1':
+        pytest.skip('Set TEST_DATABASE=1 with PG* pointing to a disposable TimescaleDB database')
+    suffix = uuid.uuid4().hex
+    with storage.connect() as connection:
+        migrate.migrate(connection)
+        with connection.transaction():
+            connection.execute("SELECT alter_job(job_id, scheduled => false) FROM timescaledb_information.jobs WHERE proc_name = 'policy_refresh_continuous_aggregate'")
+        loaded = {}
+        for factory in persona_data.PERSONAS:
+            persona = factory()
+            store = PostgresStore(account=f'{persona.account}-{suffix}', connection=connection)
+            store.write(persona.records)
+            with connection.transaction(), connection.cursor() as cur:
+                loaded[persona.account] = store.source_id(cur)
+        refresh_rollups()
+    return loaded
+
+
+@pytest.fixture(scope='session')
+def reader(personas):
+    """A read-only connection: a test that starts writing to the shared personas fails loudly."""
+    connection = storage.connect()
+    connection.read_only = True
+    yield connection
+    connection.close()
+
+
+@pytest.fixture
+def load(personas, reader):
+    """Returns a function giving a runner for dashboard queries on a persona's shared account."""
+    def load(persona):
+        sid = personas[persona.account]
+
+        def run(dashboard, panel, start, end=persona_data.NOW, ref='A', activity='__all', category='__all', sql=None, interval='5 minutes'):
+            if sql is None:
+                ids = panels(dashboard)
+                sql = STATEMENTS[f'{dashboard}:{ids.get(panel, panel)}:{ref}']
+            sql = queries.expand_query(sql, sid, start=iso(start), end=iso(end), timezone=persona.timezone, activity=activity, category=category, interval=interval)
+            with reader.transaction(), reader.cursor() as cur:
+                cur.execute(sql)
+                return [dict(zip([c.name for c in cur.description], row)) for row in cur.fetchall()]
+        run.sid = sid
+        return run
+    return load
+
+
+@pytest.fixture(scope='session')
+def empty_source(personas):
+    """The source id of a new account without any data, next to the personas' accounts."""
+    with storage.connect() as connection:
+        store = PostgresStore(account='empty-' + uuid.uuid4().hex, connection=connection)
+        with connection.transaction(), connection.cursor() as cur:
+            return store.source_id(cur)
