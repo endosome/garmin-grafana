@@ -11,7 +11,7 @@ VALUE_TESTS = {
     'Garmin-Strength-Training-Dashboard.json:1014': ['test_personas.py::test_recent_sets_table_lists_the_latest_weighted_sets_first'],
     'Garmin-Grafana-Dashboard.json:1': ['test_personas.py::test_dashboards_show_a_real_fitbit_month', 'test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person', 'test_personas.py::test_records_without_local_dates_use_the_dashboard_time_zone'],  # Daily Steps
     'Garmin-Grafana-Dashboard.json:15': ['test_personas.py::test_dashboards_show_a_real_fitbit_month'],  # Heart Rate
-    'Garmin-Grafana-Dashboard.json:26': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Last Sync 
+    'Garmin-Grafana-Dashboard.json:26': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Newest data from the watch
     'Garmin-Grafana-Dashboard.json:28': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Today RHR
     'Garmin-Grafana-Dashboard.json:29': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Stress
     'Garmin-Grafana-Dashboard.json:30': ['test_personas.py::test_garmin_stats_daily_panels_match_the_healthy_lifestyle_person'],  # Today's Steps
@@ -23,6 +23,7 @@ VALUE_TESTS = {
     'Garmin-Grafana-Dashboard.json:60': ['test_personas.py::test_records_without_local_dates_use_the_dashboard_time_zone'],  # Battery Level (Requires GarminHomeAssistant from ConnectIQ integration)
     'Garmin-Grafana-Dashboard.json:67': ['test_personas.py::test_dashboards_show_a_real_fitbit_month'],  # Month at a Glance (Intraday)
     'Garmin-Grafana-Dashboard.json:68': ['test_personas.py::test_hourly_steps_add_up_on_the_25_hour_dst_day'],  # Steps Hourly (24h)
+    'Garmin-Grafana-Dashboard.json:72': ['test_storage.py::test_fetch_now_results_are_recorded_and_readable_without_widening_the_button'],  # Fetch now result
     'Garmin-Grafana-Dashboard.json:71': ['test_storage.py::test_record_fetch_stamps_the_source_for_the_last_fetch_panel'],  # Last Fetch
     'Garmin-Health-Overview.json:1': ['test_personas.py::test_garmin_health_panels_match_the_healthy_lifestyle_person', 'test_storage.py::test_health_today_tiles_stay_empty_until_today_is_synced'],  # Sleep score
     'Garmin-Health-Overview.json:13': ['test_personas.py::test_new_users_get_no_usual_range_or_load_yet'],  # Overnight HRV

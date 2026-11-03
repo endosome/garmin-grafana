@@ -8,7 +8,7 @@ const EXPECTED: [DashboardName, PersonaName, Record<number, string>][] = [
     8: 'Intensity, 7 days340', 42: 'VO2 max53',
   }],
   ['stats', 'healthy', {
-    28: 'Today RHR54Resting HR', 30: "Today's Steps3.63 KSteps 👟", 31: 'Today SpO295SpO2 %', 26: 'Last Sync 5 hours ago', 71: 'Last Fetcha few seconds ago',
+    28: 'Today RHR54Resting HR', 30: "Today's Steps3.63 KSteps 👟", 31: 'Today SpO295SpO2 %', 26: 'Newest data from the watch5 hours ago', 71: 'Last Fetcha few seconds ago',
   }],
   ['ski', 'ski', {
     1: 'Ski season34 days to go', 2: 'Vertical, 7 days4625 m', 3: 'Vertical / week, 4 weeks3626 m', 4: 'Uphill time, 7 days13h:45m',

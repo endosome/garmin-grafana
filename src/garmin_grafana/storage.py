@@ -1,6 +1,7 @@
 """PostgreSQL persistence; no Garmin API dependencies or implicit schema changes."""
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import os
 import psycopg
 from psycopg.types.json import Jsonb
@@ -22,6 +23,7 @@ class PostgresStore:
         self.account = account or os.getenv('ACCOUNT_ID') or os.getenv('GARMINCONNECT_EMAIL') or 'default'
         self.person = person or os.getenv('PERSON_ID') or self.account
         self._connection = connection
+        self.changed_rows = 0  # rows the writes of this process actually inserted or changed
 
     @property
     def connection(self):
@@ -54,11 +56,11 @@ class PostgresStore:
             for record in records:
                 batch.append(record)
                 if len(batch) == 1000:
-                    self._batch(cur, source, batch)
+                    self.changed_rows += self._batch(cur, source, batch)
                     count += len(batch)
                     batch = []
             if batch:
-                self._batch(cur, source, batch)
+                self.changed_rows += self._batch(cur, source, batch)
                 count += len(batch)
             if checkpoint:
                 dataset, day = checkpoint
@@ -71,6 +73,8 @@ class PostgresStore:
 
     @staticmethod
     def _batch(cur, source, batch):
+        """Upserts a batch and returns how many rows it inserted or changed (unchanged rows are filtered out first)."""
+        changed = 0
         cur.executemany('INSERT INTO devices VALUES (%s,%s) ON CONFLICT DO NOTHING',
                         [(source, device) for device in sorted({r.device for r in batch})])
         for table in ('records', 'samples'):
@@ -115,6 +119,8 @@ class PostgresStore:
                  [r.nanoseconds for r in rows], [r.original_time for r in rows], [r.device for r in rows],
                  [r.local_date for r in rows], [r.timezone for r in rows], [Jsonb(r.tags) for r in rows],
                  [Jsonb(r.values) for r in rows], *bounds])
+            changed += cur.rowcount
+        return changed
 
     def request_range(self, datasets, start):
         with self.connection.transaction(), self.connection.cursor() as cur:
@@ -129,6 +135,27 @@ class PostgresStore:
         with self.connection.transaction(), self.connection.cursor() as cur:
             cur.execute("INSERT INTO app_info(key,value) VALUES (%s,%s) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()",
                         (f"last_fetch:{self.source_id(cur)}", "ok"))
+
+    def finish_fetch_requests(self, upto, changed_before, timezone='UTC', outcome='ok'):
+        """Give every "Fetch now" request up to id `upto` that has no result yet the result of the sync that just ended:
+        when it finished, how many points it added, and a short text. `changed_before` is `changed_rows` at the sync's start."""
+        new = self.changed_rows - changed_before
+        with self.connection.transaction(), self.connection.cursor() as cur:
+            cur.execute('SELECT id FROM fetch_requests WHERE id <= %s AND finished_at IS NULL', (upto,))
+            if not cur.fetchall():
+                return None
+            if new:
+                text = f"{new} new point{'' if new == 1 else 's'}"
+            else:
+                cur.execute('''SELECT max(time) AT TIME ZONE %s FROM all_records WHERE source_id=%s''', (timezone, self.source_id(cur)))
+                newest = cur.fetchone()[0]
+                text = 'nothing new' + (f" since {newest:%H:%M}" if newest and newest.date() == datetime.now(ZoneInfo(timezone)).date()
+                                        else f" since {newest:%a %d %b %H:%M}" if newest else '')
+            if outcome != 'ok':
+                text = f'{outcome}: {text}'
+            cur.execute('UPDATE fetch_requests SET finished_at=now(), new_points=%s, result=%s WHERE id <= %s AND finished_at IS NULL',
+                        (new, text, upto))
+            return text
 
     def latest_fetch_request(self):
         """Id of the newest "Fetch now" request from Grafana, 0 before the first one."""

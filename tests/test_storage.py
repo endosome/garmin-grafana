@@ -345,6 +345,8 @@ def test_grafana_reader_bootstrap_and_permissions(db, monkeypatch):
         with reader.cursor() as cur:
             cur.execute('SELECT count(*) FROM all_records')
             assert cur.fetchone()[0] >= 0
+            cur.execute('SELECT id, result FROM fetch_status')  # the result panel's read path
+            assert cur.fetchall() is not None
             for statement in ("INSERT INTO persons VALUES ('should-not-be-allowed')", 'INSERT INTO fetch_requests DEFAULT VALUES'):
                 with pytest.raises(psycopg.errors.InsufficientPrivilege):
                     cur.execute(statement)
@@ -355,7 +357,8 @@ def test_grafana_reader_bootstrap_and_permissions(db, monkeypatch):
         button.autocommit=True
         button.execute('INSERT INTO fetch_requests DEFAULT VALUES')
         for statement in ('SELECT max(id) FROM fetch_requests','SELECT count(*) FROM samples',"INSERT INTO persons VALUES ('should-not-be-allowed')",
-                          'DELETE FROM fetch_requests','UPDATE fetch_requests SET requested_at=now()'):
+                          'DELETE FROM fetch_requests','UPDATE fetch_requests SET requested_at=now()','SELECT result FROM fetch_status',
+                          "UPDATE fetch_requests SET result='fake'"):
             with pytest.raises(psycopg.errors.InsufficientPrivilege):
                 button.execute(statement)
     assert db.latest_fetch_request()>before
@@ -765,3 +768,36 @@ def test_record_fetch_stamps_the_source_for_the_last_fetch_panel(db):
     second = stamps()
     assert set(second) == set(first)
     assert second[f'last_fetch:{source(db)}'] >= first[f'last_fetch:{source(db)}']
+
+
+def test_fetch_now_results_are_recorded_and_readable_without_widening_the_button(db):
+    def request():
+        with db.connection.transaction(), db.connection.cursor() as cur:
+            cur.execute('INSERT INTO fetch_requests DEFAULT VALUES RETURNING id')
+            return cur.fetchone()[0]
+
+    def latest():
+        return query(db, 'SELECT id, finished_at IS NOT NULL, new_points, result FROM fetch_status')[0]
+    first, second = request(), request()
+    assert latest() == (second, False, None, None)  # waiting for the fetcher
+    # a sync that wrote new rows: both requests it started with get its result
+    start = db.changed_rows
+    db.write([Record.from_mapping({'measurement': 'HeartRateIntraday', 'time': '2026-01-01T10:00:00+00:00', 'tags': {'Device': 'd'},
+                                   'fields': {'HeartRate': 61}}, timezone='UTC')])
+    assert db.changed_rows == start + 1
+    assert db.finish_fetch_requests(second, start, 'UTC') == '1 new point'
+    assert query(db, 'SELECT count(*) FROM fetch_requests WHERE id IN (%s,%s) AND result=%s AND new_points=1 AND finished_at IS NOT NULL', (first, second, '1 new point')) == [(2,)]
+    # nothing is overwritten, and a request made later is not served by an earlier sync
+    third = request()
+    assert db.finish_fetch_requests(second, db.changed_rows, 'UTC') is None
+    assert latest() == (third, False, None, None)
+    # a sync that found nothing says since when, in the account's time zone; an unfinished one says so
+    text = db.finish_fetch_requests(third, db.changed_rows, 'Europe/Berlin', 'incomplete')
+    assert text == 'incomplete: nothing new since Thu 01 Jan 11:00' or text.startswith('incomplete: nothing new since ')
+    fourth = request()
+    assert db.finish_fetch_requests(fourth, db.changed_rows, 'UTC', 'failed (OSError)').startswith('failed (OSError): nothing new since')
+    # an unchanged rewrite adds no points
+    before = db.changed_rows
+    db.write([Record.from_mapping({'measurement': 'HeartRateIntraday', 'time': '2026-01-01T10:00:00+00:00', 'tags': {'Device': 'd'},
+                                   'fields': {'HeartRate': 61}}, timezone='UTC')])
+    assert db.changed_rows == before

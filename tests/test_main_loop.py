@@ -80,3 +80,28 @@ def test_only_a_finished_sync_updates_last_fetch(gf, monkeypatch, complete, reco
     with pytest.raises(StopLoop):
         gf.main()
     assert gf.store.record_fetch.call_count == recorded
+
+
+@pytest.mark.parametrize('fetch,outcome', [(mock.Mock(return_value=True), 'ok'), (mock.Mock(return_value=False), 'incomplete'),
+                                           (mock.Mock(side_effect=OSError('x')), 'failed (OSError)')])
+def test_the_requests_a_sync_served_get_its_result(gf, monkeypatch, fetch, outcome):
+    monkeypatch.setattr(gf, 'garmin_login', lambda: mock.Mock())
+    gf.store.pending_start.return_value = date(2026, 1, 1)
+    gf.store.latest_fetch_request.return_value = 7
+    monkeypatch.setattr(gf, 'fetch_write_bulk', fetch)
+    gf.time.sleep.side_effect = StopLoop
+    with pytest.raises(StopLoop):
+        gf.main()
+    (call,) = gf.store.finish_fetch_requests.call_args_list
+    assert call.args[0] == 7 and call.args[3] == outcome
+
+
+def test_a_failure_to_record_the_result_never_stops_the_loop(gf, monkeypatch, caplog):
+    monkeypatch.setattr(gf, 'garmin_login', lambda: mock.Mock())
+    gf.store.pending_start.return_value = date(2026, 1, 1)
+    gf.store.finish_fetch_requests.side_effect = RuntimeError('db down')
+    monkeypatch.setattr(gf, 'fetch_write_bulk', mock.Mock(return_value=True))
+    gf.time.sleep.side_effect = StopLoop
+    with pytest.raises(StopLoop):
+        gf.main()
+    assert 'Could not record the result of the fetch request' in caplog.text

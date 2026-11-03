@@ -121,17 +121,20 @@ use separate ingestion processes and token volumes. Do not change an established
 ACCOUNT_ID casually: it creates a different provenance source, not a rename.
 
 **Fetch now.** The Garmin Stats dashboard has a "Fetch now" button under Last
-Sync. It adds a row to `fetch_requests` through its own Grafana data source,
+Fetch. It adds a row to `fetch_requests` through its own Grafana data source,
 whose login may insert there and do nothing else. Every collector notices it
 within `FETCH_REQUEST_CHECK_SECONDS` and syncs straight away instead of waiting
 for the rest of `UPDATE_INTERVAL_SECONDS`. A click during a sync starts one more
 sync after it. Viewers can use the button; the kiosk does not get the data source
 and hides the button. It needs the Business Forms plugin, which Compose installs
 (`volkovlabs-form-panel`, community-signed, like the hourly heatmap). Garmin
-Connect only has what the watch has uploaded, so sync the watch first. "Last Sync" is
-the watch's last upload to Garmin Connect and only moves when the watch uploads; "Last
-Fetch" below it is when the collector last finished a sync, so it moves after every
-Fetch now.
+Connect only has what the watch has uploaded, so sync the watch first. "Newest data
+from the watch" is the newest data Garmin Connect has and only moves when the watch
+uploads; "Last Fetch" below it is when the collector last finished a sync, so it moves
+after every Fetch now. Next to the button, "Fetch now result" shows what the latest request
+found ("12 new points", or "nothing new since 09:40"). The collector writes it to
+`fetch_requests` (`finished_at`, `new_points`, `result`) and Grafana reads the `fetch_status`
+view with its ordinary SELECT-only login; the button's login is still INSERT-only.
 
 ## Touchscreen kiosk
 

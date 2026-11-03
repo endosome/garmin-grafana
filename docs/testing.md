@@ -39,7 +39,7 @@ other tests' accounts in it). Shared persona data and per-worker databases both 
 `tests/panel_registry.py` lists every panel as `File.json:id`, and a test fails for a panel in none of the lists, or in
 two, or for a panel that no longer exists. A new panel therefore cannot land without one of:
 
-- `VALUE_TESTS`: the tests that assert its values, computed independently from the persona data (64 panels);
+- `VALUE_TESTS`: the tests that assert its values, computed independently from the persona data (65 panels);
 - `SCREENSHOT`: chart panels with no hand-computed expectation. `tests/data/panel_values.json` records what each of their
   queries returns for the persona and range the screenshots use (row count, and sum, min and max per column), and a
   reviewed screenshot baseline records what they draw (63 panels). It is a golden master, not an independent expectation:
@@ -47,7 +47,7 @@ two, or for a panel that no longer exists. A new panel therefore cannot land wit
 - `NO_VALUES`: a written reason (text panel, the Fetch now button, the version stat, the geomaps: their basemap needs
   the internet, which the browser tests block) (6 panels).
 
-The test summary prints how many panels fall in each group. The registry has 133 panels.
+The test summary prints how many panels fall in each group. The registry has 134 panels.
 
 ## Running things
 

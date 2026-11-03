@@ -1793,13 +1793,22 @@ def main():
     while True:
         today = datetime.now(user_zone).date()
         seen_request = 0
+        outcome = 'ok'
+        changed_before = store.changed_rows
         try:
             seen_request = store.latest_fetch_request()  # a request made during this sync starts another one
             start = store.pending_start(selected_datasets(), today, USER_TIMEZONE or 'UTC')
             if fetch_write_bulk(start.isoformat(), today.isoformat(), skip_completed=True):
                 store.record_fetch()
+            else:
+                outcome = 'incomplete'
         except Exception as err:
+            outcome = f'failed ({type(err).__name__})'
             logging.error("Synchronization failed (%s); retrying next cycle", type(err).__name__)
+        try:
+            store.finish_fetch_requests(seen_request, changed_before, USER_TIMEZONE or 'UTC', outcome)
+        except Exception as err:
+            logging.warning("Could not record the result of the fetch request (%s)", type(err).__name__)
         wait_for_next_sync(seen_request)
 
 

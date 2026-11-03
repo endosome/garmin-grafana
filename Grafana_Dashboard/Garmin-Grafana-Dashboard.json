@@ -242,7 +242,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 7,
         "w": 21,
         "x": 3,
         "y": 1
@@ -354,7 +354,7 @@
         }
       ],
       "timeFrom": "24h",
-      "title": "Last Sync ",
+      "title": "Newest data from the watch",
       "transparent": true,
       "type": "stat",
       "description": "When the watch last uploaded to Garmin Connect. Data recorded after that is not available yet: sync the watch."
@@ -429,7 +429,7 @@
       "title": "Last Fetch",
       "transparent": true,
       "type": "stat",
-      "description": "When the fetcher last finished a sync with Garmin Connect, for example after Fetch now. It does not change the Last Sync time unless the watch has uploaded since."
+      "description": "When the fetcher last finished a sync with Garmin Connect, by schedule or after Fetch now. It does not change \"Newest data from the watch\" unless the watch has uploaded since."
     },
     {
       "description": "Asks the fetcher to sync with Garmin Connect now instead of at its next scheduled run (every 5 minutes by default). Data the watch has not uploaded to Garmin Connect yet still needs a watch sync.",
@@ -503,7 +503,7 @@
         },
         "sync": false,
         "update": {
-          "code": "if (context.panel.response && context.panel.response.state === 'Done') {\n  context.grafana.notifySuccess(['Fetch now', 'The fetcher starts a Garmin sync within a few seconds. Last Fetch shows when it finishes; Last Sync only changes after the watch uploads to Garmin Connect.']);\n} else {\n  context.grafana.notifyError(['Fetch now', 'The request was not saved: check the Garmin fetch request data source.']);\n}",
+          "code": "if (context.panel.response && context.panel.response.state === 'Done') {\n  context.grafana.notifySuccess(['Fetch now', 'The fetcher starts a Garmin sync within a few seconds. The result appears next to the button when it finishes; Newest data from the watch only changes after the watch uploads to Garmin Connect.']);\n} else {\n  context.grafana.notifyError(['Fetch now', 'The request was not saved: check the Garmin fetch request data source.']);\n}",
           "confirm": true,
           "contentType": "application/json",
           "datasource": "Garmin fetch request",
@@ -8707,6 +8707,75 @@
       ],
       "title": "Long term visualization",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "garmin_postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "\u2013"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 21,
+        "x": 3,
+        "y": 8
+      },
+      "id": 72,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "start",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Result$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "garmin_postgres"
+          },
+          "refId": "A",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN finished_at IS NULL THEN 'Requested ' || to_char(requested_at AT TIME ZONE ${TimeZone:sqlstring}, 'HH24:MI') || ', waiting for the fetcher' ELSE 'Fetch now at ' || to_char(requested_at AT TIME ZONE ${TimeZone:sqlstring}, 'HH24:MI') || ': ' || result END AS \"Result\" FROM fetch_status",
+          "format": "table",
+          "editorMode": "code",
+          "hide": false
+        }
+      ],
+      "title": "Fetch now result",
+      "transparent": true,
+      "type": "stat",
+      "description": "What the latest Fetch now request found: how many new points, or nothing new and the time of the newest data. Read through the normal read-only login, not the button's."
     }
   ],
   "refresh": "15m",

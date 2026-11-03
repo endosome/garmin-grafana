@@ -49,7 +49,7 @@ test.describe('Fetch now', () => {
     await page.locator('[data-viz-panel-key="panel-70"]').getByRole('button', { name: 'Fetch now' }).click();
     await expect(page.getByText('Fetch new data from Garmin Connect now?')).toBeVisible();
     await page.getByRole('dialog').getByRole('button', { name: 'Fetch now' }).click();
-    await expect(page.getByText(/Last Sync only changes after the watch uploads/)).toBeVisible();
+    await expect(page.getByText(/Newest data from the watch only changes after the watch uploads/)).toBeVisible();
     await expect.poll(count).toBe(before + 1);
   });
 });
