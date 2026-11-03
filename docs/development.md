@@ -27,7 +27,7 @@ docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
 export PGHOST=localhost PGPORT=55439 PGUSER=postgres PGDATABASE=garmin
 export PGPASSWORD=test-only-password TEST_DATABASE=1
 uv run --locked pytest --cov --cov-report=term-missing --ignore=tests/test_personas.py --ignore=tests/test_dashboard_contracts.py
-uv run --locked pytest tests/test_personas.py tests/test_dashboard_contracts.py
+uv run --locked pytest -n 2 --dist loadgroup tests/test_personas.py tests/test_dashboard_contracts.py
 uv run --locked python scripts/validate_dashboard_queries.py
 ```
 
