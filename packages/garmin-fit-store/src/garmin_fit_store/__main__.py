@@ -24,6 +24,7 @@ def _parser():
     rnd = commands.add_parser('roundtrip', help='import, export and compare, then roll everything back')
     rnd.add_argument('files', nargs='+', type=Path)
     rnd.add_argument('--ignore-crc', action='store_true')
+    commands.add_parser('profile-sql', help='print the profile rows and typed views as SQL (for PGlite and other databases without Python)')
     conv = commands.add_parser('convert', help='write a FIT file as gpx, tcx, json or csv (no database)')
     conv.add_argument('--to', required=True, choices=['gpx', 'tcx', 'json', 'csv', 'jsonl'])
     conv.add_argument('input', type=Path)
@@ -38,6 +39,10 @@ def _fit_paths(paths):
 
 def main(argv=None):
     args = _parser().parse_args(argv)
+    if args.command == 'profile-sql':
+        from . import profile_tables
+        sys.stdout.write(profile_tables.script())
+        return 0
     if args.command == 'convert':
         from . import convert
         args.output.write_text(convert.convert(decoder.decode(args.input.read_bytes(), check_crc=False), args.to))

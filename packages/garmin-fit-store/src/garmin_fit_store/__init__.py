@@ -12,6 +12,8 @@ __all__ = ['after_migrate', 'FitError', 'FitFile', 'MIGRATIONS', 'canonical', 'd
 
 
 def after_migrate(connection):
-    """Runs after the fit/*.sql files: loads the profile rows for the installed SDK version."""
-    from . import profile_tables
-    profile_tables.load(connection)
+    """Runs after the fit/*.sql files: loads the profile rows for the installed SDK version and builds the typed views."""
+    from . import profile_tables, views
+    loaded = profile_tables.load(connection)
+    if loaded or not views.exist(connection):
+        views.create(connection)

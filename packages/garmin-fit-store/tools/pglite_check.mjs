@@ -16,6 +16,9 @@ const pg = await PGlite.create({ extensions: { timescaledb } })
 console.log((await pg.query('select version()')).rows[0].version)
 for (const name of migrations) await pg.exec(readFileSync(new URL(`../src/garmin_fit_store/migrations/${name}`, here), 'utf8'))
 
+// The profile rows and typed views, generated from the installed SDK (never committed): PROFILE_SQL is the output of
+// `python -m garmin_fit_store profile-sql`.
+if (process.env.PROFILE_SQL) await pg.exec(readFileSync(process.env.PROFILE_SQL, 'utf8'))
 const EPOCH = 631065600
 let failures = 0
 for (const name of readdirSync(new URL('../tests/corpus/', here)).filter((n) => n.endsWith('.jsonl')).sort()) {
@@ -41,6 +44,12 @@ for (const name of readdirSync(new URL('../tests/corpus/', here)).filter((n) => 
   failures += same ? 0 : 1
 }
 function sorted(o) { return JSON.stringify(Object.entries(o).sort()) }
+if (process.env.PROFILE_SQL) {
+  const activity = (await pg.query("SELECT id FROM fit.files WHERE sha256 = decode(md5('activity.jsonl'), 'hex')")).rows[0].id
+  const view = (await pg.query('SELECT count(*)::int AS n, max(heart_rate) AS hr, round(max(speed)::numeric, 3)::float AS speed FROM fit.v_record WHERE file_id = $1', [activity])).rows[0]
+  console.log('v_record:', JSON.stringify(view))
+  if (view.n !== 30 || view.hr !== 124) { console.log('v_record DIFFERENT'); failures++ }
+}
 const { rows } = await pg.query("SELECT count(*)::int AS chunks FROM timescaledb_information.chunks WHERE hypertable_name = 'records'")
 console.log('record chunks:', rows[0].chunks)
 await pg.close()
