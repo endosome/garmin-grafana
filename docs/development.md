@@ -31,7 +31,7 @@ uv run --locked pytest tests/test_personas.py tests/test_dashboard_contracts.py
 uv run --locked python scripts/validate_dashboard_queries.py
 ```
 
-`uv run --locked pytest -n 2` runs the suite on two xdist workers in about 40 s instead of about a minute; each worker creates its
+`uv run --locked pytest -n 2 --dist loadgroup` runs the suite on two xdist workers in about 40 s instead of about a minute; each worker creates its
 own database next to the configured one (`<PGDATABASE>_gw0`, `_gw1`) and drops it at the end, so the role needs CREATEDB.
 
 Tests insert synthetic data under randomized source identities. Fresh-schema
