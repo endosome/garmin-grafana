@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'  # matches version release only
+  workflow_dispatch:  # a dry run: builds both platforms natively, pushes and tags nothing
 
 env:
   IMAGE_NAME: garmin-fetch-data
@@ -11,7 +12,7 @@ env:
 
 jobs:
   tests:
-    if: ${{ github.repository == 'endosome/garmin-grafana' }}
+    if: ${{ github.repository == 'endosome/garmin-grafana' && github.event_name == 'push' }}
     uses: ./.github/workflows/tests.yml
 
   # Each platform builds natively on its own runner (no QEMU) and pushes by digest; the merge job joins them under the tag.
@@ -19,7 +20,7 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     needs: tests
-    if: ${{ github.repository == 'endosome/garmin-grafana' }}
+    if: ${{ !cancelled() && github.repository == 'endosome/garmin-grafana' && (needs.tests.result == 'success' || needs.tests.result == 'skipped') }}
     strategy:
       matrix:
         include:
@@ -34,13 +35,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Log in to GHCR
+        if: ${{ github.event_name == 'push' }}
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@v4
+      - name: Build only (dry run)
+        if: ${{ github.event_name != 'push' }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=release-${{ matrix.runner }}
       - name: Build and push by digest
+        if: ${{ github.event_name == 'push' }}
         id: build
         uses: docker/build-push-action@v7
         with:
@@ -50,11 +60,13 @@ jobs:
           cache-from: type=gha,scope=release-${{ matrix.runner }}
           cache-to: type=gha,scope=release-${{ matrix.runner }},mode=max
       - name: Record the digest
+        if: ${{ github.event_name == 'push' }}
         run: |
           mkdir -p "$RUNNER_TEMP/digests"
           digest="${{ steps.build.outputs.digest }}"
           touch "$RUNNER_TEMP/digests/${digest#sha256:}"
       - uses: actions/upload-artifact@v7
+        if: ${{ github.event_name == 'push' }}
         with:
           name: digests-${{ matrix.runner }}
           path: ${{ runner.temp }}/digests/*
@@ -64,6 +76,7 @@ jobs:
   build_and_push:
     name: Publish the multi-arch image to GHCR
     needs: build
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-26.04
     permissions:
       contents: read

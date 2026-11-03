@@ -12,7 +12,7 @@ concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  # Two jobs in parallel: the Python suite, and the image with the Compose stack. Neither needs the other's result.
+  # Three jobs in parallel: the Python suite with coverage, the dashboard tests (own database, no coverage) and the image with the Compose stack.
   pytest:
     runs-on: ubuntu-26.04
     services:
@@ -41,6 +41,33 @@ jobs:
       # The persona and contract tests check dashboard SQL, not Python branches: the coverage gate holds without them, and tracing
       # them costs about half again as much time. Run together, they load the personas once.
       - run: uv run --locked pytest --cov --cov-report=term-missing --durations=15 --ignore=tests/test_personas.py --ignore=tests/test_dashboard_contracts.py
+  dashboards:
+    runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+        env:
+          POSTGRES_DB: garmin
+          POSTGRES_PASSWORD: test-only-password
+          NO_TS_TUNE: "true"
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d garmin"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE: "1"
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGDATABASE: garmin
+      PGUSER: postgres
+      PGPASSWORD: test-only-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      # The persona and contract tests check dashboard SQL, not Python branches: the coverage gate holds without them, and tracing
+      # them costs about half again as much time. Run together, they load the personas once.
       - run: uv run --locked pytest --durations=5 tests/test_personas.py tests/test_dashboard_contracts.py
       - run: uv run --locked python scripts/validate_dashboard_queries.py
   stack:
