@@ -8,4 +8,10 @@ from .protocol import FitError
 
 MIGRATIONS = Path(__file__).with_name('migrations')
 
-__all__ = ['FitError', 'FitFile', 'MIGRATIONS', 'canonical', 'decode', 'encode']
+__all__ = ['after_migrate', 'FitError', 'FitFile', 'MIGRATIONS', 'canonical', 'decode', 'encode']
+
+
+def after_migrate(connection):
+    """Runs after the fit/*.sql files: loads the profile rows for the installed SDK version."""
+    from . import profile_tables
+    profile_tables.load(connection)

@@ -12,21 +12,31 @@ from .storage import connect
 logger = logging.getLogger(__name__)
 
 
+def _migration_sets():
+    """(name prefix, directory, hook that runs after the set) for the main package and every workspace member."""
+    import garmin_fit_store
+    yield '', Path(__file__).with_name('migrations'), None
+    yield 'fit/', garmin_fit_store.MIGRATIONS, garmin_fit_store.after_migrate
+
+
 def migrate(connection):
     with connection.transaction(), connection.cursor() as cur:
         cur.execute('SELECT pg_advisory_xact_lock(782643901)')
         cur.execute('CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())')
-        for path in sorted(Path(__file__).with_name('migrations').glob('*.sql')):
-            sql = path.read_text()
-            digest = hashlib.sha256(sql.encode()).hexdigest()
-            cur.execute('SELECT checksum FROM schema_migrations WHERE name=%s', (path.name,))
-            row = cur.fetchone()
-            if row:
-                if row[0] != digest:
-                    raise RuntimeError(f'Applied migration changed: {path.name}')
-                continue
-            cur.execute(sql)
-            cur.execute('INSERT INTO schema_migrations(name,checksum) VALUES (%s,%s)', (path.name, digest))
+        for prefix, directory, after in _migration_sets():
+            for path in sorted(directory.glob('*.sql')):
+                sql = path.read_text()
+                digest = hashlib.sha256(sql.encode()).hexdigest()
+                cur.execute('SELECT checksum FROM schema_migrations WHERE name=%s', (prefix + path.name,))
+                row = cur.fetchone()
+                if row:
+                    if row[0] != digest:
+                        raise RuntimeError(f'Applied migration changed: {prefix}{path.name}')
+                    continue
+                cur.execute(sql)
+                cur.execute('INSERT INTO schema_migrations(name,checksum) VALUES (%s,%s)', (prefix + path.name, digest))
+            if after:
+                after(connection)
 
 
 def update_extension():

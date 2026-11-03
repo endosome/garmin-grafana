@@ -7,6 +7,7 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 import pytest
+import garmin_fit_store
 from garmin_grafana import migrate, storage
 
 
@@ -41,11 +42,14 @@ def test_empty_database_installation_is_complete_and_repeatable(fresh_database):
     migrate.migrate(connection)
     with connection.transaction(), connection.cursor() as cur:
         cur.execute('SELECT name FROM schema_migrations ORDER BY name')
-        assert [row[0] for row in cur.fetchall()] == [
-            path.name for path in sorted(Path(migrate.__file__).with_name('migrations').glob('*.sql'))
-        ]
-        cur.execute("SELECT hypertable_name FROM timescaledb_information.hypertables")
-        assert cur.fetchall() == [('samples',)]
+        assert [row[0] for row in cur.fetchall()] == sorted(
+            [path.name for path in Path(migrate.__file__).with_name('migrations').glob('*.sql')] +
+            ['fit/' + path.name for path in garmin_fit_store.MIGRATIONS.glob('*.sql')]
+        )
+        cur.execute("SELECT hypertable_name FROM timescaledb_information.hypertables ORDER BY 1")
+        assert cur.fetchall() == [('records',), ('samples',)]
+        cur.execute('SELECT count(*) FROM fit.profile_versions')
+        assert cur.fetchone() == (1,)
         cur.execute("SELECT conname FROM pg_constraint WHERE conname IN ('samples_device_fk','records_device_fk') ORDER BY conname")
         assert cur.fetchall() == [('records_device_fk',), ('samples_device_fk',)]
 
@@ -85,9 +89,9 @@ def test_module_command_initializes_a_fresh_database(fresh_database, monkeypatch
     assert connection.closed and all(c.closed for c in opened)
     with psycopg.connect(**settings) as verification, verification.cursor() as cur:
         cur.execute('SELECT count(*) FROM schema_migrations')
-        assert cur.fetchone()[0] == len(list(Path(migrate.__file__).with_name('migrations').glob('*.sql')))
-        cur.execute("SELECT hypertable_name FROM timescaledb_information.hypertables")
-        assert cur.fetchall() == [('samples',)]
+        assert cur.fetchone()[0] == len(list(Path(migrate.__file__).with_name('migrations').glob('*.sql'))) + len(list(garmin_fit_store.MIGRATIONS.glob('*.sql')))
+        cur.execute("SELECT hypertable_name FROM timescaledb_information.hypertables ORDER BY 1")
+        assert cur.fetchall() == [('records',), ('samples',)]
 
 
 def test_record_version_stores_installed_package_version(fresh_database):
