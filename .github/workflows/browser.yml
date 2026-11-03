@@ -1,5 +1,5 @@
 name: Browser tests
-# Layer L4 of docs/dashboard-testing-plan.md, in its own workflow so that the Tests workflow reports in under two minutes.
+# Layer L4 of docs/testing.md, in its own workflow so that the Tests workflow reports in under two minutes.
 # Runs on every push like Tests, and the release workflow requires both.
 on:
   push:

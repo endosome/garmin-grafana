@@ -222,7 +222,7 @@ No raw-data retention, compression, or automatic deletion policy is installed.
 ## Development and other deployments
 
 Python 3.13 and uv are required for development. See [developer instructions](docs/development.md),
-and [architecture](docs/architecture.md).
+[testing and CI](docs/testing.md) (test layers, the dashboard browser tests, CI timings) and [architecture](docs/architecture.md).
 See the [implementation and outstanding-work report](docs/migration-implementation-report.md)
 for the change inventory and production acceptance checklist.
 See the [executed verification report](docs/verification.md) for test results and

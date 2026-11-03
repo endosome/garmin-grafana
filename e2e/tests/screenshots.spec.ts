@@ -1,6 +1,6 @@
 // Tier 5: chart panels against reviewed baselines (thresholds, bands, stacking, heatmaps, plugin rendering).
 // One persona per dashboard over one range, rather than every persona times every range. Baselines are regenerated only by
-// update-baselines.sh, inside the pinned container; see docs/dashboard-testing-plan.md.
+// update-baselines.sh, inside the pinned container; see docs/testing.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import { DASHBOARDS, openDashboard, reveal, test, expect, type DashboardName, type PersonaName } from './fixtures';

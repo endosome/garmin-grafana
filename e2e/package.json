@@ -1,7 +1,7 @@
 {
   "name": "garmin-grafana-e2e",
   "private": true,
-  "description": "Browser tests of the provisioned dashboards (docs/dashboard-testing-plan.md, layer L4)",
+  "description": "Browser tests of the provisioned dashboards (docs/testing.md, layer L4)",
   "scripts": {
     "test": "playwright test"
   },

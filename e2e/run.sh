@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the browser tests in the pinned Playwright image, inside a memory limit, with two workers by default.
 # Usage: e2e/run.sh [playwright test arguments]   (GRAFANA_URL, KIOSK_URL, GRAFANA_PASSWORD from the environment)
-# The stack must be up with the personas loaded; see docs/dashboard-testing-plan.md.
+# The stack must be up with the personas loaded; see docs/testing.md.
 set -euo pipefail
 cd "$(dirname "$0")"
 version=$(sed -n 's/.*"@playwright\/test": "\([^"]*\)".*/\1/p' package.json)

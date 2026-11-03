@@ -114,7 +114,7 @@ selection, local-day boundaries, heart-rate distribution, strength category/labe
 filters, totals, latest sets, and heatmaps. Inspect Query Inspector for errors.
 The SQL validator substitutes deterministic Grafana macro values. Layout, third-party
 plugin rendering, units and transformations are checked by the browser tests in `e2e/`
-(see [dashboard standards](dashboard-standards.md#testing-a-dashboard-change)); the
+(see [testing and CI](testing.md) and [dashboard standards](dashboard-standards.md#testing-a-dashboard-change)); the
 nightly workflow also runs them on the newest Grafana.
 
 To exercise the actual Grafana datasource and provisioning after startup:

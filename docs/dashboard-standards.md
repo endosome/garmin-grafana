@@ -84,7 +84,7 @@ settled on when fixing them. When a rule and an old panel disagree, fix the pane
 
 ## Testing a dashboard change
 
-Layers are described in the [dashboard testing plan](dashboard-testing-plan.md).
+Layers are described in [testing and CI](testing.md).
 
 1. `uv run --locked pytest tests/test_dashboard_lint.py` needs no database. It enforces
    this document where it can be checked statically: canonical JSON, uids, tags and

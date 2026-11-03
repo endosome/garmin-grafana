@@ -1,6 +1,6 @@
 name: Nightly
 # What takes too long for every push, and what tells us about a breaking Grafana release before a bump is merged.
-# docs/dashboard-testing-plan.md: L1 full matrix, L5 performance budget, L6 compatibility with the newest Grafana.
+# docs/testing.md: L1 full matrix, L5 performance budget, L6 compatibility with the newest Grafana.
 on:
   schedule:
     - cron: '17 3 * * *'
