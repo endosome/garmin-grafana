@@ -1,0 +1,36 @@
+name: Runtime image
+description: Makes the image garmin-grafana:timescale, by building it from the layer cache or, for a release, by pulling the exact image that is about to ship.
+inputs:
+  image:
+    description: Image reference with digest to test instead of building (empty: build)
+    default: ''
+  token:
+    description: Token for pulling from GHCR
+    default: ''
+  cache-to:
+    description: Write the layer cache (only the stack job does)
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: docker/setup-buildx-action@v4
+    - name: Build the runtime image
+      if: ${{ inputs.image == '' }}
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        load: true
+        tags: garmin-grafana:timescale
+        cache-from: type=gha,scope=stack
+        cache-to: ${{ inputs.cache-to == 'true' && 'type=gha,scope=stack,mode=max' || '' }}
+    - name: Pull the image that will ship
+      if: ${{ inputs.image != '' }}
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        TOKEN: ${{ inputs.token }}
+        ACTOR: ${{ github.actor }}
+      run: |
+        echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+        docker pull --platform linux/amd64 "$IMAGE"
+        docker tag "$IMAGE" garmin-grafana:timescale

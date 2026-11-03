@@ -1,0 +1,1601 @@
+{
+ "Garmin-Grafana-Dashboard.json:10:A": {
+  "Activity Calories": [
+   14000.0,
+   500.0,
+   500.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:10:B": {
+  "BMR Calories": [
+   45080.0,
+   1610.0,
+   1610.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:11:A": {
+  "Avg HRV": [
+   194.391,
+   40.185,
+   52.989,
+   4
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:11:B": {
+  "Avg SpO2": [
+   2660.0,
+   95.0,
+   95.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:11:D": {
+  "Avg Resting HR": [
+   1551.0,
+   53.0,
+   58.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:12:B": {
+  "Sleep Score": [
+   2155.0,
+   65.0,
+   90.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:13:A": {
+  "Light Sleep": [
+   423143.0,
+   13633.0,
+   17250.0,
+   27
+  ],
+  "rows": 61,
+  "time": [
+   "distinct",
+   61,
+   61
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:13:B": {
+  "Deep Sleep": [
+   145893.0,
+   4701.0,
+   5948.0,
+   27
+  ],
+  "rows": 61,
+  "time": [
+   "distinct",
+   61,
+   61
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:13:C": {
+  "REM Sleep": [
+   160480.0,
+   5171.0,
+   6543.0,
+   27
+  ],
+  "rows": 61,
+  "time": [
+   "distinct",
+   61,
+   61
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:13:D": {
+  "Awake": [
+   21363.0,
+   302.0,
+   1461.0,
+   27
+  ],
+  "rows": 61,
+  "time": [
+   "distinct",
+   61,
+   61
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:16:A": {
+  "Intraday Steps": [
+   6523849.0,
+   0.0,
+   42171.0,
+   336
+  ],
+  "rows": 2885,
+  "time": [
+   "distinct",
+   2885,
+   2885
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:17:A": {
+  "Active": [
+   151200.0,
+   5400.0,
+   5400.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:17:B": {
+  "Highly Active": [
+   50400.0,
+   1800.0,
+   1800.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:17:C": {
+  "Sedentary": [
+   1120000.0,
+   40000.0,
+   40000.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:17:D": {
+  "Sleeping": [
+   755278.0,
+   23505.0,
+   29741.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:18:D": {
+  "High stress duration": [
+   28000.0,
+   1000.0,
+   1000.0,
+   28
+  ],
+  "Low Stress duration": [
+   420000.0,
+   15000.0,
+   15000.0,
+   28
+  ],
+  "Medium stress duration": [
+   112000.0,
+   4000.0,
+   4000.0,
+   28
+  ],
+  "Rest stress duration": [
+   840000.0,
+   30000.0,
+   30000.0,
+   28
+  ],
+  "Uncategorized stress duration": [
+   56000.0,
+   2000.0,
+   2000.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:19:C": {
+  "Drained": [
+   -1960.0,
+   -70.0,
+   -70.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:19:D": {
+  "Charged": [
+   1736.0,
+   62.0,
+   62.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:20:A": {
+  "Hourly Steps": [
+   10542.75,
+   0.0,
+   1475.25,
+   84
+  ],
+  "rows": 722,
+  "time": [
+   "distinct",
+   722,
+   722
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:21:A": {
+  "Heart rate histogram": [
+   165463.0,
+   51.0,
+   86.0,
+   2480
+  ],
+  "Heart rate histogram < 60": [
+   46671.0,
+   51.0,
+   59.0,
+   846
+  ],
+  "Heart rate histogram > 110": [
+   4173.0,
+   111.0,
+   156.0,
+   31
+  ],
+  "Heart rate histogram > 96": [
+   5142.0,
+   106.0,
+   156.0,
+   40
+  ],
+  "rows": 2520,
+  "time": [
+   "distinct",
+   2520,
+   2520
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:22:A": {
+  "Awake": [
+   22013.0,
+   302.0,
+   1461.0,
+   28
+  ],
+  "Deep": [
+   151045.0,
+   4701.0,
+   5948.0,
+   28
+  ],
+  "Light": [
+   438086.0,
+   13633.0,
+   17250.0,
+   28
+  ],
+  "REM": [
+   166147.0,
+   5171.0,
+   6543.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:23:A": {
+  "Fair Activity": [
+   151200.0,
+   5400.0,
+   5400.0,
+   28
+  ],
+  "Intense Activity": [
+   50400.0,
+   1800.0,
+   1800.0,
+   28
+  ],
+  "Sedentary": [
+   1120000.0,
+   40000.0,
+   40000.0,
+   28
+  ],
+  "Sleeping": [
+   755278.0,
+   23505.0,
+   29741.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:27:A": {
+  "Sleep Regularity": [
+   32.0,
+   0.5,
+   2.5,
+   27
+  ],
+  "rows": 722,
+  "time": [
+   "distinct",
+   722,
+   722
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:32:A": {
+  "Total Asleep": [
+   25715.0,
+   25715.0,
+   25715.0,
+   1
+  ],
+  "rows": 1,
+  "time": [
+   "distinct",
+   1,
+   1
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:35:A": {
+  "Intense Activity": [
+   21600.0,
+   0.0,
+   1800.0,
+   28
+  ],
+  "Moderate Activity": [
+   39300.0,
+   600.0,
+   2340.0,
+   28
+  ],
+  "Sedentary": [
+   1120000.0,
+   40000.0,
+   40000.0,
+   28
+  ],
+  "Sleeping": [
+   755278.0,
+   23505.0,
+   29741.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:36:A": {
+  "Awake": [
+   22013.0,
+   302.0,
+   1461.0,
+   28
+  ],
+  "Deep": [
+   151045.0,
+   4701.0,
+   5948.0,
+   28
+  ],
+  "Light": [
+   438086.0,
+   13633.0,
+   17250.0,
+   28
+  ],
+  "REM": [
+   166147.0,
+   5171.0,
+   6543.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:37:A": {
+  "bb_low": [
+   616.0,
+   22.0,
+   22.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:37:B": {
+  "bb_high": [
+   2576.0,
+   92.0,
+   92.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:3:A": {
+  "Distance Covered": [
+   212270.0,
+   2831.0,
+   12075.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:41:A": {
+  "Activity Timeline": [
+   "distinct",
+   4,
+   54
+  ],
+  "Time": [
+   "distinct",
+   54,
+   54
+  ],
+  "rows": 54
+ },
+ "Garmin-Grafana-Dashboard.json:43:A": {
+  "Zone 1": [
+   19699.0,
+   103.0,
+   3240.0,
+   28
+  ],
+  "Zone 2": [
+   21310.0,
+   360.0,
+   1711.0,
+   28
+  ],
+  "Zone 3": [
+   20772.0,
+   0.0,
+   2567.0,
+   28
+  ],
+  "Zone 4": [
+   7480.0,
+   0.0,
+   1027.0,
+   28
+  ],
+  "Zone 5": [
+   792.0,
+   0.0,
+   114.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:44:A": {
+  "BMR calories": [
+   1341.0,
+   26.0,
+   111.0,
+   27
+  ],
+  "calories": [
+   11462.0,
+   220.0,
+   951.0,
+   27
+  ],
+  "rows": 27,
+  "time": [
+   "distinct",
+   27,
+   27
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:46:A": {
+  "Altitude": [
+   43160.0,
+   104.0,
+   104.0,
+   415
+  ],
+  "rows": 415,
+  "time": [
+   "distinct",
+   415,
+   415
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:47:A": {
+  "rows": 415,
+  "time": [
+   "distinct",
+   415,
+   415
+  ],
+  "time/km": [
+   139438.655,
+   335.997,
+   335.997,
+   415
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:48:A": {
+  "avgHR": [
+   3296.0,
+   78.0,
+   148.0,
+   27
+  ],
+  "rows": 722,
+  "time": [
+   "distinct",
+   722,
+   722
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:48:B": {
+  "maxHR": [
+   3971.0,
+   103.0,
+   173.0,
+   27
+  ],
+  "rows": 722,
+  "time": [
+   "distinct",
+   722,
+   722
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:4:A": {
+  "Moderate Intensity": [
+   39300.0,
+   600.0,
+   2340.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:4:B": {
+  "Vigorous Intensity": [
+   21600.0,
+   0.0,
+   1800.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:51:A": {
+  "Avg Stress": [
+   105.314,
+   21.983,
+   27.993,
+   4
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:51:C": {
+  "Avg Sleeping Stress": [
+   364.0,
+   13.0,
+   13.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:51:E": {
+  "Avg Breathing Rate": [
+   55.746,
+   13.696,
+   14.143,
+   4
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:52:E": {
+  "Sleeping Movement Activity": [
+   1384.14,
+   0.0,
+   1.5,
+   1824
+  ],
+  "rows": 1824,
+  "time": [
+   "distinct",
+   1824,
+   1824
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:53:A": {
+  "Distance": [
+   196890.0,
+   6170.0,
+   15850.0,
+   23
+  ],
+  "rows": 23,
+  "time": [
+   "distinct",
+   23,
+   23
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:54:A": {
+  "Duration": [
+   68771.8,
+   1320.0,
+   5706.0,
+   27
+  ],
+  "rows": 27,
+  "time": [
+   "distinct",
+   27,
+   27
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:55:A": {
+  "Heart Rate": [
+   62250.0,
+   150.0,
+   150.0,
+   415
+  ],
+  "Speed (Km/h)": [
+   4446.471,
+   10.714,
+   10.714,
+   415
+  ],
+  "rows": 415,
+  "time": [
+   "distinct",
+   415,
+   415
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:57:A": {
+  "Duration": [
+   429525.0,
+   0.0,
+   2070.0,
+   415
+  ],
+  "Heart Rate": [
+   62250.0,
+   150.0,
+   150.0,
+   415
+  ],
+  "Pace": [
+   4446.471,
+   10.714,
+   10.714,
+   415
+  ],
+  "rows": 415,
+  "time": [
+   "distinct",
+   415,
+   415
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:58:A": {
+  "hr_low": [
+   1467.0,
+   50.0,
+   55.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:58:B": {
+  "hr_high": [
+   4900.0,
+   175.0,
+   175.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:61:A": {
+  "Cadence": [
+   68060.0,
+   164.0,
+   164.0,
+   415
+  ],
+  "rows": 415,
+  "time": [
+   "distinct",
+   415,
+   415
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:62:B": {
+  "Breathing Rate": [
+   1169.539,
+   13.289,
+   18.389,
+   84
+  ],
+  "rows": 84,
+  "time": [
+   "distinct",
+   84,
+   84
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:63:A": {
+  "Time 10K": [
+   88200.0,
+   3150.0,
+   3150.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:63:B": {
+  "Time 5K": [
+   42000.0,
+   1500.0,
+   1500.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:63:C": {
+  "Half Marathon": [
+   196000.0,
+   7000.0,
+   7000.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:63:D": {
+  "Full Marathon": [
+   414400.0,
+   14800.0,
+   14800.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:64:B": {
+  "VO2 Max": [
+   211.683,
+   52.833,
+   53.008,
+   4
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:65:A": {
+  "Heart Rate": [
+   5686.833,
+   53.8,
+   118.5,
+   84
+  ],
+  "rows": 84,
+  "time": [
+   "distinct",
+   84,
+   84
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:66:A": {
+  "Active time": [
+   151200.0,
+   5400.0,
+   5400.0,
+   28
+  ],
+  "Body Battery (Highest)": [
+   2576.0,
+   92.0,
+   92.0,
+   28
+  ],
+  "HRV": [
+   194.391,
+   40.185,
+   52.989,
+   4
+  ],
+  "High Stress Duration": [
+   28000.0,
+   1000.0,
+   1000.0,
+   28
+  ],
+  "Resting HR": [
+   1551.0,
+   53.0,
+   58.0,
+   28
+  ],
+  "Sleep Score": [
+   2155.0,
+   65.0,
+   90.0,
+   28
+  ],
+  "SpO2": [
+   2660.0,
+   95.0,
+   95.0,
+   28
+  ],
+  "Total Sleep": [
+   755278.0,
+   23505.0,
+   29741.0,
+   28
+  ],
+  "Total Steps": [
+   272144.0,
+   3630.0,
+   15481.0,
+   28
+  ],
+  "rows": 31,
+  "time": [
+   "distinct",
+   31,
+   31
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:6:A": {
+  "Deep": [
+   8.0,
+   1.0,
+   1.0,
+   8
+  ],
+  "rows": 8,
+  "time": [
+   "distinct",
+   8,
+   8
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:6:B": {
+  "Light": [
+   48.0,
+   2.0,
+   2.0,
+   24
+  ],
+  "rows": 24,
+  "time": [
+   "distinct",
+   24,
+   24
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:6:C": {
+  "REM": [
+   36.0,
+   3.0,
+   3.0,
+   12
+  ],
+  "rows": 12,
+  "time": [
+   "distinct",
+   12,
+   12
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:6:D": {
+  "Awake": [
+   16.0,
+   4.0,
+   4.0,
+   4
+  ],
+  "rows": 4,
+  "time": [
+   "distinct",
+   4,
+   4
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:7:A": {
+  "HRV": [
+   17831.0,
+   32.0,
+   60.0,
+   367
+  ],
+  "rows": 367,
+  "time": [
+   "distinct",
+   367,
+   367
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:7:C": {
+  "Sleeping Heart Rate": [
+   20244.0,
+   51.0,
+   60.0,
+   367
+  ],
+  "rows": 367,
+  "time": [
+   "distinct",
+   367,
+   367
+  ]
+ },
+ "Garmin-Grafana-Dashboard.json:7:D": {
+  "SpO2": [
+   34910.0,
+   92.0,
+   98.0,
+   367
+  ],
+  "rows": 367,
+  "time": [
+   "distinct",
+   367,
+   367
+  ]
+ },
+ "Garmin-Health-Overview.json:10:A": {
+  "Stage": [
+   "distinct",
+   4,
+   48
+  ],
+  "rows": 48,
+  "time": [
+   "distinct",
+   48,
+   48
+  ]
+ },
+ "Garmin-Health-Overview.json:11:A": {
+  "Awake": [
+   780.0,
+   780.0,
+   780.0,
+   1
+  ],
+  "Deep": [
+   5143.0,
+   5143.0,
+   5143.0,
+   1
+  ],
+  "Light": [
+   14915.0,
+   14915.0,
+   14915.0,
+   1
+  ],
+  "REM": [
+   5657.0,
+   5657.0,
+   5657.0,
+   1
+  ],
+  "rows": 1
+ },
+ "Garmin-Health-Overview.json:15:A": {
+  "At wake": [
+   7744.0,
+   88.0,
+   88.0,
+   88
+  ],
+  "Highest": [
+   8096.0,
+   92.0,
+   92.0,
+   88
+  ],
+  "Lowest": [
+   1936.0,
+   22.0,
+   22.0,
+   88
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:16:A": {
+  "7-day average": [
+   54.105,
+   26.328,
+   27.777,
+   2
+  ],
+  "Average stress": [
+   105.314,
+   21.983,
+   27.993,
+   4
+  ],
+  "Usual low": [
+   "distinct",
+   0,
+   0
+  ],
+  "Usual range": [
+   "distinct",
+   0,
+   0
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:21:A": {
+  "7-day average": [
+   1183.0,
+   13.0,
+   13.0,
+   91
+  ],
+  "Breathing rate": [
+   1144.0,
+   13.0,
+   13.0,
+   88
+  ],
+  "Usual low": [
+   1155.7,
+   12.7,
+   12.7,
+   91
+  ],
+  "Usual range": [
+   1210.3,
+   13.3,
+   13.3,
+   91
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:22:A": {
+  "7-day average": [
+   8645.0,
+   95.0,
+   95.0,
+   91
+  ],
+  "Average SpO2": [
+   8360.0,
+   95.0,
+   95.0,
+   88
+  ],
+  "Usual low": [
+   8599.5,
+   94.5,
+   94.5,
+   91
+  ],
+  "Usual range": [
+   8690.5,
+   95.5,
+   95.5,
+   91
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:23:A": {
+  "Skin temperature change": [
+   4.6,
+   -0.4,
+   0.5,
+   88
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:26:A": {
+  "Moderate": [
+   2152.0,
+   56.0,
+   200.0,
+   14
+  ],
+  "Vigorous (counted twice)": [
+   2340.0,
+   60.0,
+   180.0,
+   14
+  ],
+  "rows": 14,
+  "time": [
+   "distinct",
+   14,
+   14
+  ]
+ },
+ "Garmin-Health-Overview.json:30:A": {
+  "Achievable": [
+   2464.0,
+   28.0,
+   28.0,
+   88
+  ],
+  "Actual age": [
+   2992.0,
+   34.0,
+   34.0,
+   88
+  ],
+  "Fitness age": [
+   2596.0,
+   29.5,
+   29.5,
+   88
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:33:A": {
+  "Acute load": [
+   28964.0,
+   250.0,
+   418.0,
+   87
+  ],
+  "Chronic load": [
+   28710.0,
+   330.0,
+   330.0,
+   87
+  ],
+  "Range high": [
+   43065.0,
+   495.0,
+   495.0,
+   87
+  ],
+  "Range low": [
+   22968.0,
+   264.0,
+   264.0,
+   87
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:34:A": {
+  "Morning readiness": [
+   5684.0,
+   41.0,
+   90.0,
+   88
+  ],
+  "rows": 91,
+  "time": [
+   "distinct",
+   91,
+   91
+  ]
+ },
+ "Garmin-Health-Overview.json:38:A": {
+  "Heart rate": [
+   1958.528,
+   54.4,
+   87.211,
+   29
+  ],
+  "rows": 721,
+  "time": [
+   "distinct",
+   721,
+   721
+  ]
+ },
+ "Garmin-Health-Overview.json:39:A": {
+  "Body Battery": [
+   1659.675,
+   23.65,
+   85.55,
+   29
+  ],
+  "Stress": [
+   781.276,
+   11.283,
+   37.632,
+   29
+  ],
+  "rows": 721,
+  "time": [
+   "distinct",
+   721,
+   721
+  ]
+ },
+ "Garmin-Ski-Season.json:11:A": {
+  "metric": [
+   "distinct",
+   8,
+   70
+  ],
+  "rows": 70,
+  "time": [
+   "distinct",
+   17,
+   70
+  ],
+  "value": [
+   181.35,
+   0.0,
+   8.096,
+   70
+  ]
+ },
+ "Garmin-Ski-Season.json:13:A": {
+  "Zone 1 (warm up)": [
+   28.391,
+   0.838,
+   2.228,
+   17
+  ],
+  "Zone 2 (easy)": [
+   63.23,
+   2.54,
+   4.772,
+   17
+  ],
+  "Zone 3 (aerobic)": [
+   40.612,
+   1.618,
+   3.019,
+   17
+  ],
+  "Zone 4 (threshold)": [
+   14.632,
+   0.533,
+   1.162,
+   17
+  ],
+  "Zone 5 (maximum)": [
+   2.014,
+   0.062,
+   0.177,
+   17
+  ],
+  "rows": 17,
+  "time": [
+   "distinct",
+   17,
+   17
+  ]
+ },
+ "Garmin-Ski-Season.json:16:A": {
+  "4-week average": [
+   9616.0,
+   0.0,
+   716.0,
+   18
+  ],
+  "Weekly load": [
+   10468.0,
+   0.0,
+   778.0,
+   18
+  ],
+  "rows": 18,
+  "time": [
+   "distinct",
+   18,
+   18
+  ]
+ },
+ "Garmin-Ski-Season.json:21:A": {
+  "Climbed": [
+   1600.0,
+   1600.0,
+   1600.0,
+   1
+  ],
+  "Descended": [
+   1600.0,
+   1600.0,
+   1600.0,
+   1
+  ],
+  "rows": 1,
+  "time": [
+   "distinct",
+   1,
+   1
+  ]
+ },
+ "Garmin-Ski-Season.json:23:A": {
+  "Acute load": [
+   "distinct",
+   0,
+   0
+  ],
+  "Chronic load": [
+   "distinct",
+   0,
+   0
+  ],
+  "Range high": [
+   "distinct",
+   0,
+   0
+  ],
+  "Range low": [
+   "distinct",
+   0,
+   0
+  ],
+  "rows": 121,
+  "time": [
+   "distinct",
+   121,
+   121
+  ]
+ },
+ "Garmin-Ski-Season.json:24:A": {
+  "Morning readiness": [
+   "distinct",
+   0,
+   0
+  ],
+  "rows": 121,
+  "time": [
+   "distinct",
+   121,
+   121
+  ]
+ },
+ "Garmin-Strength-Training-Dashboard.json:1009:A": {
+  "Time": [
+   "distinct",
+   36,
+   36
+  ],
+  "Volume": [
+   81930.0,
+   1320.0,
+   4330.0,
+   36
+  ],
+  "rows": 36
+ },
+ "Garmin-Strength-Training-Dashboard.json:1012:A": {
+  "ExerciseCategory": [
+   "distinct",
+   6,
+   6
+  ],
+  "Volume": [
+   81930.0,
+   150.0,
+   24120.0,
+   6
+  ],
+  "rows": 6
+ },
+ "Garmin-Strength-Training-Dashboard.json:1018:A": {
+  "Exercise": [
+   "distinct",
+   6,
+   6
+  ],
+  "Total Time Under Tension (s)": [
+   8655.0,
+   135.0,
+   2160.0,
+   6
+  ],
+  "rows": 6
+ },
+ "Garmin-Strength-Training-Dashboard.json:1021:A": {
+  "rows": 181,
+  "sets": [
+   207.0,
+   0.0,
+   8.0,
+   181
+  ],
+  "time": [
+   "distinct",
+   181,
+   181
+  ]
+ }
+}

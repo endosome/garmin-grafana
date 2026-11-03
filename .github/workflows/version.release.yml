@@ -11,20 +11,12 @@ env:
   IMAGE_TAG: ${{ github.ref_name }}
 
 jobs:
-  tests:
-    if: ${{ github.repository == 'endosome/garmin-grafana' && github.event_name == 'push' }}
-    uses: ./.github/workflows/tests.yml
-
-  # Each platform builds natively on its own runner (no QEMU) and pushes by digest; the merge job joins them under the tag.
+  # Each platform builds natively on its own runner (no QEMU) and pushes by digest, with no tag. The amd64 image is then the one the
+  # stack, upgrade and browser tests run against, so what is tested is what ships; the merge job tags both only when those pass.
   # Both runners are 26.04; the arm64 one is labelled ubuntu-26.04-arm.
-  browser:
-    if: ${{ github.repository == 'endosome/garmin-grafana' && github.event_name == 'push' }}
-    uses: ./.github/workflows/browser.yml
-
   build:
     name: Build ${{ matrix.platform }}
-    needs: [tests, browser]
-    if: ${{ !cancelled() && github.repository == 'endosome/garmin-grafana' && contains(fromJSON('["success", "skipped"]'), needs.tests.result) && contains(fromJSON('["success", "skipped"]'), needs.browser.result) }}
+    if: ${{ github.repository == 'endosome/garmin-grafana' }}
     strategy:
       matrix:
         include:
@@ -77,9 +69,42 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  amd64_image:
+    name: The amd64 image to test
+    needs: build
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-26.04
+    outputs:
+      image: ${{ steps.digest.outputs.image }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: digests-ubuntu-26.04
+          path: digests
+      - id: digest
+        run: echo "image=ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}@sha256:$(ls digests)" >> "$GITHUB_OUTPUT"
+
+  tests:
+    needs: amd64_image
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/tests.yml
+    with:
+      image: ${{ needs.amd64_image.outputs.image }}
+
+  browser:
+    needs: amd64_image
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/browser.yml
+    with:
+      image: ${{ needs.amd64_image.outputs.image }}
+
   build_and_push:
     name: Publish the multi-arch image to GHCR
-    needs: build
+    needs: [build, tests, browser]
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-26.04
     permissions:

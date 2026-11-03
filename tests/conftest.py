@@ -17,6 +17,7 @@ from panel_queries import STATEMENTS, iso, panels, queries
 # Every environment variable garmin_fetch reads is cleared, apart from these pinned
 # values, so a developer's shell environment can't change what the tests exercise.
 def pytest_addoption(parser):
+    parser.addoption('--update-values', action='store_true', help='rewrite tests/data/panel_values.json from the current queries')
     parser.addoption('--update-schemas', action='store_true', help='rewrite tests/data/panel_schemas.json from the current queries')
 
 

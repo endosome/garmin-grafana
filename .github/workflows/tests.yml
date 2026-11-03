@@ -6,8 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      image:
+        description: 'A GHCR image (with digest) to test instead of building one; the release workflow passes the one it is about to ship'
+        type: string
+        default: ''
 permissions:
   contents: read
+  packages: read
 concurrency:
   group: tests-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -85,15 +91,11 @@ jobs:
         with:
           enable-cache: true
       - run: docker compose -f compose-example.yml --profile kiosk config --quiet
-      - uses: docker/setup-buildx-action@v4
-      - name: Build the runtime image
-        uses: docker/build-push-action@v7
+      - uses: ./.github/actions/runtime-image
         with:
-          context: .
-          load: true
-          tags: garmin-grafana:timescale
-          cache-from: type=gha,scope=stack
-          cache-to: type=gha,scope=stack,mode=max
+          image: ${{ inputs.image }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cache-to: 'true'
       - name: Verify Grafana provisioning and queries
         run: |
           docker compose -f compose-example.yml --profile kiosk up -d --no-build --wait postgres migrate grafana grafana-kiosk kiosk
@@ -112,13 +114,9 @@ jobs:
       GRAFANA_DB_PASSWORD: test-reader-password
     steps:
       - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - name: Build the runtime image
-        uses: docker/build-push-action@v7
+      - uses: ./.github/actions/runtime-image
         with:
-          context: .
-          load: true
-          tags: garmin-grafana:timescale
-          cache-from: type=gha,scope=stack
+          image: ${{ inputs.image }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Rehearse the upgrade from the Alpine image
         run: scripts/smoke_upgrade.sh

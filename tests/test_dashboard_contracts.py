@@ -2,12 +2,14 @@
 and time zones and ranges. Needs TEST_DATABASE=1; the personas are loaded once per session (conftest.py).
 """
 from datetime import timedelta
+from decimal import Decimal
+from pathlib import Path
 import json
 import os
 import re
 import pytest
 from panel_queries import FORMATS, ROOT, STATEMENTS, iso, queries
-from personas import NOW, healthy_lifestyle, ski_tourer
+from personas import NOW, gym_goer, healthy_lifestyle, ski_tourer
 
 SCHEMAS = ROOT / 'tests/data/panel_schemas.json'
 RANGES = {'24h': 86400, '7d': 7 * 86400, '30d': 30 * 86400, '1y': 365 * 86400, '5y': 5 * 365 * 86400}
@@ -23,10 +25,10 @@ DATA_FREE = {
 }
 
 
-def execute(reader, label, source, *, zone='UTC', seconds=None, interval=None, end=NOW):
+def execute(reader, label, source, *, zone='UTC', seconds=None, interval=None, end=NOW, activity='__all'):
     """Runs one dashboard query the way test_personas does; returns ([(column, type name)], rows)."""
     seconds = seconds or queries.pinned_ranges().get(label.rsplit(':', 1)[0]) or 400 * 86400
-    sql = queries.expand_query(STATEMENTS[label], source, start=iso(end - timedelta(seconds=seconds)), end=iso(end), timezone=zone,
+    sql = queries.expand_query(STATEMENTS[label], source, start=iso(end - timedelta(seconds=seconds)), end=iso(end), timezone=zone, activity=activity,
                                interval=interval or queries.interval(seconds))
     with reader.transaction(), reader.cursor() as cur:
         cur.execute(sql)
@@ -103,3 +105,49 @@ def test_every_query_runs_in_each_zone_and_range(personas, reader, zone, name, s
     sid = personas[healthy_lifestyle().account]
     for label in STATEMENTS:
         execute(reader, label, sid, zone=zone, seconds=seconds)
+
+
+# What the browser tests' screenshots draw: one persona and one range per dashboard (e2e/tests/fixtures.ts, screenshots.spec.ts).
+SNAPSHOT_RUNS = {
+    'Garmin-Grafana-Dashboard.json': (healthy_lifestyle, 'Europe/Budapest', 30),
+    'Garmin-Health-Overview.json': (healthy_lifestyle, 'Europe/Budapest', 90),
+    'Garmin-Ski-Season.json': (ski_tourer, 'Europe/Budapest', 120),
+    'Garmin-Strength-Training-Dashboard.json': (gym_goer, 'UTC', 180),
+}
+VALUES = Path(__file__).parent / 'data/panel_values.json'
+
+
+def summarize(columns, rows):
+    """Row count and, per column, what a reviewer can read in a diff: sum, min and max of numbers, distinct count of the rest."""
+    out = {'rows': len(rows)}
+    for i, (name, _) in enumerate(columns):
+        values = [row[i] for row in rows if row[i] is not None]
+        numbers = [float(v) for v in values if isinstance(v, (int, float, Decimal)) and not isinstance(v, bool)]
+        if values and len(numbers) == len(values):
+            out[name] = [round(sum(numbers), 3), round(min(numbers), 3), round(max(numbers), 3), len(values)]
+        else:
+            out[name] = ['distinct', len({str(v) for v in values}), len(values)]
+    return out
+
+
+def test_chart_panels_show_the_recorded_values(personas, reader, request):
+    """A golden master for the 63 chart panels that have no hand-computed expectation (tests/panel_registry.py): what each
+    query returns for the persona the screenshots use. A change is a reviewed diff, like a baseline: --update-values."""
+    import panel_registry
+    found = {}
+    for label in STATEMENTS:
+        file, _, rest = label.partition(':')
+        if rest.split(':')[0].isdigit() is False or f"{file}:{rest.split(':')[0]}" not in panel_registry.SCREENSHOT:
+            continue  # a template variable, or a panel with a hand-computed expectation
+        persona, zone, days = SNAPSHOT_RUNS[file]
+        source = personas[persona().account]
+        with reader.transaction(), reader.cursor() as cur:  # the GPS panels show one activity: the latest the persona recorded
+            cur.execute("SELECT tags->>'ActivitySelector' FROM samples WHERE source_id=%s AND dataset='ActivityGPS' ORDER BY time DESC LIMIT 1", (source,))
+            latest = (cur.fetchone() or ['__all'])[0]
+        columns, rows = execute(reader, label, source, zone=zone, seconds=days * 86400, activity=latest)
+        found[label] = summarize(columns, rows)
+    if request.config.getoption('--update-values'):
+        VALUES.write_text(json.dumps(found, indent=1, sort_keys=True) + '\n')
+    recorded = json.loads(VALUES.read_text())
+    assert set(found) == set(recorded), 'queries added or removed: run pytest --update-values and review the diff'
+    assert {k: v for k, v in found.items() if v != recorded[k]} == {}, 'values changed: run pytest --update-values and review the diff'
