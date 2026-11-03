@@ -322,3 +322,16 @@ Don't use xdist for the unit tests: they finish in 3.7 s.
   still over a quarter of the suite after item 1.
 - Query performance for users. That is the
   [Grafana optimization plan](grafana-optimization-plan.md).
+
+## Status (2026-11-03)
+
+Done: items 1, 2, 3, 4, 5, 6, 8, 9. Measured locally after item 1: full DB suite 54–61 s
+(was 82 s), `test_personas.py` 35 s (was ~70 s). Without `test_personas.py` the coverage
+gate holds at 100 %, so CI runs those tests in a second pytest command without coverage
+(item 8). Container image: uv bumped to 0.9.30, the newest `python3.13-bookworm-slim`
+tag published; the arm64 build is verified by the next release run only.
+
+Not done, on purpose: item 7 (native arm64 runner) waits for a measured release build with
+the apt layer gone and the layer cache warm; item 10 (xdist) waits for a CI timing of the
+new layout. What is left in the suite is the rollup equivalence matrix (12–14 s) and the
+first persona load (about 10 s), both inside the "out of scope" rule.

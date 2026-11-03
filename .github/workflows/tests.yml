@@ -38,7 +38,10 @@ jobs:
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-      - run: uv run --locked pytest --cov --cov-report=term-missing --durations=15
+      # The persona tests check dashboard SQL, not Python branches: the coverage gate holds without them, and tracing them
+      # costs about half again as much time.
+      - run: uv run --locked pytest --cov --cov-report=term-missing --durations=15 --ignore=tests/test_personas.py
+      - run: uv run --locked pytest --durations=5 tests/test_personas.py
       - run: uv run --locked python scripts/validate_dashboard_queries.py
   stack:
     runs-on: ubuntu-26.04

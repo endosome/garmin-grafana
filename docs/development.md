@@ -16,8 +16,8 @@ PostgreSQL and its settings. No InfluxDB server is required or started by tests.
 An ordinary `uv run pytest` is a unit-only check unless the PostgreSQL integration
 settings are supplied.
 
-To run the full coverage gate
-(unchanged at 98%), use a disposable database, never your real health database:
+To run the full suite and the coverage gate
+(unchanged at 98%; the persona tests check dashboard SQL, so CI runs them without coverage), use a disposable database, never your real health database:
 
 ```bash
 docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
@@ -26,7 +26,8 @@ docker run -d --name garmin-test-db -e POSTGRES_PASSWORD=test-only-password \
 # Wait for: docker exec garmin-test-db pg_isready -h 127.0.0.1 (TCP: first-time setup runs a socket-only server)
 export PGHOST=localhost PGPORT=55439 PGUSER=postgres PGDATABASE=garmin
 export PGPASSWORD=test-only-password TEST_DATABASE=1
-uv run --locked pytest --cov --cov-report=term-missing
+uv run --locked pytest --cov --cov-report=term-missing --ignore=tests/test_personas.py
+uv run --locked pytest tests/test_personas.py
 uv run --locked python scripts/validate_dashboard_queries.py
 ```
 
