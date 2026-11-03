@@ -333,7 +333,7 @@ pre-release test can.
 | L4 browser, tier 5 screenshots | `e2e` job, pinned Grafana only | | yes |
 | L5 performance | | yes | |
 
-The `e2e` job runs in eight shards, in parallel with `pytest`, `dashboards` and `stack` (the status section has the timing). It gets the same
+The `e2e` job lives in `.github/workflows/browser.yml` (workflow `Browser tests`), runs in eight shards beside the `Tests` workflow on every push, and the release workflow requires both. It gets the same
 image by rebuilding it from the GitHub Actions build cache, which takes seconds
 once item 6 of the [test speed plan](test-speed-plan.md) is done, rather than by
 uploading a 268 MB artifact. Target:
@@ -411,8 +411,8 @@ because without it every query read the raw samples and the budgets failed 10 to
 - Every panel is in the registry with value tests (64), a reviewed screenshot baseline (63) or a written reason (6):
   `test_every_panel_is_in_the_registry` fails for a panel that is in none of them.
 - A broken query, unit, override, layout, link, isolation or kiosk behaviour fails a CI job (`dashboards`, `stack`,
-  `e2e`); the release workflow calls `Tests` before it builds the image.
+  `e2e`); the release workflow calls `Tests` and `Browser tests` before it builds the image.
 - Screenshot baselines change only through `e2e/update-baselines.sh`; the budget file only with `--update`, both as diffs.
 - The browser suite runs on genesis in the memory limit with two workers: 29 of 29 in 7.0 minutes.
 - Timing target: `e2e` under 3 minutes and the whole push under about 4 minutes. Eight shards, each 2 m 02 s to
-  3 m 03 s; the whole `Tests` run 3 m 06 s.
+  3 m 06 s; the `Browser tests` workflow 3 m 09 s (run 41671391025), beside `Tests` at 1 m 38 s.

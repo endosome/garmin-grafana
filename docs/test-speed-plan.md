@@ -367,15 +367,15 @@ target, from 2 m 15 s. The tag was removed from git and its image version from G
 
 | Measure | Target | Measured |
 | --- | --- | --- |
-| `Tests` wall clock on a push | ≤ 1 m 50 s | 3 m 06 s with the browser tests; the jobs of this plan alone (`pytest` 54 s, `dashboards` 68 s, `stack` 112 s) finish in 1 m 52 s, the `stack` job being the floor the target names |
+| `Tests` wall clock on a push | ≤ 1 m 50 s | 1 m 38 s (run 41671390992: `pytest` 56 s, `dashboards` 63 s, `stack` 93 s, `upgrade` 94 s, in parallel). The browser tests are their own workflow, `Browser tests`, which also runs on every push (3 m 09 s) and which the release workflow requires next to `Tests` |
 | CI pytest step | ≤ 25 s | 11 s (coverage run) and 16 s (persona and contract tests, in the `dashboards` job) |
 | Persona tests alone | < 23 s | 16 s with the contract tests, as its own job |
 | Local full DB suite (no coverage) | ≤ 40 s | 38–42 s with `pytest -n 2` (each worker has its own database, see item 10 below), 58–66 s serial |
 | Test runs per release | 1 | 1 |
 | Release multi-arch build | ≤ 1 m 15 s | 55 s (rehearsal tag) |
 
-The wall clock grew from 2 m 46 s to 3 m 06 s because the browser suite of the dashboard testing plan was added
-(7 m 19 s when it ran in two workers on one runner; eight shards each starting their own stack brought it back
-down). Item 10 came back for local runs only: `pytest -n 2` gives every xdist worker its own database (`garmin_gw0`, `garmin_gw1`,
+The `Tests` wall clock is the jobs of this plan alone: the upgrade rehearsal moved out of the `stack` job into a job of
+its own, and the browser suite of the dashboard testing plan moved into the `Browser tests` workflow (7 m 19 s when it ran
+in two workers on one runner as part of `Tests`; eight shards each starting their own stack bring it to about 3 m). Item 10 came back for local runs only: `pytest -n 2` gives every xdist worker its own database (`garmin_gw0`, `garmin_gw1`,
 created empty and dropped afterwards by `tests/conftest.py`), which is what the deadlock on a shared database called for.
 CI does not need it: the two halves already run as separate jobs.
