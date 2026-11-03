@@ -23,14 +23,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import personas  # noqa: E402
 from garmin_grafana.storage import PostgresStore, connect  # noqa: E402
-from validate_dashboard_queries import expand_query  # noqa: E402
+from validate_dashboard_queries import expand_query, interval, seconds  # noqa: E402
 
 ACCOUNT = 'bench-year'
 END = personas.NOW
-# Grafana rounds range / max data points to these steps; 1000 points approximates a full-width panel.
-STEPS = [(s, f'{s} seconds') for s in (1, 2, 5, 10, 15, 20, 30)] + [(m * 60, f'{m} minutes') for m in (1, 2, 5, 10, 15, 20, 30)] \
-    + [(h * 3600, f'{h} hours') for h in (1, 2, 3, 6, 12)] + [(86400, '1 day'), (7 * 86400, '7 days')]
-UNITS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800}
 
 
 def seed():
@@ -55,15 +51,6 @@ def seed():
     with connect() as connection:
         connection.autocommit = True
         connection.execute('VACUUM ANALYZE')
-
-
-def seconds(text):
-    return int(text[:-1]) * UNITS[text[-1]]
-
-
-def interval(range_seconds, minimum=None):
-    floor = max(range_seconds / 1000, seconds(minimum) if minimum else 0)
-    return next((label for step, label in STEPS if step >= floor), STEPS[-1][1])
 
 
 def panels(items):

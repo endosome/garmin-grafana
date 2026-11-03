@@ -96,8 +96,11 @@ def load(personas, reader):
 @pytest.mark.parametrize('factory', PERSONAS, ids=lambda f: f.__name__)
 def test_every_query_runs_on_each_persona(load, factory):
     run = load(factory())
-    for sql in STATEMENTS.values():  # a year and a bit: covers every persona's data; short ranges are checked below
-        run(None, None, NOW - timedelta(days=400), sql=sql, interval='12 hours')  # what Grafana picks for this range
+    pinned = queries.pinned_ranges()
+    for label, sql in STATEMENTS.items():  # a year and a bit: covers every persona's data; short ranges are checked below
+        seconds = pinned.get(label.rsplit(':', 1)[0])  # a panel with its own `timeFrom` never sees the dashboard's range
+        run(None, None, NOW - (timedelta(seconds=seconds) if seconds else timedelta(days=400)), sql=sql,
+            interval=queries.interval(seconds) if seconds else '12 hours')  # what Grafana picks for this range
 
 
 def test_accounts_never_see_each_others_data(load):

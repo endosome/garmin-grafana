@@ -9,6 +9,34 @@ import re
 from garmin_grafana.storage import connect
 
 
+# Grafana rounds range / max data points to these steps; 1000 points approximates a full-width panel.
+STEPS = [(s, f'{s} seconds') for s in (1, 2, 5, 10, 15, 20, 30)] + [(m * 60, f'{m} minutes') for m in (1, 2, 5, 10, 15, 20, 30)] \
+    + [(h * 3600, f'{h} hours') for h in (1, 2, 3, 6, 12)] + [(86400, '1 day'), (7 * 86400, '7 days')]
+UNITS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400, 'w': 604800}
+
+
+def seconds(text):
+    """Length of a Grafana relative range such as 24h or 14d."""
+    return int(text[:-1]) * UNITS[text[-1]]
+
+
+def interval(range_seconds, minimum=None):
+    floor = max(range_seconds / 1000, seconds(minimum) if minimum else 0)
+    return next((label for step, label in STEPS if step >= floor), STEPS[-1][1])
+
+
+def pinned_ranges():
+    """{'File.json:panel id': seconds} for panels whose own `timeFrom` overrides the dashboard's time range."""
+    def walk(items):
+        for panel in items:
+            yield panel
+            yield from walk(panel.get('panels', []))
+    root = Path(__file__).resolve().parents[1]
+    return {path.name + ':' + str(panel['id']): seconds(panel['timeFrom'])
+            for path in (root / 'Grafana_Dashboard').glob('*.json')
+            for panel in walk(json.loads(path.read_text())['panels']) if panel.get('timeFrom')}
+
+
 def expand_query(query, source=1, *, start='2026-01-01T00:00:00Z', end='2026-01-10T00:00:00Z', timezone='UTC', activity='__all', category='__all', interval='5 minutes'):
     query = query.replace('${Source:csv}', str(source))
     query = query.replace('${TimeZone:sqlstring}', f"'{timezone}'")
