@@ -378,6 +378,6 @@ target, from 2 m 15 s. The tag was removed from git and its image version from G
 
 The `Tests` wall clock is the jobs of this plan alone: the upgrade rehearsal moved out of the `stack` job into a job of
 its own, and the browser suite of the dashboard testing plan moved into the `Browser tests` workflow (7 m 19 s when it ran
-in two workers on one runner as part of `Tests`; eight shards each starting their own stack bring it to about 3 m). Item 10 came back for local runs only: `pytest -n 2 --dist loadgroup` gives every xdist worker its own database (`garmin_gw0`, `garmin_gw1`,
+in two workers on one runner as part of `Tests`; eight shards each starting their own stack bring it to about 3 m). Item 10 came back for local runs only, as the item itself prescribes ("Locally `-n 2`", "Use `--dist loadgroup`"), so the local target of 40 s is measured with those flags: `pytest -n 2 --dist loadgroup` gives every xdist worker its own database (`garmin_gw0`, `garmin_gw1`,
 created empty and dropped afterwards by `tests/conftest.py`), which is what the deadlock on a shared database called for.
 CI does not need it: the two halves already run as separate jobs.
