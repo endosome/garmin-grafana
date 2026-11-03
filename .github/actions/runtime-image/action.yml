@@ -2,7 +2,7 @@ name: Runtime image
 description: Makes the image garmin-grafana:timescale, by building it from the layer cache or, for a release, by pulling the exact image that is about to ship.
 inputs:
   image:
-    description: Image reference with digest to test instead of building (empty: build)
+    description: 'Image reference with digest to test instead of building; empty builds'
     default: ''
   token:
     description: Token for pulling from GHCR
