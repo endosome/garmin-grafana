@@ -102,9 +102,14 @@ jobs:
             uv run --locked pytest -m grafana tests/test_grafana_stack.py --durations=5
       - name: Rehearse the upgrade from the Alpine image
         run: scripts/smoke_upgrade.sh
-  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4). Needs the stack job first so the image comes from its layer cache.
+  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4), in four shards that each start their own stack.
+  # They run beside the stack job; the image comes from the layer cache the stack job leaves behind.
   e2e:
-    needs: stack
+    name: e2e (shard ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/4', '2/4', '3/4', '4/4']
     runs-on: ubuntu-26.04
     env:
       PGDATABASE: garmin
@@ -136,11 +141,11 @@ jobs:
           KIOSK_URL: http://localhost:3001
           GRAFANA_ALLOW_WRITES: "1"
           CI: "true"
-        run: e2e/run.sh
+        run: e2e/run.sh --shard=${{ matrix.shard }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ strategy.job-index }}
           path: |
             e2e/playwright-report
             e2e/test-results

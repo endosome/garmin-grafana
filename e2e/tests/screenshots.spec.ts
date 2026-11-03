@@ -17,18 +17,25 @@ function panelsOf(name: DashboardName): { id: number; title: string; type: strin
   return found;
 }
 
+// Chunks of panels, so that the tests can be spread over workers and CI shards: a dashboard of 50 charts in one test takes minutes.
+const CHUNK = 12;
+
 for (const [name, persona] of PLAN) {
-  test(`screenshots of the chart panels of ${DASHBOARDS[name].file}`, async ({ page, request }) => {
-    test.setTimeout(600_000);
-    await openDashboard(page, request, name, { persona });
-    for (const panel of panelsOf(name)) {
-      const element = page.locator(`[data-viz-panel-key="panel-${panel.id}"]`).first();
-      if (!(await reveal(page, panel.id))) {
-        expect.soft(false, `${panel.title} (${panel.id}) is not on the page`).toBe(true);
-        continue;
+  const all = panelsOf(name);
+  for (let first = 0; first < all.length; first += CHUNK) {
+    const chunk = all.slice(first, first + CHUNK);
+    test(`screenshots of the chart panels of ${DASHBOARDS[name].file}, ${first / CHUNK + 1} of ${Math.ceil(all.length / CHUNK)}`, async ({ page, request }) => {
+      test.setTimeout(300_000);
+      await openDashboard(page, request, name, { persona });
+      for (const panel of chunk) {
+        const element = page.locator(`[data-viz-panel-key="panel-${panel.id}"]`).first();
+        if (!(await reveal(page, panel.id))) {
+          expect.soft(false, `${panel.title} (${panel.id}) is not on the page`).toBe(true);
+          continue;
+        }
+        await page.waitForTimeout(1500);  // virtualized panels draw after they scroll into view
+        await expect.soft(element, `${panel.title} (${panel.id})`).toHaveScreenshot(`${name}-${panel.id}.png`, { timeout: 20_000 });
       }
-      await page.waitForTimeout(1500);  // virtualized panels draw after they scroll into view
-      await expect.soft(element, `${panel.title} (${panel.id})`).toHaveScreenshot(`${name}-${panel.id}.png`, { timeout: 20_000 });
-    }
-  });
+    });
+  }
 }
