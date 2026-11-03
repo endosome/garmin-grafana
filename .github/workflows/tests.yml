@@ -57,7 +57,14 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      # The TypeScript codec is accepted against the Python package's committed conformance corpus (no dependencies).
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      # The TypeScript codec is accepted against the Python package's committed conformance corpus, its semantics layer against
+      # the Python layer's values by field number (which needs uv and the package; the pglite test needs PGLITE_DIR and skips).
+      - run: uv sync --locked
+      - run: npm ci
+        working-directory: packages/garmin-fit-store-ts
       - run: node --test packages/garmin-fit-store-ts/test/*.test.ts
   dashboards:
     runs-on: ubuntu-26.04

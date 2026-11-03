@@ -3,6 +3,8 @@
 Columns are the FIT field names in SI units, positions in degrees and times as timestamptz. Nothing here is committed
 as data: a profile upgrade rebuilds the views from the new document.
 """
+import hashlib
+
 from psycopg import sql
 
 from .profile import Profile
@@ -14,10 +16,16 @@ FLOATS = {'float32', 'float64'}
 INTEGERS = {'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint32', 'uint8z', 'uint16z', 'uint32z', 'sint64', 'enum', 'byte'}
 
 
-def column_expression(field, profile):
+# record fields stored as generated bigint columns (migration fit/006); the view reads these instead of parsing the JSONB
+PROMOTED = {0: 'f0', 1: 'f1', 2: 'f2', 3: 'f3', 4: 'f4', 5: 'f5', 6: 'f6', 7: 'f7', 13: 'f13', 73: 'f73', 78: 'f78'}
+
+
+def column_expression(field, profile, promoted=None):
     """The SQL expression for one field of a message, over the jsonb column ``fields``; None when it has no column."""
     number, kind, base = field['number'], field['type'], field['base_type']
     raw = f"fit.num(fields->'{number}')"
+    if promoted and number in promoted:  # the stored column, or the JSONB when the column could not hold the value
+        raw = f"coalesce(CASE WHEN abs({promoted[number]}) < 9e18 THEN {promoted[number]} END, {raw})"
     if field['array']:
         return f"fields->'{number}'"
     if base == 'string':
@@ -50,7 +58,7 @@ def view_sql(name, message_number, profile):
         if field['name'] in seen:
             continue
         seen.add(field['name'])
-        columns.append(f'{column_expression(field, profile)} AS {sql.Identifier(field["name"]).as_string(None)}')
+        columns.append(f'{column_expression(field, profile, PROMOTED if message_number == 20 else None)} AS {sql.Identifier(field["name"]).as_string(None)}')
     where = '' if message_number == 20 else f' WHERE global_num = {message_number}'
     return f'CREATE VIEW fit.{name} AS SELECT {", ".join(columns)} FROM {table}{where}'
 
@@ -62,18 +70,28 @@ DEV_VIEW = """CREATE VIEW fit.v_record_dev AS
  FROM fit.records r"""
 
 
+def definitions(profile=None):
+    profile = profile or Profile()
+    return {**{name: view_sql(name, number, profile) for name, number in VIEWS.items()}, 'v_record_dev': DEV_VIEW}
+
+
+def signature():
+    return hashlib.sha256('\n'.join(definitions().values()).encode()).hexdigest()
+
+
 def create(connection):
-    """(Re)create every typed view from the installed profile."""
-    profile = Profile()
+    """(Re)create every typed view from the installed profile, remembering what they were generated from."""
     with connection.cursor() as cur:
-        for name in [*VIEWS, 'v_record_dev']:
+        for name in definitions():
             cur.execute(f'DROP VIEW IF EXISTS fit.{name}')
-        for name, number in VIEWS.items():
-            cur.execute(view_sql(name, number, profile))
-        cur.execute(DEV_VIEW)
+        for name, text in definitions().items():
+            cur.execute(text)
+        cur.execute(sql.SQL('COMMENT ON VIEW fit.v_record IS {}').format(sql.Literal(signature())))
 
 
 def exist(connection):
-    names = [*VIEWS, 'v_record_dev']
+    """True when every view exists and was generated from the current profile and view code."""
+    names = list(definitions())
     row = connection.execute("SELECT count(*) FROM pg_views WHERE schemaname = 'fit' AND viewname = ANY(%s)", (names,)).fetchone()
-    return row[0] == len(names)
+    comment = connection.execute("SELECT obj_description('fit.v_record'::regclass)").fetchone()[0] if row[0] == len(names) else None
+    return row[0] == len(names) and comment == signature()

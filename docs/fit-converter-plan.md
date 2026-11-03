@@ -344,7 +344,7 @@ Prepend a dated section here as items land: what was done, the numbers, and anyt
 
 ### 2026-11-03: implemented
 
-Items 1 to 6, 8, 9, 10, 11, 12, 13, 14, 15 and the codec half of 16 are done; items 7 and the browser half of 16 are not.
+Every item is implemented except item 7, which is a manual upload to a Garmin Connect account.
 The current description lives in [architecture.md](architecture.md), [testing.md](testing.md) and
 [manual-import-instructions.md](manual-import-instructions.md).
 
@@ -363,10 +363,11 @@ The current description lives in [architecture.md](architecture.md), [testing.md
 - Item 7: **not done**, it is a manual upload to a Garmin Connect account.
 - Item 8: **amended:** the view SQL is generated at migrate time from the profile, not committed as `fit/002`, because it
   would be profile-derived data (A5). Views show NULL, not an error, where a file puts an array where the profile has a number.
-- Item 9 (365 one-hour 1 Hz activities, 1.31 M records): import 0.57 s per file and export 0.24 s (targets met); verify
-  0.77 s. The one-activity view query (7 columns) took 41 ms on a small database and 76 ms at a year of data, so the 50 ms
-  target is **not reliably met**; a 30-day aggregate takes 176 ms and a full-year aggregate 5.8 s. The robustness guard
-  on every column (`fit.num`) costs about a third; lever 2 (promoted typed columns) was not applied.
+- Item 9 (365 one-hour 1 Hz activities, 1.31 M records): the first run missed the view target (41 to 76 ms for one activity),
+  so both levers were applied: the import writes with COPY, and the eleven record fields every chart reads are stored
+  generated columns (migration `fit/006`; the JSONB stays the truth, the view falls back to it where a column is NULL).
+  Final numbers: import 0.31 s per file, export 0.24 s, verify 0.63 s, the one-activity view query 23 ms, a 30-day hourly
+  aggregate 64 ms, a full-year daily aggregate 2.0 s. All targets are met.
 - Item 10: `fetch_activity_GPS` returns a `RecordBatch` carrying `(activity id, bytes)`; the orchestration stores them after
   the records are written; failures go to `fit.pending_imports` and are retried. The bulk importer uses the same path.
 - Item 11: GPX (TrackPointExtension, PowerExtension) and TCX validate against Garmin's and Topografix's XSDs. The CSV follows
@@ -377,9 +378,15 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   Totals recomputed: start/end clamping, elapsed and timer time, distance, avg/max/min by name where the scales agree.
   Developer data collisions on combine raise an error. The combined-file Garmin Connect check is manual and open.
 - Item 15: documents updated.
-- Item 16: `packages/garmin-fit-store-ts` has the decoder and encoder (no semantics layer) and passes every corpus pair; the
-  Node job is in `tests.yml`. **Not done:** the pglite CI job (the fork's packages are unpublished, A6) and the browser demo
-  page; the pglite check runs locally with `tools/pglite_check.mjs`.
+- Item 16: `packages/garmin-fit-store-ts` has the decoder, encoder, a store (`importFile`, `exportFile`) and a semantics layer
+  (enum names, scale and offset, date_time, components with accumulation; sub-field selection is not ported). Its profile
+  document is built from `@garmin/fitsdk`'s `Profile` at test time, which names fields in camelCase, so it is compared
+  with the Python layer by field number. The codec passes every corpus pair; the pglite test imports each corpus file
+  through the TypeScript store into PGlite with the TimescaleDB fork, exports it and checks the R4 oracle (it passes
+  locally). `tests.yml` runs the Node job (`act push -j fit-ts` passes); `pglite.yml` builds the fork and runs the pglite
+  test, manual only and **not yet run on GitHub** (it follows the fork's build script). `demo/` holds the browser page and its
+  build step; it is written and its modules load, but it has not been opened in a browser.
+- Item 7 remains manual: it needs a Garmin Connect account.
 - Package coverage 98.2 percent; root 100 percent.
 
 ### 2026-11-03: plan accepted

@@ -1,0 +1,49 @@
+name: PGlite gate
+# The fit migrations on PGlite with the TimescaleDB fork (plan item 16): a corpus file goes in through the TypeScript store,
+# comes out, and the R4 oracle holds. The fork's packages are not published (plan A6), so this builds them, which is slow
+# and cached on the fork's commit. Written from the fork's own buildAndTestTimescale.sh; manual only (workflow_dispatch), so a push never starts the slow build; run it locally with act.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pglite-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pglite:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - id: fork
+        run: echo "sha=$(git ls-remote https://github.com/endosome/pglite refs/heads/timescaledb | cut -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: endosome/pglite
+          ref: timescaledb
+          path: pglite
+          submodules: recursive
+      - uses: actions/cache@v5
+        id: built
+        with:
+          path: |
+            pglite/packages/pglite/dist
+            pglite/packages/pglite/release
+            pglite/packages/pglite-extensions/pglite-timescaledb/dist
+            pglite/packages/pglite-extensions/pglite-timescaledb/release
+          key: pglite-fork-${{ steps.fork.outputs.sha }}
+      - uses: pnpm/action-setup@v5
+        with:
+          package_json_file: pglite/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - if: steps.built.outputs.cache-hit != 'true'
+        working-directory: pglite
+        run: pnpm install --frozen-lockfile && pnpm build:all
+      - if: steps.built.outputs.cache-hit == 'true'
+        working-directory: pglite
+        run: pnpm install --frozen-lockfile
+      - run: node --test packages/garmin-fit-store-ts/test/pglite.test.ts
+        env:
+          PGLITE_DIR: ${{ github.workspace }}/pglite

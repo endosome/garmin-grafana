@@ -297,10 +297,13 @@ export function encode(file: FitFile): Uint8Array {
 }
 
 // The JSONL form is parsed with bigint for integers a double cannot hold.
+const reviver = (_k: string, v: unknown, ctx?: { source: string }) =>
+  typeof v === 'number' && ctx && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v) ? BigInt(ctx.source) : v
+export const parseJson = (text: string) => JSON.parse(text, reviver as never)
+export const stringifyJson = (value: unknown) =>
+  JSON.stringify(value, (_k, v) => (typeof v === 'bigint' ? (JSON as unknown as { rawJSON(s: string): unknown }).rawJSON(String(v)) : v))
 export function parseJsonl(text: string) {
-  const reviver = (_k: string, v: unknown, ctx?: { source: string }) =>
-    typeof v === 'number' && ctx && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v) ? BigInt(ctx.source) : v
-  return text.trim().split('\n').map((line) => JSON.parse(line, reviver as never))
+  return text.trim().split('\n').map((line) => parseJson(line))
 }
 
 export function toRows(file: FitFile) {

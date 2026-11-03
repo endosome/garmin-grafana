@@ -70,3 +70,14 @@ def test_developer_fields_are_pivoted_by_name(connection):
     assert rows[1][0] is None
     assert connection.execute('SELECT name, units FROM fit.v_dev_fields WHERE file_id = %s ORDER BY name', (file_id,)).fetchall() == [
         ('Flag', None), ('Stride', 'mm')]
+
+
+def test_promoted_columns_follow_the_json_and_tolerate_odd_values(connection):
+    from garmin_fit_store import encode, ir
+    fit = ir.FitFile()
+    d = fit.add_definition(20, [(253, 4, 0x86), (3, 3, 2), (6, 2, 0x84)])
+    fit.add_message(d, {253: 1_100_000_000, 3: [1, 2, 3], 6: 3200})
+    file_id = store.import_file(connection, encode(fit), source_id=9600)
+    assert connection.execute('SELECT f3, f6 FROM fit.records WHERE file_id = %s', (file_id,)).fetchone() == (None, 3200)
+    connection.execute("UPDATE fit.records SET fields = jsonb_set(fields, '{6}', '5000') WHERE file_id = %s", (file_id,))
+    assert connection.execute('SELECT speed, heart_rate FROM fit.v_record WHERE file_id = %s', (file_id,)).fetchone() == (5.0, 1)

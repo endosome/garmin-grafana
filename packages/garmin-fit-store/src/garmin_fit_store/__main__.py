@@ -25,6 +25,9 @@ def _parser():
     rnd.add_argument('files', nargs='+', type=Path)
     rnd.add_argument('--ignore-crc', action='store_true')
     commands.add_parser('profile-sql', help='print the profile rows and typed views as SQL (for PGlite and other databases without Python)')
+    commands.add_parser('profile-json', help='print the profile document built from the installed SDK (for the TypeScript tests)')
+    named = commands.add_parser('named-json', help='print the named values of a FIT file by field number (for the TypeScript tests)')
+    named.add_argument('input', type=Path)
     conv = commands.add_parser('convert', help='write a FIT file as gpx, tcx, json or csv (no database)')
     conv.add_argument('--to', required=True, choices=['gpx', 'tcx', 'json', 'csv', 'jsonl'])
     conv.add_argument('input', type=Path)
@@ -42,6 +45,23 @@ def main(argv=None):
     if args.command == 'profile-sql':
         from . import profile_tables
         sys.stdout.write(profile_tables.script())
+        return 0
+    if args.command == 'profile-json':
+        from .profile import build_profile, dumps
+        sys.stdout.write(dumps(build_profile()))
+        return 0
+    if args.command == 'named-json':
+        import json
+        from .profile import Profile
+        from .semantics import Semantics
+        profile, semantics, fit_file = Profile(), Semantics(), decoder.decode(args.input.read_bytes(), check_crc=False)
+        rows = []
+        for m in fit_file.messages:
+            wire = {n: base for n, _, base in fit_file.definitions[m.def_id].fields}
+            names = {f['name']: int(n) for n, f in (profile.message(m.global_num) or {'fields': {}})['fields'].items()}
+            named = semantics.named(m.global_num, m.fields, expand_sub_fields=False, wire=wire)
+            rows.append({str(names.get(k, k)): (v.isoformat() if hasattr(v, 'isoformat') else v) for k, v in named.items()})
+        print(json.dumps(rows))
         return 0
     if args.command == 'convert':
         from . import convert

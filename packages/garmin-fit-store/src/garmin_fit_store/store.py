@@ -73,16 +73,22 @@ def insert_ir(connection, fit_file, data=None, source_id=None, garmin_activity_i
     return file_id
 
 
+def _copy(cur, statement, rows):
+    # COPY, not INSERT: item 9's first lever, which took the import of a one-hour activity from 1.1 s to well under a second
+    with cur.copy(statement) as copy:
+        for row in rows:
+            copy.write_row(row)
+    rows.clear()
+
+
 def _flush_messages(cur, rows):
     if rows:
-        cur.executemany('INSERT INTO fit.messages VALUES (%s,%s,%s,%s,%s,%s,%s)', rows)
-        rows.clear()
+        _copy(cur, 'COPY fit.messages FROM STDIN', rows)
 
 
 def _flush_records(cur, rows):
     if rows:
-        cur.executemany('INSERT INTO fit.records VALUES (%s,%s,%s,%s,%s,%s)', rows)
-        rows.clear()
+        _copy(cur, 'COPY fit.records (file_id, seq, def_id, time, fields, dev) FROM STDIN', rows)
 
 
 def load_ir(connection, file_id):

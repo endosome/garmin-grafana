@@ -182,3 +182,12 @@ def test_no_garmin_derived_profile_data_is_in_the_package_tree():
         text = path.read_text(errors='ignore')
         tables = re.findall(r"^\s*\d+:\s*['\"][a-z_]+['\"],?\s*$", text, re.M)
         assert len(tables) < 10, f'{path} holds a table of numbered names'
+
+
+def test_profile_json_and_named_json_commands(capsys):
+    import json
+    assert main(['profile-json']) == 0
+    assert json.loads(capsys.readouterr().out)['messages']['20']['name'] == 'record'
+    assert main(['named-json', str(CORPUS / 'activity.fit')]) == 0
+    rows = json.loads(capsys.readouterr().out)
+    assert rows[0]['8'] == 'Test Watch' and rows[2]['253'].startswith('2026-01-01T10:00:00')
