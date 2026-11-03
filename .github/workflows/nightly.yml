@@ -1,0 +1,115 @@
+name: Nightly
+# What takes too long for every push, and what tells us about a breaking Grafana release before a bump is merged.
+# docs/dashboard-testing-plan.md: L1 full matrix, L5 performance budget, L6 compatibility with the newest Grafana.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matrix:
+    name: Query contracts, three zones and five ranges
+    runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+        env:
+          POSTGRES_DB: garmin
+          POSTGRES_PASSWORD: test-only-password
+          NO_TS_TUNE: "true"
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d garmin"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_DATABASE: "1"
+      DASHBOARD_MATRIX: full
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGDATABASE: garmin
+      PGUSER: postgres
+      PGPASSWORD: test-only-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - run: uv run --locked pytest tests/test_dashboard_contracts.py --durations=10
+  budget:
+    name: Query cost on a year of data
+    runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: timescale/timescaledb-ha:pg17.11-ts2.31.0
+        env:
+          POSTGRES_DB: garmin
+          POSTGRES_PASSWORD: test-only-password
+          NO_TS_TUNE: "true"
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d garmin"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGDATABASE: garmin
+      PGUSER: postgres
+      PGPASSWORD: test-only-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - run: uv run --locked python -m garmin_grafana.migrate
+      - run: uv run --locked python scripts/bench_dashboards.py seed
+      - run: uv run --locked python scripts/bench_dashboards.py run --days 30 --days 365 --json bench.json
+      - run: uv run --locked python scripts/check_dashboard_budgets.py bench.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: bench
+          path: bench.json
+  newest-grafana:
+    name: Dashboards on the newest Grafana
+    runs-on: ubuntu-26.04
+    env:
+      PGDATABASE: garmin
+      PGUSER: garmin
+      PGPASSWORD: test-only-password
+      GRAFANA_PASSWORD: test-admin-password
+      GRAFANA_DB_PASSWORD: test-reader-password
+      GRAFANA_IMAGE: grafana/grafana:latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: garmin-grafana:timescale
+          cache-from: type=gha,scope=stack
+      - name: Start the stack with the personas
+        run: |
+          docker compose -f compose-example.yml --profile kiosk up -d --no-build --wait postgres migrate grafana grafana-kiosk kiosk
+          docker compose -f compose-example.yml exec -T grafana grafana --version | head -1 || true
+          export PGHOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose -f compose-example.yml ps -q postgres)")
+          uv run --locked python scripts/load_personas.py
+      - name: Grafana server checks
+        run: GRAFANA_URL=http://localhost:3000 KIOSK_URL=http://localhost:3001 uv run --locked pytest -m grafana tests/test_grafana_stack.py
+      - name: Browser tests without screenshots
+        env:
+          GRAFANA_URL: http://localhost:3000
+          KIOSK_URL: http://localhost:3001
+          CI: "true"
+        run: e2e/run.sh --grep-invert 'screenshots of'
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report-newest-grafana
+          path: |
+            e2e/playwright-report
+            e2e/test-results

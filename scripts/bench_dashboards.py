@@ -4,7 +4,8 @@ Run with PG* settings for a disposable database, never your real health database
 `seed` writes the healthy-lifestyle persona with a full year of intraday series at
 Garmin's cadence and a 5-second GPS track for every run (a few minutes, about
 1.3 million rows). `run` executes each query with the panel's pinned range, or the
-selected range, ending at the persona's "now", and prints database time per panel:
+selected range, ending at the persona's "now", and prints database time per panel (--json also saves the shared buffers each query
+touches, which scripts/check_dashboard_budgets.py compares with tests/data/dashboard_budgets.json):
 
     uv run --locked python scripts/bench_dashboards.py seed
     uv run --locked python scripts/bench_dashboards.py run --days 30 --days 365 [--json out.json]
@@ -68,7 +69,7 @@ def run(days, output):
         selector = cur.execute("SELECT tags->>'ActivitySelector' FROM samples WHERE source_id=%s AND dataset='ActivityGPS' ORDER BY time DESC LIMIT 1",
                                (source,)).fetchone()[0]
         for span in days:
-            totals, rows = {}, []
+            totals, rows, blocks = {}, [], {}
             for path in sorted(root.glob('*.json')):
                 dashboard = json.loads(path.read_text())
                 for panel in panels(dashboard['panels']):
@@ -86,6 +87,8 @@ def run(days, output):
                             count = len(cur.fetchall())
                             timings.append(time.perf_counter() - began)
                         label = f"{path.stem}:{panel['id']}:{target['refId']}"
+                        plan = cur.execute('EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ' + query).fetchone()[0][0]['Plan']
+                        blocks[label] = plan.get('Shared Hit Blocks', 0) + plan.get('Shared Read Blocks', 0)
                         rows.append((statistics.median(timings), count, label, panel.get('title', '')))
                         totals[path.stem] = totals.get(path.stem, 0) + statistics.median(timings)
             rows.sort(reverse=True)
@@ -94,7 +97,7 @@ def run(days, output):
                 print(f'  {name}: {total:.2f} s')
             for elapsed, count, label, title in rows[:15]:
                 print(f'  {elapsed * 1000:8.1f} ms {count:7d} rows  {label}  {title}')
-            results[span] = {label: {'ms': round(elapsed * 1000, 2), 'rows': count} for elapsed, count, label, _ in rows}
+            results[span] = {label: {'ms': round(elapsed * 1000, 2), 'rows': count, 'buffers': blocks[label]} for elapsed, count, label, _ in rows}
     if output:
         Path(output).write_text(json.dumps(results, indent=2) + '\n')
 

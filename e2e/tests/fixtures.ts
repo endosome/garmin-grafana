@@ -85,8 +85,12 @@ export async function openDashboard(page: Page, request: APIRequestContext, name
   // Grafana computes "now", pinned ranges (24h tiles) and "today" in the browser, then sends absolute times to the server.
   await page.clock.setFixedTime(new Date(NOW));
   await page.addInitScript(css => { document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = css; document.head.append(s); }); }, NO_ANIMATION);
+  const began = Date.now();
   await page.goto(`${options.prefix ?? ''}/d/${dashboard.uid}?${params}`);
-  return { source, panelCount: await settle(page) };
+  const panelCount = await settle(page);
+  // Navigation to the last panel loaded, for the trend in the nightly report; there is no gate until there is history to choose a threshold.
+  test.info().annotations.push({ type: 'dashboard load ms', description: String(Date.now() - began) });
+  return { source, panelCount };
 }
 
 

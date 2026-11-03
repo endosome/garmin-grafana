@@ -75,3 +75,45 @@ jobs:
             uv run --locked pytest -m grafana tests/test_grafana_stack.py --durations=5
       - name: Rehearse the upgrade from the Alpine image
         run: scripts/smoke_upgrade.sh
+  # Browser tests of the dashboards (docs/dashboard-testing-plan.md, layer L4). Needs the stack job first so the image comes from its layer cache.
+  e2e:
+    needs: stack
+    runs-on: ubuntu-26.04
+    env:
+      PGDATABASE: garmin
+      PGUSER: garmin
+      PGPASSWORD: test-only-password
+      GRAFANA_PASSWORD: test-admin-password
+      GRAFANA_DB_PASSWORD: test-reader-password
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the runtime image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: garmin-grafana:timescale
+          cache-from: type=gha,scope=stack
+      - name: Start the stack with the personas
+        run: |
+          docker compose -f compose-example.yml --profile kiosk up -d --no-build --wait postgres migrate grafana grafana-kiosk kiosk
+          export PGHOST=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(docker compose -f compose-example.yml ps -q postgres)")
+          uv run --locked python scripts/load_personas.py
+      - name: Browser tests
+        env:
+          GRAFANA_URL: http://localhost:3000
+          KIOSK_URL: http://localhost:3001
+          GRAFANA_ALLOW_WRITES: "1"
+          CI: "true"
+        run: e2e/run.sh
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results

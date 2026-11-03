@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The Grafana image and the pinned plugins in compose-example.yml; the bump's CI run includes the Grafana server checks and the browser tests with screenshots",
+      "fileMatch": ["^compose-example\\.yml$"],
+      "matchStrings": [
+        "\\$\\{GRAFANA_IMAGE:-(?<depName>grafana/grafana):(?<currentValue>[^}]+)\\}"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}

@@ -84,16 +84,33 @@ settled on when fixing them. When a rule and an old panel disagree, fix the pane
 
 ## Testing a dashboard change
 
-1. Run the query checks against a disposable TimescaleDB, never the real
+Layers are described in the [dashboard testing plan](dashboard-testing-plan.md).
+
+1. `uv run --locked pytest tests/test_dashboard_lint.py` needs no database. It enforces
+   this document where it can be checked statically: canonical JSON, uids, tags and
+   settings, layout, installed panel types, `source_id IN (${Source:csv})`, variables,
+   units, `noValue`, links, and a registry entry for every panel
+   (`tests/panel_registry.py`). Rules some old panels still break are ratcheted in
+   `tests/data/lint_ratchet.json`; fixing a panel means removing it from there
+   (`LINT_UPDATE_RATCHET=1` rewrites the file).
+2. Run the query checks against a disposable TimescaleDB, never the real
    database (setup is in [development](development.md)):
-   `uv run --locked python scripts/validate_dashboard_queries.py`.
-2. Run `tests/test_personas.py` with `TEST_DATABASE=1`. It checks panel output
-   against values computed independently from the persona data. When a panel's
+   `uv run --locked python scripts/validate_dashboard_queries.py`, and the suite with
+   `TEST_DATABASE=1`. `tests/test_dashboard_contracts.py` snapshots every query's
+   columns (`pytest --update-schemas` after a deliberate change, reviewed in the same
+   diff as the override that depends on it) and checks isolation between accounts,
+   two accounts at once, and zones and ranges. `tests/test_personas.py` checks panel
+   output against values computed independently from the persona data. When a panel's
    unit changes, change the expected value and the column name in
    `tests/personas.py` and `tests/test_personas.py` in the same commit. Without
    `TEST_DATABASE=1` these tests are skipped and prove nothing.
-3. Look at the changed panels in a real Grafana for each persona, over a short and
-   a multi-year range and in a time zone other than UTC. Unit strings such as
-   `clocks` and `dthms` are only verified by looking at the rendered panel.
+3. Run the browser tests against the Compose stack with the personas loaded
+   (`scripts/load_personas.py`), inside the memory limit:
+   `systemd-run --user --scope -p MemoryMax=6G -p MemoryHigh=5G -- e2e/run.sh`.
+   They check that every dashboard loads without a panel error, console error or missing
+   plugin, the text of the tiles (`clocks`, `dthms`, decimals, `noValue`), dropdowns, links,
+   collapsed rows, Fetch now, the kiosk, and screenshots of the chart panels. A deliberate
+   change to a chart updates its baseline with `e2e/update-baselines.sh`; look at every
+   changed image and commit the baselines with the change that explains them.
 4. Run heavy commands inside a memory limit and with low parallelism, as the
    project and machine rules require.

@@ -372,3 +372,27 @@ plan.
   use them.
 - Browsers other than Chromium.
 - Accessibility audits of Grafana's own UI.
+
+## Status (2026-11-03)
+
+Phases 0 to 5 are implemented. What exists, and what is deliberately not done:
+
+| Layer | Where | Notes |
+| --- | --- | --- |
+| L0 lint | `tests/test_dashboard_lint.py`, `tests/dashboards.py` | Ratchet file `tests/data/lint_ratchet.json`: 58 missing descriptions and 21 `noValue` that are not an en dash. The fixes made on the way: canonical JSON, `weekStart`, `graphTooltip` and `description` for Garmin Stats and Strength, a dead datasource variable, the Ski to Strength link keeps variables. |
+| L1 contracts | `tests/test_dashboard_contracts.py`, `tests/panel_registry.py`, `tests/data/panel_schemas.json` | Push runs one zone and two ranges, the nightly workflow all fifteen. Panel registry: 61 of 130 panels have value assertions, 69 are in `NOT_YET`. |
+| L2 semantics | `tests/test_personas.py` | Unchanged; the registry now says what is still missing. Baseline bands, the remaining Garmin Stats panels and the strength filters are the next ones. |
+| L3 Grafana server | `tests/test_grafana_stack.py` | Replaces `smoke_grafana.py` and `smoke_kiosk.py`. The datasource expands the time macros itself (checked against Grafana 13.0.2); the frontend substitutes variables and `${__interval}`. The API returns each dashboard as its file (minus `id` and `version`), so the drift check compares them directly. |
+| L4 browser | `e2e/` | Tiers 1 to 5. Run with `e2e/run.sh` (pinned Playwright 1.64.1 image, 3 GB, two workers); baselines with `e2e/update-baselines.sh`. 1.7 MB of screenshots for 93 chart panels. Geomaps are left out of the screenshots: their basemap needs the internet. |
+| L5 budgets | `scripts/check_dashboard_budgets.py`, `tests/data/dashboard_budgets.json` | Buffers per query (1.5x) and median milliseconds per dashboard (2x), run by the nightly workflow. The browser load time is attached to each test as an annotation, without a gate. |
+| L6 upgrades | `renovate.json`, `.github/workflows/nightly.yml` | Renovate needs its GitHub app installed on the repository. The nightly run starts the stack with `GRAFANA_IMAGE=grafana/grafana:latest`. |
+
+Found by the new tests: a state timeline with no rows says "Data does not have a time field" instead
+of "No data" (Health panels 10 and 36; changing the query format did not help, so the browser tests
+list them); Health panel 10 and others only showed up once the browser tests expanded every collapsed
+row and scrolled through every panel.
+
+Not done: the clock is frozen with `setFixedTime`, but the kiosk idle test waits for its real
+20 seconds instead of fast-forwarding, because a fake clock stalls Grafana's own timers; the accessibility
+check covers the kiosk page only, as planned; Gatus monitoring of the deployment is outside this
+repository.
