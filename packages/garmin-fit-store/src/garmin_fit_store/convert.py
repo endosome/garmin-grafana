@@ -12,6 +12,7 @@ from .semantics import Semantics
 GPX_NS = 'http://www.topografix.com/GPX/1/1'
 TPX_NS = 'http://www.garmin.com/xmlschemas/TrackPointExtension/v1'
 PWR_NS = 'http://www.garmin.com/xmlschemas/PowerExtension/v1'
+from . import values as raw_values
 from .protocol import BASE_TYPES
 
 TCX_NS = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
@@ -172,6 +173,7 @@ def to_csv(fit_file):
     writer = csv.writer(out, lineterminator='\n')
     rows = []
     announced = set()
+    tool_reads = _tool_reads(fit_file)
     descriptions = {(m.fields.get(0), m.fields.get(1)): m.fields for m in fit_file.messages if m.global_num == 206}
     for message in fit_file.messages:
         definition = fit_file.definitions[message.def_id]
@@ -195,7 +197,10 @@ def to_csv(fit_file):
         shown = set()
         cells = []
         for number, field in fields:
-            fname, shown_field, raw = field['name'] if field else 'unknown', field, message.fields.get(number)
+            fname, shown_field, raw = field['name'] if field else 'unknown', field, tool_reads.get((message.seq, number), message.fields.get(number))
+            if isinstance(raw, dict):
+                # a string that is not valid UTF-8: the tool drops the bad bytes, shows inner NULs as |, and counts an empty result as invalid
+                raw = bytes.fromhex(raw['hex']).rstrip(b'\0').decode('utf-8', 'ignore').replace('\0', '|') or None
             if raw is None:
                 shown.add(fname)
                 continue  # the tool leaves out a field whose value is invalid
@@ -237,6 +242,38 @@ def to_csv(fit_file):
     writer.writerow(['Type', 'Local Number', 'Message'] + [x for i in range(1, widest + 1) for x in (f'Field {i}', f'Value {i}', f'Units {i}')])
     writer.writerows(rows)
     return out.getvalue()
+
+
+def _tool_reads(fit_file):
+    """What the official tool prints for a field defined narrower than its base type (``{(message seq, field number): value}``).
+
+    The tool keeps one buffer for every field it reads, in file order: a field's bytes land at its start, each whole element is
+    byte-flipped in place for a little-endian file, and every element (the last one partial) is then read big-endian from the
+    buffer, so a partial element is made of the field's last bytes and whatever the buffer held before. That is not file data,
+    but it is what the tool prints, and it needs the whole file's reads to be replayed; only a file with such a field pays for it.
+    """
+    def width(base):
+        return BASE_TYPES[base & 0x1F][2]
+
+    if not any(size % width(base) for d in fit_file.definitions for _, size, base in d.fields):
+        return {}
+    buffer, reads = bytearray(256), {}
+    for message in fit_file.messages:
+        definition = fit_file.definitions[message.def_id]
+        for number, size, base in definition.fields:
+            if number == 253 and definition.id in fit_file.compressed:
+                continue
+            chunk = raw_values.encode(message.fields.get(number), base, size, definition.arch)
+            buffer[:len(chunk)] = chunk
+            w = width(base)
+            if base & 0x80 and definition.arch == 0:
+                for i in range(len(chunk) // w):
+                    buffer[i * w:(i + 1) * w] = buffer[i * w:(i + 1) * w][::-1]
+            if len(chunk) % w:
+                count = -(-len(chunk) // w)
+                value = raw_values.decode(bytes(buffer[:count * w]), base, 1)
+                reads[(message.seq, number)] = value
+    return reads
 
 
 def _count(size, base):

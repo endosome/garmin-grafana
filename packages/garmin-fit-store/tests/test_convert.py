@@ -13,6 +13,7 @@ from garmin_fit_store.builder import build_fit
 from garmin_fit_store.__main__ import main
 
 from conftest import CORPUS
+import rawfit
 
 
 def activity():
@@ -118,6 +119,34 @@ def test_csv_lists_a_compressed_timestamp_first():
     assert data[3] == 'timestamp' and data[4] == '1100000003'
 
 
+def ragged(fields, payload):
+    """The CSV text of the one data row of a record whose fields are defined narrower than their types."""
+    rows = csv_rows(rawfit.fit([rawfit.definition(0, 20, fields), rawfit.data(0, payload)]))
+    return [c for c in next(r for r in rows if r[0] == 'Data')[3:] if c]
+
+
+@pytest.mark.parametrize('fields, payload, expected', [
+    # values the official tool printed for these files (CSVTool 21.221): its read buffer persists from field to field
+    ([(253, 4, rawfit.UINT32), (200, 1, rawfit.UINT32)], b'\x73\x18\xf8\x39\x00', ['timestamp', '972560499', 's', 'unknown', '16259187']),
+    ([(253, 4, rawfit.UINT32), (200, 1, rawfit.UINT32)], b'\x73\x18\xf8\x39\x05', ['timestamp', '972560499', 's', 'unknown', '100145267']),
+    ([(200, 1, rawfit.UINT32)], b'\x07', ['unknown', '117440512']),
+    ([(201, 2, rawfit.UINT32), (200, 1, rawfit.UINT32)], b'\x34\x12\x07', ['unknown', '873594880', 'unknown', '118620160']),
+    ([(200, 3, rawfit.UINT16)], b'\x01\x02\x03', ['unknown', '513|768']),
+    ([(253, 4, rawfit.UINT32), (200, 3, rawfit.UINT16)], b'\x73\x18\xf8\x39\x01\x02\x03', ['timestamp', '972560499', 's', 'unknown', '513|883']),
+    ([(201, 4, rawfit.UINT32), (200, 2, rawfit.UINT32), (199, 1, rawfit.UINT32)], b'\x44\x33\x22\x11\x01\x02\x07',
+     ['unknown', '287454020', 'unknown', '16921412', 'unknown', '117584708']),
+    ([(200, 5, rawfit.UINT16)], b'\x01\x02\x03\x04\x05', ['unknown', '513|1027|1280']),
+])
+def test_csv_prints_a_narrow_field_the_way_the_tool_reads_it(fields, payload, expected):
+    assert ragged(fields, payload) == expected
+
+
+def test_csv_string_that_is_not_utf8():
+    text = ragged([(200, 8, rawfit.STRING)], b'AB\x00\xc3\x00\x00 \x00')
+    assert text == ['unknown', 'AB||| ']  # the bad byte is dropped, inner NULs show as |
+    assert ragged([(200, 4, rawfit.STRING), (201, 1, rawfit.UINT8)], b'\xff\xfe\x00\x00\x05') == ['unknown', '5']  # nothing left: invalid
+
+
 def test_csv_value_forms():
     assert convert._csv_value(None, None) == ''
     assert convert._csv_value([1, None], None) == '1|'
@@ -139,7 +168,7 @@ def test_csv_equals_the_official_tool(tmp_path):
     def data_rows(rows):  # the tool's local numbers are the wire's; the IR renumbers, so compare the rows without them
         return [[c for c in r[2:] if c] for r in rows if r and r[0] == 'Data']
 
-    for path in [CORPUS / 'activity.fit', CORPUS / 'developer_fields.fit', CORPUS / 'big_endian.fit', CORPUS / 'chained.fit', CORPUS / 'zero_header_crc.fit', CORPUS / 'compressed_timestamps.fit']:
+    for path in sorted(CORPUS.glob('*.fit')):
         subprocess.run(['java', '-cp', jar, 'com.garmin.fit.csv.CSVTool', '-b', str(path), str(tmp_path / 'tool.csv')], check=True, capture_output=True)
         with open(tmp_path / 'tool.csv', encoding='utf-8-sig') as handle:
             theirs = data_rows(list(csv.reader(handle)))
@@ -149,7 +178,7 @@ def test_csv_equals_the_official_tool(tmp_path):
 def test_csv_of_unknown_and_odd_values():
     fit_file = decode((CORPUS / 'unknown_things.fit').read_bytes())
     text = convert.to_csv(fit_file)
-    assert 'fffe0000' in text and 'unknown' in text
+    assert 'fffe0000' not in text and '1|2|3|255|5' in text and 'unknown' in text  # the tool leaves out the invalid string
 
 
 def test_jsonl_target_is_the_ir():

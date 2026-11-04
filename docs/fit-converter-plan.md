@@ -262,6 +262,8 @@ Each item ends with its done criterion. Sizes are days of focused work.
    with developer fields, multisport) from the database and upload them to a Garmin Connect account; compare the
    activity summary, laps, charts and Connect IQ fields with the original. Record the outcome here. Done: the three
    files are accepted and show the same values; any rejection becomes a worklist item with the file's shape.
+   (Amended 2026-11-04: Connect IQ fields compared by a control upload of the original; Connect shows the same metrics for both and
+   neither displays the sample's four developer fields; the user accepted this. Edited and combined files were uploaded too.)
 
 8. **Typed views and the profile tables.** (2 days) Generate `fit.v_record`, `fit.v_lap`, `fit.v_session`,
    `fit.v_event`, `fit.v_file_id` and `fit.v_device_info` as SQL views over the raw tables and `profile_fields`,
@@ -333,7 +335,7 @@ Each item ends with its done criterion. Sizes are days of focused work.
     first, or built in the job from endosome/postgres-pglite, which is slow and so cached), imports a corpus file
     through the TypeScript store, exports it and checks the R4 oracle. Done: the TypeScript codec passes every corpus
     pair; the Node job is green in `tests.yml`; a browser demo page imports a FIT file into pglite and downloads the
-    export.
+    export. (Amended 2026-11-04: green under `act`; the user decided a GitHub run is not required.)
 
 Total about 36 days. Items 1 to 7 are the MVP (R23), about 13 days.
 
@@ -375,16 +377,16 @@ The current description lives in [architecture.md](architecture.md), [testing.md
   `com.garmin.fit.csv.CSVTool`): 0 differing rows for the committed activity file and for three real files (a fenix 2 run,
   an indoor-trainer activity and the 24,274-row multisport file), after fixing sub-field names (`garmin_product`), omitted
   invalid fields, blank Definition units, expanded components (`enhanced_speed`) and 32-bit float text. Remaining documented
-  differences: local message numbers (the IR renumbers definitions; the tool prints the wire's) and fields defined narrower
-  than their base type.
-  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal for 12
-  (including both developer-field files, the compressed-timestamp file, the ELEMNT, the Edge 820, the multisport and
-  `big_endian`, after developer-field columns, unscaled array sentinels, 32-bit float text and the compressed header's
-  timestamp-first order were added; `FitFile.compressed` carries that last fact from the decoder). The other 3 are files
-  with a field defined narrower than its base type (`unknown_things`, the fenix 5 file's one unknown message, and COROS's
-  `event.data`): the tool reads past the field into the next bytes (a 3-byte field of base type uint16 prints as `513|768`),
-  we keep the 3 bytes. The test `test_csv_equals_the_official_tool` runs the comparison on six committed files when
-  `FIT_CSV_TOOL_JAR` is set.
+  differences: local message numbers (the IR renumbers definitions; the tool prints the wire's).
+  Over all 15 files (the 7 committed corpus files and 8 real ones), data rows, ignoring local numbers, are equal to the tool's
+  for all 15, after developer-field columns, unscaled array sentinels, 32-bit float text, the compressed header's timestamp-first
+  order (`FitFile.compressed` carries that fact from the decoder), non-UTF-8 strings, and fields defined narrower than their
+  base type were added. For the last, the tool's value is not file data: it keeps one buffer for every field it reads and a
+  partial element is made of the field's last bytes and what the buffer held before (the COROS `event.data` of one byte prints
+  the low three bytes of the row's timestamp). `_tool_reads` replays the tool's reads (found from its bytecode, checked with
+  crafted files) so those files match too (user decision 2026-11-04: match the tool). The test
+  `test_csv_equals_the_official_tool` compares all 7 committed files when `FIT_CSV_TOOL_JAR` is set; the 8 real files were
+  compared by hand.
 - Item 12: `fitparse` removed from the root dependencies; the existing tests pass unchanged. It stays a dev dependency of the
   package as a differential oracle.
 - Items 13 and 14: SQL functions and Python references agree on the R4 oracle; originals unchanged; SDK decodes the output.
